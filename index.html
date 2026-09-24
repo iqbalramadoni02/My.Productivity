@@ -526,6 +526,32 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .panels > *, .card, .list, .list li { min-width: 0; }
 .panels .card { overflow: hidden; }
 
+  
+
+/* ---------- lock screen (v2) ---------- */
+.lock { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; padding: 20px;
+  background: radial-gradient(120% 90% at 50% 0%, var(--surface-2), var(--bg)); }
+.lock-box { width: min(360px, 100%); text-align: center; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 22px; padding: 26px 22px 20px; box-shadow: var(--shadow-lg); }
+.lock-box h2 { margin: 12px 0 2px; font-size: 18px; letter-spacing: -.02em; }
+.lock-salam { margin: 0 0 16px; color: var(--muted); font-size: 13.5px; }
+.lock-mark { width: 52px; height: 52px; margin: 0 auto; border-radius: 16px; background: var(--brand); display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 11px; }
+.lock-mark i { background: #fff; border-radius: 3px; }
+.lock-mark i:nth-child(2) { opacity: .7; } .lock-mark i:nth-child(3) { opacity: .55; } .lock-mark i:nth-child(4) { opacity: .85; }
+.pin-dots { display: flex; gap: 10px; justify-content: center; margin: 4px 0 8px; }
+.pin-dots span { width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--line); }
+.pin-dots span.on { background: var(--brand); border-color: var(--brand); }
+.pin-msg { min-height: 18px; color: var(--coral); margin-bottom: 6px; }
+.pinpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.pinpad button { height: 54px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2);
+  font-size: 20px; font-weight: 700; cursor: pointer; color: var(--ink); }
+.pinpad button:hover { background: var(--surface-3); }
+.pinpad button:active { transform: scale(.97); }
+.lock-go { width: 100%; height: 44px; }
+.lock-foot { margin: 12px 0 0; }
+.shake { animation: shake .35s; }
+@keyframes shake { 25% { transform: translateX(-7px); } 50% { transform: translateX(7px); } 75% { transform: translateX(-4px); } }
+
   </style>
 </head>
 <body>
@@ -535,7 +561,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   <div id="modal-root"></div>
   <div id="toast-root" class="toasts" aria-live="polite"></div>
   <!-- Diisi otomatis oleh Apps Script (doGet). Bila file ini di-hosting statis, isinya diabaikan. -->
-  <script type="application/json" id="mph-boot">{}</script>
+  <script type="application/json" id="mph-boot"><?!= boot ?></script>
   <script>
 /* =====================================================================
  * MY PRODUCTIVITY HUB — Frontend (vanilla JS, tanpa build step)
@@ -579,6 +605,8 @@ const SCHEMA = {
   HabitLogs: ['id', 'habitId', 'date', 'createdAt', 'updatedAt'],
   Todos: ['id', 'text', 'date', 'priority', 'done', 'createdAt', 'updatedAt'],
   Files: ['id', 'module', 'refId', 'name', 'mime', 'size', 'driveId', 'url', 'note', 'createdAt', 'updatedAt'],
+  _Kehadiran: ['id', 'date', 'program', 'className', 'tpCodes', 'topic', 'boysPresent', 'boysTotal', 'girlsPresent', 'girlsTotal', 'boysAchieved', 'girlsAchieved', 'method', 'note', 'createdAt', 'updatedAt'],
+  _Log: ['id', 'at', 'sheet', 'rowId', 'action', 'before', 'after', 'note', 'createdAt', 'updatedAt'],
   Deadlines: ['id', 'title', 'deadline', 'type', 'status', 'left', 'urgency', 'gcalId'],
   Jobdesc: ['id', 'no', 'field', 'activity', 'position', 'weight', 'jp', 'discipline', 'linearity', 'period', 'status', 'target', 'progress', 'prediction', 'risk', 'note'],
   Links: ['id', 'title', 'label', 'url', 'status', 'division'],
@@ -589,7 +617,8 @@ const SCHEMA = {
 const PROTECTED = new Set(['Settings', 'Pricelist', 'Categories']);
 const NUMERIC = new Set(['amount', 'price', 'discount', 'progress', 'principal', 'ratePct', 'tenor', 'installment',
   'principalPart', 'interestPart', 'rate', 'durationMin', 'totalSessions', 'participants', 'present', 'total',
-  'score', 'mood', 'no', 'day', 'size', 'dayOfMonth', 'normalMin', 'normalMax', 'expressMin', 'expressMax', 'daysNormal', 'daysExpress', 'target', 'weight', 'jp']);
+  'score', 'mood', 'no', 'day', 'size', 'dayOfMonth', 'normalMin', 'normalMax', 'expressMin', 'expressMax', 'daysNormal', 'daysExpress', 'target', 'weight', 'jp',
+  'boysPresent', 'boysTotal', 'girlsPresent', 'girlsTotal', 'boysAchieved', 'girlsAchieved']);
 const BOOLEAN = new Set(['paid', 'done', 'active', 'disbursed']);
 
 const DEFAULT_SETTINGS = {
@@ -607,7 +636,8 @@ const DEFAULT_SETTINGS = {
   calendarSync: 'on',
   inviteClients: 'on',
   autoSendReceipt: 'off',
-  digestHour: '6'
+  digestHour: '6',
+  kkm: '75'
 };
 
 /* ---------------------------------------------------------------------
@@ -813,6 +843,7 @@ const ICONS = {
   chevR: '<path d="m9 6 6 6-6 6"/>',
   copy: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  lock: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14.5v2.5"/>',
   pay: '<rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5v5M18 9.5v5"/>'
 };
 const ic = (name, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ''}</svg>`;
@@ -870,6 +901,15 @@ const IDB = {
  * 6. API (Google Apps Script)
  * ------------------------------------------------------------------- */
 const Api = {
+  sess() { try { return (typeof Lock !== 'undefined' ? Lock.session() : '') || ''; } catch (e) { return ''; } },
+  err(j) {
+    const msg = (j && j.error) || 'Permintaan gagal.';
+    if (msg === 'SESSION_EXPIRED') {
+      try { Lock.setSession(''); if (!Lock.active) Lock.lock(true); } catch (e) { }
+      return new Error('Sesi terkunci. Masukkan PIN lagi.');
+    }
+    return new Error(msg);
+  },
   /** Jalur HtmlService: google.script.run.apiCall(json) */
   gsr(body) {
     return new Promise((resolve, reject) => {
@@ -883,8 +923,8 @@ const Api = {
   async call(action, payload = {}, opts = {}) {
     const key = opts.key != null ? opts.key : Config.data.key;
     if (EMBEDDED) {
-      const j = await this.gsr(Object.assign({ action, key }, payload));
-      if (!j || !j.ok) throw new Error((j && j.error) || 'Permintaan gagal.');
+      const j = await this.gsr(Object.assign({ action, key, session: Api.sess() }, payload));
+      if (!j || !j.ok) throw Api.err(j);
       return j;
     }
     const url = opts.url || Config.data.url;
@@ -895,7 +935,7 @@ const Api = {
         method: 'POST',
         redirect: 'follow',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(Object.assign({ action, key }, payload))
+        body: JSON.stringify(Object.assign({ action, key, session: Api.sess() }, payload))
       });
     } catch (e) {
       throw new Error('Tidak dapat menghubungi server. Periksa internet dan URL Web App (harus berakhiran /exec).');
@@ -905,7 +945,7 @@ const Api = {
     try { j = JSON.parse(text); } catch (e) {
       throw new Error('Respons server bukan JSON. Pastikan deploy Web App dengan akses "Anyone" dan gunakan URL /exec terbaru.');
     }
-    if (!j.ok) throw new Error(j.error || 'Permintaan gagal.');
+    if (!j.ok) throw Api.err(j);
     return j;
   },
   async get(url, params) {
@@ -1089,7 +1129,7 @@ const Store = {
  * ------------------------------------------------------------------- */
 const MODULES = {
   school: { nav: 'Sekolah & Mengajar', title: 'Sekolah & Kinerja Mengajar', short: 'Sekolah', icon: 'school', desc: 'Jadwal, logbook, KPI, tugas & ujian',
-    subs: [['jadwal', 'Jadwal & Kalender'], ['tugas', 'Tugas & Ujian'], ['deadline', 'Deadline Dinas'], ['logbook', 'Logbook, TP & KPI'], ['jobdesc', 'Jobdesc'], ['file', 'Tautan & File'], ['keuangan', 'Gaji & Honor'], ['lembar', 'Lembar Excel']] },
+    subs: [['jadwal', 'Jadwal & Kalender'], ['tugas', 'Tugas & Ujian'], ['deadline', 'Deadline Dinas'], ['kehadiran', 'Kehadiran & TP'], ['logbook', 'Logbook & KPI'], ['jobdesc', 'Jobdesc'], ['file', 'Tautan & File'], ['keuangan', 'Gaji & Honor'], ['lembar', 'Lembar Excel']] },
   project: { nav: 'Project & Klien', title: 'Project Management', short: 'Project', icon: 'project', desc: 'Klien, pengerjaan, invoice & kwitansi',
     subs: [['daftar', 'Daftar Project'], ['kanban', 'Kanban'], ['bayar', 'Pembayaran & Piutang'], ['harga', 'Pricelist & Kalkulator'], ['file', 'File Project']] },
   tutor: { nav: 'Tutor Class', title: 'Tutor Class', short: 'Tutor', icon: 'tutor', desc: 'Bimbel, les privat, workshop',
@@ -1354,6 +1394,7 @@ const App = {
           <button class="chip" id="sync-chip" data-act="syncNow"></button>
           <button class="chip desk-only" id="gw-chip" data-act="settings" data-tab="google"></button>
           <button class="icon-btn" data-act="notif" aria-label="Notifikasi" id="bell">${ic('bell')}</button>
+          <button class="icon-btn" data-act="lockNow" aria-label="Kunci aplikasi" title="Kunci aplikasi" id="lock-btn" hidden>${ic('lock')}</button>
           <button class="icon-btn" data-act="theme" aria-label="Ganti tema" id="theme-btn"></button>
           <div class="clock" id="clock"></div>
         </header>
@@ -1434,6 +1475,8 @@ const App = {
     }
     this.renderBell();
     this.renderGwChip();
+    const lb = $('#lock-btn');
+    if (lb) lb.hidden = !(Store.isRemote() && Store.services && Store.services.pinSet);
     const tb = $('#theme-btn');
     if (tb) tb.innerHTML = ic(document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon');
     if (focusKey) {
@@ -1598,6 +1641,10 @@ const Palette = {
       ['Tambah agenda', 'plus', () => { App.open('school', 'jadwal'); School.agendaForm(); }],
       ['Tulis jurnal hari ini', 'journal', () => { App.open('journal', 'jurnal'); Journal.newEntry(); }],
       ['Upload file', 'upload', () => { App.open('files'); Files.pick('umum'); }],
+      ['Catat kehadiran & ketercapaian TP', 'plus', () => { App.open('school', 'kehadiran'); Hadir.form(); }],
+      ['Kunci aplikasi (lock screen)', 'lock', () => Lock.lock()],
+      ['Riwayat perubahan & urungkan', 'refresh', () => ChangeLog.open()],
+      ['Backup spreadsheet sekarang', 'cloud', () => ACT.backupNow()],
       ['Impor dari Excel', 'upload', () => Excel.importDialog()],
       ['Ekspor semua data (Excel)', 'download', () => Excel.exportAll()],
       ['Pengaturan & koneksi Google', 'settings', () => Settings.open()],
@@ -1614,6 +1661,11 @@ const Palette = {
       add('Kelas tutor', 'tutor', Store.all('TutorClasses'), (c) => c.name, (c) => `${c.tutorType} — ${c.clientName}`, (c) => { App.s('tutor').classId = c.id; App.open('tutor', 'sesi'); }, (c) => [c.name, c.clientName, c.institution, c.tutorType]);
       add('Tugas & ujian', 'school', Store.all('Assignments'), (a) => a.title, (a) => `${a.className} — ${fmtDate(a.deadline)}`, (a) => { App.open('school', 'tugas'); School.assignForm(a.id); }, (a) => [a.title, a.className, a.subject]);
       add('Agenda', 'calendar', Store.all('Agenda'), (a) => a.title, (a) => fmtDate(a.date), (a) => { App.open('school', 'jadwal'); School.agendaForm(a.id); }, (a) => [a.title, a.type, a.location]);
+      add('Deadline dinas', 'alert', Store.all('Deadlines'), (d) => d.title, (d) => `${d.type || ''} — ${fmtDate(d.deadline)}`, (d) => { App.open('school', 'deadline'); Work.dlForm(d.id); }, (d) => [d.title, d.type]);
+      add('Jobdesc', 'project', Store.all('Jobdesc'), (j) => j.activity, (j) => `${j.field || ''} — ${j.progress || 0}%`, (j) => { App.open('school', 'jobdesc'); Work.jobForm(j.id); }, (j) => [j.activity, j.field, j.position]);
+      add('Tautan', 'link', Store.all('Links'), (l) => l.title, (l) => l.division || '', (l) => { App.open('school', 'file'); Work.linkForm(l.id); }, (l) => [l.title, l.label, l.division]);
+      add('Tujuan pembelajaran', 'check', Store.all('TP'), (t) => `${t.code} ${String(t.objective).slice(0, 60)}`, (t) => `${t.program} — ${t.status}`, () => App.open('school', 'kehadiran'), (t) => [t.code, t.objective, t.program, t.unit]);
+      add('Kehadiran', 'school', Store.all('_Kehadiran'), (r) => `${r.className} — ${fmtDate(r.date)}`, (r) => r.topic || '', (r) => { App.open('school', 'kehadiran'); Hadir.form(r.id); }, (r) => [r.className, r.topic, r.tpCodes, r.program]);
       add('File', 'file', Store.all('Files'), (f) => f.name, (f) => `${f.module} — ${fmtSize(f.size)}`, (f) => Files.openFile(f.id), (f) => [f.name, f.module, f.note]);
       add('Jurnal', 'journal', Store.all('Journal'), (j) => j.title || fmtDate(j.date), (j) => fmtDate(j.date), (j) => { App.s('journal').current = j.id; App.open('journal', 'jurnal'); }, (j) => [j.title, j.tags, stripHTML(j.content)]);
     }
@@ -1657,6 +1709,7 @@ const Settings = {
           ${UI.fieldHTML({ k: 'semesterStart', l: 'Awal semester', t: 'date', hint: 'Dipakai untuk event berulang jadwal mengajar.' }, st.semesterStart)}
           ${UI.fieldHTML({ k: 'semesterEnd', l: 'Akhir semester', t: 'date' }, st.semesterEnd)}
           ${UI.fieldHTML({ k: 'jpTarget', l: 'Target JP per minggu', t: 'number' }, st.jpTarget)}
+          ${UI.fieldHTML({ k: 'kkm', l: 'KKM / batas ketercapaian TP (%)', t: 'number', min: 0, max: 100 }, st.kkm)}
         </div>
         <div class="btn-row mt"><button class="btn primary" data-s="saveProfile">${ic('check')}Simpan profil</button></div>
       </div>
@@ -1684,6 +1737,9 @@ const Settings = {
           <div class="card soft span2"><h4>${ic('cloud')}Impor database lengkap</h4><p class="mini muted" style="margin-top:0">Pilih file <b>MyProductivityHub_Database.xlsx</b> (atau file cadangan). Semua sheet dimasukkan sekaligus; data yang sudah ada <b>tidak diubah dan tidak dihapus</b>. Sheet berawalan "ARSIP" disalin utuh sebagai arsip.</p><button class="btn sm primary" data-s="importFull">Impor database lengkap</button></div>
           <div class="card soft"><h4>${ic('upload')}Impor</h4><p class="mini muted" style="margin-top:0">Dari file cadangan aplikasi ini atau Excel lama Anda (Task Management, Appointment, Schedule, PROJECT, dll).</p><button class="btn sm" data-s="import">Impor dari Excel</button></div>
           <div class="card soft"><h4>${ic('cloud')}Pindahkan data lokal</h4><p class="mini muted" style="margin-top:0">Mengirim data yang tersimpan di browser (mode lokal) ke Google Sheets. Baris dengan ID yang sama dilewati.</p><button class="btn sm" data-s="migrate" ${remote && !EMBEDDED ? '' : 'disabled'}>Kirim data lokal ke Google Sheets</button></div>
+          <div class="card soft"><h4>${ic('lock')}Keamanan (PIN)</h4><p class="mini muted" style="margin-top:0">Lock screen sebelum Beranda; kunci otomatis setelah 10 menit tidak aktif. PIN disimpan sebagai hash di server. Status: <b>${svc.pinSet ? 'aktif' : 'belum dibuat'}</b>.</p><div class="btn-row"><button class="btn sm" data-s="pin" ${remote ? '' : 'disabled'}>${svc.pinSet ? 'Ganti PIN' : 'Buat PIN'}</button>${svc.pinSet ? `<button class="btn sm" data-s="lock">Kunci sekarang</button>` : ''}</div></div>
+          <div class="card soft"><h4>${ic('cloud')}Backup Drive</h4><p class="mini muted" style="margin-top:0">Salinan spreadsheet ke folder <b>My Productivity Hub — Backup</b>; 8 salinan terakhir disimpan, sisanya ke Sampah. Trigger mingguan: <b>${svc.backup ? 'aktif' : 'belum dipasang'}</b>.</p><div class="btn-row"><button class="btn sm" data-s="backup" ${remote ? '' : 'disabled'}>Backup sekarang</button><button class="btn sm" data-s="backupTrigger" ${remote ? '' : 'disabled'}>Pasang backup mingguan</button></div></div>
+          <div class="card soft"><h4>${ic('refresh')}Riwayat perubahan</h4><p class="mini muted" style="margin-top:0">Setiap tambah/ubah/hapus tercatat di sheet <b>_Log</b> dan bisa diurungkan (90 hari).</p><button class="btn sm" data-s="log" ${remote ? '' : 'disabled'}>Buka riwayat & urungkan</button></div>
           <div class="card soft"><h4>${ic('refresh')}Data contoh</h4><p class="mini muted" style="margin-top:0">Isi contoh singkat untuk melihat cara kerja tiap modul.</p><button class="btn sm" data-s="demo">Muat data contoh</button></div>
         </div>
         ${remote ? '' : `<div class="divider"></div><button class="btn sm danger" data-s="wipe">${ic('trash')}Hapus semua data lokal</button>`}
@@ -1742,7 +1798,7 @@ const Settings = {
         break;
       }
       case 'saveProfile': {
-        const v = this.read(box, ['ownerName', 'ownerEmail', 'ownerWa', 'businessName', 'bankInfo', 'invoiceNote', 'schoolName', 'jpMinutes', 'semesterStart', 'semesterEnd', 'jpTarget']);
+        const v = this.read(box, ['ownerName', 'ownerEmail', 'ownerWa', 'businessName', 'bankInfo', 'invoiceNote', 'schoolName', 'jpMinutes', 'semesterStart', 'semesterEnd', 'jpTarget', 'kkm']);
         if (v.ownerEmail && !validEmail(v.ownerEmail)) throw new Error('Format email tidak valid.');
         await Store.saveSettings(v);
         UI.toast('Profil disimpan', 'ok');
@@ -1766,6 +1822,11 @@ const Settings = {
         UI.toast(`${j.synced} item diperiksa, ${j.patches.length} event diperbarui${j.warnings.length ? '. Catatan: ' + j.warnings[0] : ''}`, j.warnings.length ? '' : 'ok', 6000);
         break;
       }
+      case 'pin': m.close(); Lock.changeForm(); break;
+      case 'lock': m.close(); Lock.lock(); break;
+      case 'backup': await ACT.backupNow(); break;
+      case 'backupTrigger': await ACT.setupBackup(); m.close(); this.open('data'); break;
+      case 'log': m.close(); ChangeLog.open(); break;
       case 'export': Excel.exportAll(); break;
       case 'import': m.close(); Excel.importDialog(); break;
       case 'importFull': m.close(); Excel.importFull(); break;
@@ -2049,9 +2110,26 @@ const Home = {
       <div class="panels">
         <div class="card"><h3>${ic('alert')}Perlu perhatian</h3>${alerts.length ? `<ul class="list">${alerts.slice(0, 8).map((a) => `<li class="link" data-act="open" data-mod="${a.mod}" data-sub="${a.subTab}"><span class="dotc" style="background:var(--${a.level === 'danger' ? 'coral' : a.level === 'warn' ? 'amber' : 'sky'})"></span><div class="grow"><div class="t">${esc(a.text)}</div><div class="s">${esc(a.sub || '')}</div></div></li>`).join('')}</ul>` : UI.empty('Semua aman', 'Tidak ada deadline atau tagihan mendesak.')}</div>
         <div class="card"><h3>${ic('calendar')}7 hari ke depan</h3>${upcoming.length ? `<ul class="list">${upcoming.slice(0, 9).map((e) => `<li class="link" data-act="open" data-mod="${e.mod}" data-sub="${e.sub}"><span class="dotc" style="background:var(--${e.color})"></span><div class="grow"><div class="t">${esc(e.title)}</div><div class="s">${fmtDate(e.date, true)}${e.time ? ' — ' + esc(e.time) : ''}</div></div><span class="badge">${esc(e.kind)}</span></li>`).join('')}</ul>` : UI.empty('Minggu yang lapang', 'Belum ada agenda, sesi, deadline, atau cicilan.')}</div>
+        <div class="card"><h3>${ic('clock')}Jadwal hari ini</h3>${this.todayPanel(dow, jpMin)}</div>
+        <div class="card span2"><h3>${ic('check')}Kehadiran & ketercapaian TP</h3>${this.tpPanel()}</div>
         <div class="card"><h3>${ic('cloud')}Google Workspace</h3>${this.syncPanel()}</div>
       </div>
     </div>`;
+  },
+
+  todayPanel(dow, jpMin) {
+    const list = Store.where('Schedule', (x) => Number(x.day) === dow).sort((a, b) => String(a.start).localeCompare(String(b.start)));
+    if (!list.length) return UI.empty('Tidak ada jadwal', HARI[new Date().getDay()] + ' kosong dari jadwal mengajar.');
+    return `<ul class="list">${list.map((x) => `<li class="link" data-act="open" data-mod="school" data-sub="jadwal"><span class="dotc" style="background:var(--${School.isDuty(x) ? 'slate' : 'sky'})"></span><div class="grow"><div class="t">${esc(x.className || x.subject)}</div><div class="s">${esc(x.start)}–${esc(x.end)}${x.room ? ' — ' + esc(x.room) : ''}</div></div>${School.isDuty(x) ? UI.badge('Non-JP') : UI.badge(School.jpOf(x, jpMin) + ' JP', 'sky')}</li>`).join('')}</ul>`;
+  },
+
+  tpPanel() {
+    const cls = typeof Hadir !== 'undefined' ? Hadir.byClass() : [];
+    if (!cls.length) return UI.empty('Belum ada catatan kehadiran', 'Catat kehadiran tiap pertemuan untuk melihat ketercapaian TP per kelas.', `<button class="btn sm" data-act="hadirAdd">${ic('plus')}Catat pertemuan</button>`);
+    return `<div class="bars">${cls.map((c) => `<div class="bar-row" style="grid-template-columns:140px 1fr auto"><span>${esc(c.cls)}<div class="s muted mini">${c.meetings} pertemuan</div></span>
+      <div><div class="progress" style="--mc:var(--sky)"><i style="width:${clamp(c.att || 0, 0, 100)}%"></i></div><div class="progress mt" style="--mc:var(--jade);margin-top:4px"><i style="width:${clamp(c.ach || 0, 0, 100)}%"></i></div></div>
+      <span class="mini nowrap">hadir <b>${c.att == null ? '—' : Math.round(c.att) + '%'}</b> · TP <b class="${c.ach != null && c.ach >= Hadir.kkm() ? 'pos' : ''}">${c.ach == null ? '—' : Math.round(c.ach) + '%'}</b></span></div>`).join('')}</div>
+      <p class="mini muted">Biru = kehadiran siswa/siswi, hijau = ketercapaian TP (KKM ${typeof Hadir !== 'undefined' ? Hadir.kkm() : 75}%).</p>`;
   },
 
   syncPanel() {
@@ -4817,12 +4895,14 @@ async function boot() {
   App.shell();
   bindGlobalEvents();
   try {
+    await Lock.gate();
     await Store.init();
   } catch (e) {
     console.error(e);
     UI.toast('Gagal memuat data: ' + e.message, 'err', 8000);
   }
   App.refresh();
+  if (Store.isRemote() && Store.services && Store.services.pinSet) Lock.arm();
   if (Store.needsKey()) {
     UI.toast('Masukkan API key untuk memuat data dari Google Sheets.', '', 6000);
     Settings.open('koneksi');
@@ -4841,7 +4921,373 @@ async function boot() {
     }
   }, 5 * 60 * 1000);
 }
+/* =====================================================================
+ * 29. UPGRADE v2 — Lock Screen, Kehadiran & Ketercapaian TP,
+ *     Riwayat perubahan (Urungkan), Backup Drive
+ * ===================================================================== */
 
+/* ---------------------- Lock Screen (PIN) --------------------------- */
+const Lock = {
+  KEY: 'mph_sess',
+  idleMs: 10 * 60 * 1000,
+  hiddenAt: 0,
+  timer: null,
+  active: false,
+
+  session() { try { return sessionStorage.getItem(this.KEY) || ''; } catch (e) { return ''; } },
+  setSession(t) { try { t ? sessionStorage.setItem(this.KEY, t) : sessionStorage.removeItem(this.KEY); } catch (e) { } },
+
+  /** Dipanggil saat boot. Mengembalikan true bila aplikasi boleh dimuat. */
+  async gate() {
+    if (!Store.isRemote() || Store.needsKey()) return true;   // mode lokal / belum ada koneksi
+    let st;
+    try { st = await Api.call('pinStatus'); } catch (e) { return true; }   // server lama / tanpa PIN
+    if (!st.pinSet) { this.offerCreate(); return true; }
+    if (this.session()) return true;
+    await this.show({ mode: 'verify' });
+    return !!this.session();
+  },
+
+  offerCreate() {
+    if (localStorage.getItem('mph_pin_offered')) return;
+    localStorage.setItem('mph_pin_offered', '1');
+    setTimeout(() => {
+      UI.modal({
+        title: 'Amankan aplikasi dengan PIN', size: 'narrow',
+        body: `<p style="margin-top:0">Tambahkan PIN 4–6 angka sebagai lapisan kedua setelah API key. Setiap kali aplikasi dibuka atau setelah 10 menit tidak aktif, PIN diminta lebih dulu.</p>`,
+        foot: `<button class="btn" data-close>Nanti saja</button><button class="btn primary" data-close data-act="pinCreate">${ic('check')}Buat PIN</button>`
+      });
+    }, 1200);
+  },
+
+  show({ mode = 'verify' } = {}) {
+    if (this.active) return Promise.resolve();
+    this.active = true;
+    UI.closeAll();
+    const pop = $('#notif-pop'); if (pop) pop.remove();
+    return new Promise((resolve) => {
+      const h = new Date().getHours();
+      const salam = h < 11 ? 'Selamat pagi' : h < 15 ? 'Selamat siang' : h < 18 ? 'Selamat sore' : 'Selamat malam';
+      const el = document.createElement('div');
+      el.className = 'lock';
+      el.id = 'lock';
+      el.innerHTML = `<div class="lock-box">
+          <div class="lock-mark"><i></i><i></i><i></i><i></i></div>
+          <h2>My Productivity Hub</h2>
+          <p class="lock-salam">${salam}, ${esc(String(Store.settings().ownerName || '').split(/[ ,]/)[0] || 'Ustadz')}.<br><span class="mini muted">${mode === 'verify' ? 'Masukkan PIN untuk membuka.' : 'Buat PIN baru 4–6 angka.'}</span></p>
+          <div class="pin-dots" id="pin-dots"></div>
+          <div class="pin-msg mini" id="pin-msg"></div>
+          <div class="pinpad">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button data-n="${n}">${n}</button>`).join('')}
+            <button data-act2="clear" aria-label="Hapus semua">C</button><button data-n="0">0</button><button data-act2="back" aria-label="Hapus">⌫</button></div>
+          <button class="btn primary lock-go" data-act2="go">${mode === 'verify' ? 'Buka' : 'Simpan PIN'}</button>
+          <p class="mini muted lock-foot">Lupa PIN? Buka Google Sheet → menu <b>My Productivity Hub → Reset PIN</b>.</p>
+        </div>`;
+      document.body.appendChild(el);
+      let pin = '', busy = false;
+      const dots = $('#pin-dots', el), msg = $('#pin-msg', el);
+      const draw = () => { dots.innerHTML = [0, 1, 2, 3, 4, 5].map((i) => `<span class="${i < pin.length ? 'on' : ''}"></span>`).join(''); };
+      const fail = (t) => { msg.textContent = t; el.querySelector('.lock-box').classList.add('shake'); setTimeout(() => el.querySelector('.lock-box').classList.remove('shake'), 400); pin = ''; draw(); };
+      const submit = async () => {
+        if (busy) return;
+        if (pin.length < 4) return fail('PIN minimal 4 angka.');
+        busy = true; msg.textContent = 'Memeriksa…';
+        try {
+          const j = mode === 'verify' ? await Api.call('pinVerify', { pin }) : await Api.call('pinCreate', { pin });
+          this.setSession(j.session);
+          msg.textContent = '';
+          el.remove(); this.active = false;
+          this.arm();
+          resolve(true);
+        } catch (e) { fail(e.message); } finally { busy = false; }
+      };
+      el.addEventListener('click', (e) => {
+        const b = e.target.closest('button');
+        if (!b) return;
+        if (b.dataset.n != null && pin.length < 6) { pin += b.dataset.n; draw(); msg.textContent = ''; if (pin.length === 6 && mode === 'verify') submit(); }
+        else if (b.dataset.act2 === 'back') { pin = pin.slice(0, -1); draw(); }
+        else if (b.dataset.act2 === 'clear') { pin = ''; draw(); }
+        else if (b.dataset.act2 === 'go') submit();
+      });
+      const keyHandler = (e) => {
+        if (!document.getElementById('lock')) { document.removeEventListener('keydown', keyHandler); return; }
+        if (/^\d$/.test(e.key) && pin.length < 6) { pin += e.key; draw(); }
+        else if (e.key === 'Backspace') { pin = pin.slice(0, -1); draw(); }
+        else if (e.key === 'Enter') submit();
+      };
+      document.addEventListener('keydown', keyHandler);
+      draw();
+    });
+  },
+
+  /** Kunci manual / otomatis. */
+  async lock(silent) {
+    const s = this.session();
+    this.setSession('');
+    if (s) { try { await Api.call('pinLock', { session: s }); } catch (e) { } }
+    if (!silent) UI.toast('Aplikasi dikunci', '', 1500);
+    const ok = await this.show({ mode: 'verify' });
+    if (ok) { await Store.pull(); App.refresh(); }
+  },
+
+  /** Timer tidak aktif + tab disembunyikan. */
+  arm() {
+    if (this.armed) return;
+    this.armed = true;
+    const reset = () => {
+      clearTimeout(this.timer);
+      if (!this.session()) return;
+      this.timer = setTimeout(() => { if (this.session()) this.lock(true); }, this.idleMs);
+    };
+    ['click', 'keydown', 'mousemove', 'touchstart', 'scroll'].forEach((ev) => document.addEventListener(ev, debounce(reset, 1000), { passive: true }));
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') this.hiddenAt = Date.now();
+      else if (this.hiddenAt && Date.now() - this.hiddenAt > 5 * 60 * 1000 && this.session()) this.lock(true);
+    });
+    reset();
+  },
+
+  changeForm() {
+    UI.form({
+      title: Store.services.pinSet ? 'Ganti PIN' : 'Buat PIN',
+      values: {},
+      note: 'PIN disimpan sebagai hash di server (Script Properties), bukan teks biasa.',
+      fields: [
+        ...(Store.services.pinSet ? [{ k: 'oldPin', l: 'PIN lama', t: 'text', req: 1 }] : []),
+        { k: 'pin', l: 'PIN baru (4–6 angka)', t: 'text', req: 1 },
+        { k: 'pin2', l: 'Ulangi PIN baru', t: 'text', req: 1 }
+      ],
+      onSubmit: async (v) => {
+        if (!/^\d{4,6}$/.test(v.pin)) { UI.toast('PIN harus 4–6 angka.', 'err'); return false; }
+        if (v.pin !== v.pin2) { UI.toast('Ulangan PIN tidak sama.', 'err'); return false; }
+        const j = await Api.call('pinCreate', { pin: v.pin, oldPin: v.oldPin || '' });
+        this.setSession(j.session);
+        Store.services.pinSet = true;
+        this.arm();
+        UI.toast('PIN tersimpan', 'ok');
+      }
+    });
+  }
+};
+ACT.lockNow = () => Lock.lock();
+ACT.pinCreate = () => Lock.changeForm();
+
+/* -------- Kehadiran per pertemuan & ketercapaian TP ---------------- */
+const Hadir = {
+  rows() { return Store.all('_Kehadiran').slice().sort((a, b) => String(b.date).localeCompare(String(a.date))); },
+  kkm() { return Number(Store.settings().kkm) || 75; },
+  present(r) { return (Number(r.boysPresent) || 0) + (Number(r.girlsPresent) || 0); },
+  total(r) { return (Number(r.boysTotal) || 0) + (Number(r.girlsTotal) || 0); },
+  achieved(r) { return (Number(r.boysAchieved) || 0) + (Number(r.girlsAchieved) || 0); },
+  attRate(list) { const t = sum(list, (r) => this.total(r)); return t ? sum(list, (r) => this.present(r)) / t * 100 : null; },
+  achRate(list) { const p = sum(list, (r) => this.present(r)); return p ? sum(list, (r) => this.achieved(r)) / p * 100 : null; },
+  codesOf(r) { return String(r.tpCodes || '').split(',').map((x) => x.trim()).filter(Boolean); },
+
+  /** Ketercapaian tiap TP: rata-rata dari pertemuan yang memuat kode TP tersebut. */
+  tpAchievement(program) {
+    const tps = Store.where('TP', (t) => !program || t.program === program);
+    const meets = Store.all('_Kehadiran').filter((r) => !program || r.program === program);
+    return tps.map((t) => {
+      const code = String(t.code || '').trim();
+      const rel = code ? meets.filter((m) => this.codesOf(m).includes(code)) : [];
+      const pct = rel.length ? this.achRate(rel) : null;
+      return { tp: t, meetings: rel.length, pct, reached: pct != null ? pct >= this.kkm() : t.status === 'Selesai' };
+    });
+  },
+
+  byClass() {
+    const g = groupBy(Store.all('_Kehadiran'), (r) => r.className || '—');
+    return Object.keys(g).sort().map((cls) => {
+      const list = g[cls];
+      const program = (list.find((r) => r.program) || {}).program || '';
+      const tpa = this.tpAchievement(program);
+      const covered = new Set();
+      list.forEach((r) => this.codesOf(r).forEach((c) => covered.add(c)));
+      const reached = tpa.filter((x) => x.meetings && x.pct != null && x.pct >= this.kkm()).length;
+      return {
+        cls, program, meetings: list.length, att: this.attRate(list), ach: this.achRate(list),
+        tpTotal: tpa.length, tpCovered: covered.size, tpReached: reached,
+        pctTP: tpa.length ? reached / tpa.length * 100 : null,
+        boys: { p: sum(list, (r) => r.boysPresent), t: sum(list, (r) => r.boysTotal) },
+        girls: { p: sum(list, (r) => r.girlsPresent), t: sum(list, (r) => r.girlsTotal) }
+      };
+    });
+  },
+
+  form(id) {
+    const r = id ? Store.get('_Kehadiran', id) : null;
+    const programs = [...new Set(Store.all('TP').map((t) => t.program).filter(Boolean))];
+    const s = App.s('school');
+    const prog0 = (r && r.program) || s.hProgram || programs[0] || '';
+    const tpOptions = (prog) => Store.where('TP', (t) => t.program === prog && t.code).map((t) => [String(t.code).trim(), `${t.code} — ${String(t.objective || '').slice(0, 70)}`]);
+    const chosen = r ? this.codesOf(r) : [];
+    const box = (prog) => `<label style="font-size:12.5px;font-weight:700">TP yang dibahas</label>
+      <div id="tp-pick" style="max-height:170px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:8px">
+        ${tpOptions(prog).map(([c, l]) => `<label class="checkline" style="font-weight:500;padding:3px 0"><input type="checkbox" class="check" value="${esc(c)}" ${chosen.includes(c) ? 'checked' : ''}> ${esc(l)}</label>`).join('') || '<span class="mini muted">Belum ada TP pada program ini.</span>'}
+      </div><div class="hint">TP dengan ketercapaian ≥ KKM (${this.kkm()}%) otomatis ditandai <b>Selesai</b> di sheet TP.</div>`;
+    const fields = [
+      { k: 'date', l: 'Tanggal pertemuan', t: 'date', req: 1 },
+      { k: 'program', l: 'Program TP', t: 'select', o: programs.length ? programs : ['EW X', 'EW XI', 'EL XI', 'EL XII'], req: 1 },
+      { k: 'className', l: 'Kelas', req: 1, list: () => School.classes() },
+      { k: 'method', l: 'Metode', list: ['Ceramah & diskusi', 'Diskusi kelompok', 'Project based', 'Praktik / simulasi', 'Presentasi', 'Tes / asesmen'] },
+      { k: 'topic', l: 'Materi pertemuan', full: 1 },
+      { t: 'html', full: 1, html: `<div id="tp-box">${box(prog0)}</div>` },
+      { t: 'section', l: 'Kehadiran & ketercapaian (siswa / siswi)' },
+      { k: 'boysTotal', l: 'Jumlah siswa (putra)', t: 'number', min: 0 },
+      { k: 'girlsTotal', l: 'Jumlah siswi (putri)', t: 'number', min: 0 },
+      { k: 'boysPresent', l: 'Hadir putra', t: 'number', min: 0 },
+      { k: 'girlsPresent', l: 'Hadir putri', t: 'number', min: 0 },
+      { k: 'boysAchieved', l: 'Putra mencapai TP', t: 'number', min: 0, hint: 'Jumlah siswa yang tuntas pada TP pertemuan ini.' },
+      { k: 'girlsAchieved', l: 'Putri mencapai TP', t: 'number', min: 0 },
+      { k: 'note', l: 'Catatan / tindak lanjut', t: 'textarea', rows: 2 }
+    ];
+    UI.form({
+      title: r ? 'Ubah catatan pertemuan' : 'Catat kehadiran & ketercapaian TP', size: 'wide',
+      values: r || { date: todayISO(), program: prog0 },
+      fields,
+      onMount: (bx) => {
+        bx.querySelector('[name="program"]').addEventListener('change', (e) => { bx.querySelector('#tp-box').innerHTML = box(e.target.value); });
+      },
+      extraFoot: r ? `<button class="btn danger left" data-act="delRow" data-sheet="_Kehadiran" data-id="${r.id}">${ic('trash')}Hapus</button>` : '',
+      onSubmit: async (v, bx) => {
+        const codes = $$('#tp-pick input:checked', bx).map((i) => i.value);
+        v.tpCodes = codes.join(', ');
+        const bp = Number(v.boysPresent) || 0, gp = Number(v.girlsPresent) || 0;
+        if (bp > (Number(v.boysTotal) || 0) || gp > (Number(v.girlsTotal) || 0)) { UI.toast('Jumlah hadir melebihi jumlah siswa.', 'err'); return false; }
+        if ((Number(v.boysAchieved) || 0) > bp || (Number(v.girlsAchieved) || 0) > gp) { UI.toast('Jumlah yang mencapai TP melebihi jumlah hadir.', 'err'); return false; }
+        const ops = [r ? { op: 'update', sheet: '_Kehadiran', id: r.id, row: v } : { op: 'create', sheet: '_Kehadiran', row: Object.assign({ id: uid() }, v) }];
+        // tandai TP selesai bila ketercapaian pertemuan ini ≥ KKM
+        const pres = bp + gp, ach = (Number(v.boysAchieved) || 0) + (Number(v.girlsAchieved) || 0);
+        const pct = pres ? ach / pres * 100 : 0;
+        if (pct >= this.kkm()) {
+          codes.forEach((c) => {
+            const tp = Store.where('TP', (t) => t.program === v.program && String(t.code).trim() === c && t.status !== 'Selesai')[0];
+            if (tp) ops.push({ op: 'update', sheet: 'TP', id: tp.id, row: { status: 'Selesai' } });
+          });
+        }
+        await Store.commit(ops);
+        App.s('school').hProgram = v.program;
+        UI.toast(pct ? `Tersimpan — ketercapaian pertemuan ${Math.round(pct)}%` : 'Tersimpan', 'ok');
+      }
+    });
+  }
+};
+
+VIEWS.school.kehadiran = {
+  actions: () => `<button class="btn" data-act="expSheet" data-sheet="_Kehadiran">${ic('download')}Ekspor</button><button class="btn mod" data-act="hadirAdd">${ic('plus')}Catat pertemuan</button>`,
+  render() {
+    const s = App.s('school');
+    const all = Hadir.rows();
+    const mk = s.hMonth == null ? '' : s.hMonth;
+    const list = mk ? all.filter((r) => monthKey(r.date) === mk) : all;
+    const cls = Hadir.byClass();
+    const months = [...new Set(all.map((r) => monthKey(r.date)).filter(Boolean))].sort().reverse();
+    const prog = s.hProgram || (Store.all('TP')[0] || {}).program || '';
+    const tpa = Hadir.tpAchievement(prog);
+    const programs = [...new Set(Store.all('TP').map((t) => t.program).filter(Boolean))];
+    const att = Hadir.attRate(list), ach = Hadir.achRate(list);
+    const reached = tpa.filter((x) => x.reached).length;
+    return `
+      <div class="grid g4 mb">
+        <div class="stat accent"><small>Pertemuan tercatat</small><b>${list.length}</b><span class="sub">${mk ? monthLabel(mk) : 'semua periode'}</span></div>
+        <div class="stat"><small>Kehadiran</small><b>${att == null ? '—' : Math.round(att) + '%'}</b><span class="sub">putra ${sum(list, (r) => r.boysPresent)}/${sum(list, (r) => r.boysTotal)} — putri ${sum(list, (r) => r.girlsPresent)}/${sum(list, (r) => r.girlsTotal)}</span></div>
+        <div class="stat"><small>Ketercapaian TP rata-rata</small><b class="${ach != null && ach >= Hadir.kkm() ? 'pos' : ''}">${ach == null ? '—' : Math.round(ach) + '%'}</b><span class="sub">KKM ${Hadir.kkm()}%</span></div>
+        <div class="stat"><small>TP tercapai (${esc(prog || '-')})</small><b>${tpa.length ? Math.round(reached / tpa.length * 100) + '%' : '—'}</b><span class="sub">${reached} dari ${tpa.length} TP</span></div>
+      </div>
+      <div class="toolbar">
+        <select class="select" data-chg="hMonth"><option value="">Semua bulan</option>${months.map((m) => `<option value="${m}" ${m === mk ? 'selected' : ''}>${monthLabel(m)}</option>`).join('')}</select>
+        <select class="select" data-chg="hProgram">${programs.map((p) => `<option ${p === prog ? 'selected' : ''}>${esc(p)}</option>`).join('')}</select>
+        <span class="mini muted">Ketercapaian dihitung dari jumlah siswa yang tuntas dibanding siswa yang hadir.</span>
+      </div>
+      <div class="grid g2 mb" style="grid-template-columns:1.2fr 1fr">
+        <div class="card"><h4>Rekap per kelas</h4>
+          ${cls.length ? UI.table([
+            { h: 'Kelas', f: (c) => `<div class="t">${esc(c.cls)}</div><div class="s">${esc(c.program)} — ${c.meetings} pertemuan</div>` },
+            { h: 'Kehadiran', f: (c) => `<div style="min-width:100px">${UI.progress(c.att || 0)}<div class="s">${c.att == null ? '—' : Math.round(c.att) + '%'} — Pa ${c.boys.p}/${c.boys.t}, Pi ${c.girls.p}/${c.girls.t}</div></div>` },
+            { h: 'Ketercapaian TP', f: (c) => `<div style="min-width:100px">${UI.progress(c.ach || 0)}<div class="s">${c.ach == null ? '—' : Math.round(c.ach) + '%'}</div></div>` },
+            { h: 'TP tuntas', cls: 'r', f: (c) => `<b>${c.tpReached}/${c.tpTotal || '—'}</b><div class="s">${c.tpCovered} TP dibahas</div>` }
+          ], cls, { emptyMsg: 'Belum ada data.' }) : UI.empty('Belum ada catatan', 'Catat kehadiran tiap pertemuan untuk melihat ketercapaian TP.', `<button class="btn sm" data-act="hadirAdd">${ic('plus')}Catat pertemuan</button>`)}
+        </div>
+        <div class="card"><h4>Kehadiran vs ketercapaian per kelas</h4><div class="chart-box sm"><canvas id="ch-hadir"></canvas></div></div>
+      </div>
+      <div class="card mb"><h3>${ic('check')}Ketercapaian tiap TP — ${esc(prog || '-')}</h3>
+        ${UI.table([
+          { h: 'Kode', f: (x) => `<b>${esc(x.tp.code)}</b><div class="s">${esc(x.tp.unit || '')}</div>` },
+          { h: 'Tujuan pembelajaran', f: (x) => `<div style="max-width:520px">${esc(String(x.tp.objective).slice(0, 160))}</div>` },
+          { h: 'Pertemuan', cls: 'r', f: (x) => x.meetings || '—' },
+          { h: 'Ketercapaian', f: (x) => x.pct == null ? '<span class="muted">belum diukur</span>' : `<div style="min-width:110px">${UI.progress(x.pct)}<div class="s">${Math.round(x.pct)}%</div></div>` },
+          { h: 'Status', f: (x) => UI.badge(x.tp.status || 'Belum', x.tp.status === 'Selesai' ? 'jade' : x.tp.status === 'Proses' ? 'amber' : '') }
+        ], tpa, { emptyMsg: 'Belum ada TP pada program ini.' })}
+      </div>
+      <div class="card"><h3>${ic('journal')}Catatan pertemuan</h3>
+        ${UI.table([
+          { h: 'Tanggal', f: (r) => `<span class="nowrap">${fmtDate(r.date)}</span>` },
+          { h: 'Kelas', f: (r) => `<b>${esc(r.className)}</b><div class="s">${esc(r.program)}</div>` },
+          { h: 'Materi / TP', f: (r) => `${esc(r.topic || '—')}<div class="s">${esc(r.tpCodes || '')}</div>` },
+          { h: 'Hadir', cls: 'r', f: (r) => `${Hadir.present(r)}/${Hadir.total(r)}<div class="s">Pa ${r.boysPresent || 0}/${r.boysTotal || 0} · Pi ${r.girlsPresent || 0}/${r.girlsTotal || 0}</div>` },
+          { h: 'Tuntas', cls: 'r', f: (r) => { const p = Hadir.present(r); const a = Hadir.achieved(r); return p ? `<b class="${a / p * 100 >= Hadir.kkm() ? 'pos' : 'warn'}">${Math.round(a / p * 100)}%</b><div class="s">${a} siswa</div>` : '—'; } },
+          { h: '', cls: 'act', f: (r) => `<button class="btn xs" data-act="hadirEdit" data-id="${r.id}">${ic('edit')}</button>` }
+        ], list, { emptyMsg: 'Belum ada catatan pertemuan.' })}
+      </div>`;
+  },
+  after() {
+    const cls = Hadir.byClass();
+    if (!cls.length) return;
+    mkChart('ch-hadir', {
+      type: 'bar',
+      data: { labels: cls.map((c) => c.cls), datasets: [
+        { label: 'Kehadiran %', data: cls.map((c) => Math.round(c.att || 0)), backgroundColor: cssVar('--sky'), borderRadius: 6 },
+        { label: 'Ketercapaian TP %', data: cls.map((c) => Math.round(c.ach || 0)), backgroundColor: cssVar('--jade'), borderRadius: 6 }
+      ] },
+      options: { maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
+    });
+  }
+};
+
+Object.assign(ACT, {
+  hadirAdd: () => Hadir.form(),
+  hadirEdit: (d) => Hadir.form(d.id)
+});
+Object.assign(CHG, {
+  hMonth: (v) => { App.s('school').hMonth = v; App.refresh(); },
+  hProgram: (v) => { App.s('school').hProgram = v; App.refresh(); }
+});
+
+/* ------------------ Riwayat perubahan & Urungkan -------------------- */
+const ChangeLog = {
+  async open() {
+    if (Store.isRemote()) { UI.toast('Memuat riwayat…', '', 1200); await Store.pull(); }
+    this.render();
+  },
+  render() {
+    const rows = Store.all('_Log').slice().sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 60);
+    const label = { create: ['Tambah', 'jade'], update: ['Ubah', 'amber'], delete: ['Hapus', 'coral'] };
+    const body = rows.length ? UI.table([
+      { h: 'Waktu', f: (r) => `<span class="nowrap">${String(r.at).replace('T', ' ').slice(0, 16)}</span>` },
+      { h: 'Aksi', f: (r) => UI.badge((label[r.action] || [r.action])[0], (label[r.action] || [])[1] || '') },
+      { h: 'Tabel', f: (r) => esc(r.sheet) },
+      { h: 'Isi', f: (r) => `<div class="s" style="max-width:420px">${esc(String(r.before || r.after || '').slice(0, 160))}</div>` },
+      { h: '', cls: 'act', f: (r) => r.note === 'undone' ? UI.badge('sudah diurungkan') : `<button class="btn xs" data-act="undo" data-id="${r.id}">${ic('refresh')}Urungkan</button>` }
+    ], rows) : UI.empty('Belum ada riwayat', 'Perubahan data akan tercatat di sheet _Log.');
+    UI.modal({ title: 'Riwayat perubahan (90 hari terakhir)', size: 'wide', body });
+  }
+};
+ACT.changeLog = () => ChangeLog.open();
+ACT.undo = async (d) => {
+  if (!(await UI.confirm('Kembalikan data ke nilai sebelum perubahan ini?', { ok: 'Urungkan' }))) return;
+  UI.closeAll();
+  const j = await Api.call('undo', { logId: d.id });
+  await Store.pull();
+  App.refresh();
+  UI.toast('Perubahan diurungkan (' + j.sheet + ')', 'ok');
+};
+ACT.backupNow = async () => {
+  UI.toast('Membuat salinan spreadsheet…', '', 4000);
+  const j = await Api.call('backupNow');
+  UI.toast(`Backup dibuat: ${j.name}${j.trashed ? ` — ${j.trashed} salinan lama dipindah ke Sampah` : ''}`, 'ok', 7000);
+};
+ACT.setupBackup = async () => { await Api.call('setupBackup'); Store.services.backup = true; UI.toast('Backup mingguan aktif (Sabtu dini hari)', 'ok'); };
+
+/* Mulai aplikasi (setelah seluruh modul termuat) */
 boot();
 
   </script>
