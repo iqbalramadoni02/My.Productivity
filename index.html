@@ -5,6 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>My Productivity Hub</title>
+  <meta name="theme-color" content="#2f45c5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Productivity Hub">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -552,6 +559,9 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .shake { animation: shake .35s; }
 @keyframes shake { 25% { transform: translateX(-7px); } 50% { transform: translateX(7px); } 75% { transform: translateX(-4px); } }
 
+.lock-remember { justify-content: center; font-size: 12.5px; color: var(--muted); margin-bottom: 12px; }
+.lock-remember input { accent-color: var(--brand); }
+
   </style>
 </head>
 <body>
@@ -561,7 +571,13 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   <div id="modal-root"></div>
   <div id="toast-root" class="toasts" aria-live="polite"></div>
   <!-- Diisi otomatis oleh Apps Script (doGet). Bila file ini di-hosting statis, isinya diabaikan. -->
-  <script type="application/json" id="mph-boot">{}</script>
+  <script type="application/json" id="mph-boot"><?!= boot ?></script>
+  <script>
+    /* Service worker hanya aktif saat file ini di-hosting sendiri (GitHub Pages / Netlify / APK). */
+    if ('serviceWorker' in navigator && location.protocol === 'https:' && !location.host.includes('googleusercontent')) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
+    }
+  </script>
   <script>
 /* =====================================================================
  * MY PRODUCTIVITY HUB — Frontend (vanilla JS, tanpa build step)
@@ -570,9 +586,10 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
  * ===================================================================== */
 'use strict';
 
-/* Opsional: isi URL Web App di sini agar perangkat baru langsung terhubung.
-   API key TIDAK disimpan di kode — diisi lewat menu Pengaturan. */
-const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbxJXTz6qY9aPwm2Oc3V01zwscsIbOjd7ZxSLkZSgPyYgid0D5bUcA2vDfZrrtpzt20p6w/exec';
+/* Koneksi bawaan — sudah terisi permanen, tidak perlu diketik ulang di perangkat mana pun.
+   Keamanan aplikasi bertumpu pada PIN (lock screen). */
+const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbzWcLKC82ZjHoOFPJSVZ-kAOA4Ry_0A7yyEk6ANBMg-Cn96__N2mwu5d1fMmLtdPHc1/exec';
+const DEFAULT_API_KEY = 'mph_86556476be2b4bdcbc46ae435d41f2cc';
 
 const APP_VERSION = '1.3.0';
 
@@ -851,21 +868,45 @@ const ic = (name, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-h
 /* ---------------------------------------------------------------------
  * 4. KONFIGURASI LOKAL (URL, key, tema — per perangkat)
  * ------------------------------------------------------------------- */
+/* Penyimpanan aman untuk HP/WebView: localStorage → cookie → memori.
+   Dipakai agar koneksi & kunci perangkat tidak hilang saat halaman dimuat ulang. */
+const Keep = {
+  mem: {},
+  ok: (() => { try { localStorage.setItem('_t', '1'); localStorage.removeItem('_t'); return true; } catch (e) { return false; } })(),
+  get(k) {
+    if (this.ok) { try { const v = localStorage.getItem(k); if (v != null) return v; } catch (e) { } }
+    const m = document.cookie.match(new RegExp('(?:^|; )' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '=([^;]*)'));
+    if (m) return decodeURIComponent(m[1]);
+    return this.mem[k] != null ? this.mem[k] : null;
+  },
+  set(k, v) {
+    this.mem[k] = v;
+    if (this.ok) { try { localStorage.setItem(k, v); } catch (e) { } }
+    try { document.cookie = `${k}=${encodeURIComponent(v)}; path=/; max-age=${180 * 86400}; SameSite=None; Secure`; } catch (e) { }
+  },
+  del(k) {
+    delete this.mem[k];
+    if (this.ok) { try { localStorage.removeItem(k); } catch (e) { } }
+    try { document.cookie = `${k}=; path=/; max-age=0; SameSite=None; Secure`; } catch (e) { }
+  }
+};
+
 const Config = {
   KEY: 'mph_config_v1',
   data: { mode: 'local', url: DEFAULT_API_URL, key: '', theme: '', collapsed: false },
   load() {
     let saved = {};
-    try { saved = JSON.parse(localStorage.getItem(this.KEY) || '{}'); } catch (e) { /* abaikan */ }
+    try { saved = JSON.parse(Keep.get(this.KEY) || '{}'); } catch (e) { /* abaikan */ }
     Object.assign(this.data, saved);
     if (DEFAULT_API_URL) {
       if (!this.data.url) this.data.url = DEFAULT_API_URL;
       if (!saved.mode) this.data.mode = 'gas';   // langsung terhubung ke Google Sheets
     }
+    if (DEFAULT_API_KEY && !this.data.key) this.data.key = DEFAULT_API_KEY;
     if (EMBEDDED) { this.data.mode = 'gas'; this.data.url = BOOT.url || 'apps-script'; }
     return this.data;
   },
-  save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.data)); } catch (e) { /* abaikan */ } }
+  save() { try { Keep.set(this.KEY, JSON.stringify(this.data)); } catch (e) { /* abaikan */ } }
 };
 
 /* ---------------------------------------------------------------------
@@ -1738,6 +1779,7 @@ const Settings = {
           <div class="card soft"><h4>${ic('upload')}Impor</h4><p class="mini muted" style="margin-top:0">Dari file cadangan aplikasi ini atau Excel lama Anda (Task Management, Appointment, Schedule, PROJECT, dll).</p><button class="btn sm" data-s="import">Impor dari Excel</button></div>
           <div class="card soft"><h4>${ic('cloud')}Pindahkan data lokal</h4><p class="mini muted" style="margin-top:0">Mengirim data yang tersimpan di browser (mode lokal) ke Google Sheets. Baris dengan ID yang sama dilewati.</p><button class="btn sm" data-s="migrate" ${remote && !EMBEDDED ? '' : 'disabled'}>Kirim data lokal ke Google Sheets</button></div>
           <div class="card soft"><h4>${ic('lock')}Keamanan (PIN)</h4><p class="mini muted" style="margin-top:0">Lock screen sebelum Beranda; kunci otomatis setelah 10 menit tidak aktif. PIN disimpan sebagai hash di server. Status: <b>${svc.pinSet ? 'aktif' : 'belum dibuat'}</b>.</p><div class="btn-row"><button class="btn sm" data-s="pin" ${remote ? '' : 'disabled'}>${svc.pinSet ? 'Ganti PIN' : 'Buat PIN'}</button>${svc.pinSet ? `<button class="btn sm" data-s="lock">Kunci sekarang</button>` : ''}</div></div>
+          <div class="card soft"><h4>${ic('lock')}Perangkat terpercaya</h4><p class="mini muted" style="margin-top:0">Perangkat yang dicentang "Ingat perangkat ini" bisa membuka aplikasi tanpa PIN selama 180 hari. Perangkat ini: <b>${Lock.device() ? 'terdaftar' : 'belum'}</b>.</p><div class="btn-row"><button class="btn sm" data-s="devices" ${remote ? '' : 'disabled'}>Lihat daftar</button><button class="btn sm danger" data-s="forget">Lupakan perangkat ini</button></div></div>
           <div class="card soft"><h4>${ic('cloud')}Backup Drive</h4><p class="mini muted" style="margin-top:0">Salinan spreadsheet ke folder <b>My Productivity Hub — Backup</b>; 8 salinan terakhir disimpan, sisanya ke Sampah. Trigger mingguan: <b>${svc.backup ? 'aktif' : 'belum dipasang'}</b>.</p><div class="btn-row"><button class="btn sm" data-s="backup" ${remote ? '' : 'disabled'}>Backup sekarang</button><button class="btn sm" data-s="backupTrigger" ${remote ? '' : 'disabled'}>Pasang backup mingguan</button></div></div>
           <div class="card soft"><h4>${ic('refresh')}Riwayat perubahan</h4><p class="mini muted" style="margin-top:0">Setiap tambah/ubah/hapus tercatat di sheet <b>_Log</b> dan bisa diurungkan (90 hari).</p><button class="btn sm" data-s="log" ${remote ? '' : 'disabled'}>Buka riwayat & urungkan</button></div>
           <div class="card soft"><h4>${ic('refresh')}Data contoh</h4><p class="mini muted" style="margin-top:0">Isi contoh singkat untuk melihat cara kerja tiap modul.</p><button class="btn sm" data-s="demo">Muat data contoh</button></div>
@@ -1823,6 +1865,12 @@ const Settings = {
         break;
       }
       case 'pin': m.close(); Lock.changeForm(); break;
+      case 'devices': {
+        const j = await Api.call('deviceList');
+        UI.modal({ title: 'Perangkat terpercaya', size: 'narrow', body: j.devices.length ? `<ul class="list">${j.devices.map((d) => `<li><div class="grow"><div class="t">${esc(d.name)}</div><div class="s">terakhir dipakai ${esc(d.at)}</div></div></li>`).join('')}</ul><p class="mini muted">Cabut semua lewat menu Spreadsheet: My Productivity Hub → Cabut semua perangkat terpercaya.</p>` : UI.empty('Belum ada perangkat terdaftar') });
+        break;
+      }
+      case 'forget': { await Lock.lock(false, true); break; }
       case 'lock': m.close(); Lock.lock(); break;
       case 'backup': await ACT.backupNow(); break;
       case 'backupTrigger': await ACT.setupBackup(); m.close(); this.open('data'); break;
@@ -4929,13 +4977,21 @@ async function boot() {
 /* ---------------------- Lock Screen (PIN) --------------------------- */
 const Lock = {
   KEY: 'mph_sess',
-  idleMs: 10 * 60 * 1000,
+  DEV: 'mph_device',
+  idleMs: 15 * 60 * 1000,
   hiddenAt: 0,
   timer: null,
   active: false,
 
-  session() { try { return sessionStorage.getItem(this.KEY) || ''; } catch (e) { return ''; } },
-  setSession(t) { try { t ? sessionStorage.setItem(this.KEY, t) : sessionStorage.removeItem(this.KEY); } catch (e) { } },
+  session() { return Keep.get(this.KEY) || ''; },
+  setSession(t) { t ? Keep.set(this.KEY, t) : Keep.del(this.KEY); },
+  device() { return Keep.get(this.DEV) || ''; },
+  setDevice(t) { t ? Keep.set(this.DEV, t) : Keep.del(this.DEV); },
+  deviceName() {
+    const ua = navigator.userAgent || '';
+    const os = /Android/i.test(ua) ? 'Android' : /iPhone|iPad/i.test(ua) ? 'iOS' : /Windows/i.test(ua) ? 'Windows' : /Mac/i.test(ua) ? 'Mac' : 'Perangkat';
+    return `${os} — ${new Date().toLocaleDateString('id-ID')}`;
+  },
 
   /** Dipanggil saat boot. Mengembalikan true bila aplikasi boleh dimuat. */
   async gate() {
@@ -4943,7 +4999,17 @@ const Lock = {
     let st;
     try { st = await Api.call('pinStatus'); } catch (e) { return true; }   // server lama / tanpa PIN
     if (!st.pinSet) { this.offerCreate(); return true; }
-    if (this.session()) return true;
+    if (this.session()) { this.arm(); return true; }
+    // perangkat terpercaya: buka otomatis tanpa PIN
+    const dev = this.device();
+    if (dev) {
+      try {
+        const j = await Api.call('deviceLogin', { device: dev });
+        this.setSession(j.session);
+        this.arm();
+        return true;
+      } catch (e) { this.setDevice(''); }
+    }
     await this.show({ mode: 'verify' });
     return !!this.session();
   },
@@ -4979,6 +5045,7 @@ const Lock = {
           <div class="pin-msg mini" id="pin-msg"></div>
           <div class="pinpad">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button data-n="${n}">${n}</button>`).join('')}
             <button data-act2="clear" aria-label="Hapus semua">C</button><button data-n="0">0</button><button data-act2="back" aria-label="Hapus">⌫</button></div>
+          <label class="checkline lock-remember"><input type="checkbox" class="check" id="pin-remember" checked> Ingat perangkat ini (tanpa PIN saat dibuka lagi)</label>
           <button class="btn primary lock-go" data-act2="go">${mode === 'verify' ? 'Buka' : 'Simpan PIN'}</button>
           <p class="mini muted lock-foot">Lupa PIN? Buka Google Sheet → menu <b>My Productivity Hub → Reset PIN</b>.</p>
         </div>`;
@@ -4992,8 +5059,11 @@ const Lock = {
         if (pin.length < 4) return fail('PIN minimal 4 angka.');
         busy = true; msg.textContent = 'Memeriksa…';
         try {
-          const j = mode === 'verify' ? await Api.call('pinVerify', { pin }) : await Api.call('pinCreate', { pin });
+          const remember = !!($('#pin-remember', el) || {}).checked;
+          const payload = { pin, remember, deviceName: this.deviceName() };
+          const j = mode === 'verify' ? await Api.call('pinVerify', payload) : await Api.call('pinCreate', payload);
           this.setSession(j.session);
+          if (j.device) this.setDevice(j.device); else if (!remember) this.setDevice('');
           msg.textContent = '';
           el.remove(); this.active = false;
           this.arm();
@@ -5020,9 +5090,10 @@ const Lock = {
   },
 
   /** Kunci manual / otomatis. */
-  async lock(silent) {
+  async lock(silent, forget) {
     const s = this.session();
     this.setSession('');
+    if (forget) { const d = this.device(); this.setDevice(''); if (d) { try { await Api.call('deviceForget', { device: d }); } catch (e) { } } }
     if (s) { try { await Api.call('pinLock', { session: s }); } catch (e) { } }
     if (!silent) UI.toast('Aplikasi dikunci', '', 1500);
     const ok = await this.show({ mode: 'verify' });
@@ -5059,8 +5130,9 @@ const Lock = {
       onSubmit: async (v) => {
         if (!/^\d{4,6}$/.test(v.pin)) { UI.toast('PIN harus 4–6 angka.', 'err'); return false; }
         if (v.pin !== v.pin2) { UI.toast('Ulangan PIN tidak sama.', 'err'); return false; }
-        const j = await Api.call('pinCreate', { pin: v.pin, oldPin: v.oldPin || '' });
+        const j = await Api.call('pinCreate', { pin: v.pin, oldPin: v.oldPin || '', remember: true, deviceName: this.deviceName() });
         this.setSession(j.session);
+        if (j.device) this.setDevice(j.device);
         Store.services.pinSet = true;
         this.arm();
         UI.toast('PIN tersimpan', 'ok');
