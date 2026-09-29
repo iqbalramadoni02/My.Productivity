@@ -51,6 +51,9 @@
   --slate: #4b5a78;
   --slate-soft: #e6eaf2;
   --glass: rgba(255, 255, 255, .72);
+  --glow: 0 0 0 1px rgba(47, 69, 197, .16), 0 10px 30px -12px rgba(47, 69, 197, .45);
+  --grad-1: linear-gradient(135deg, #2f45c5, #1580ab 55%, #13886a);
+  --grad-2: linear-gradient(135deg, #7446c0, #c23d74);
   --shadow-lg: 0 18px 48px -18px rgba(23, 32, 54, .35);
   --shadow-sm: 0 1px 2px rgba(23, 32, 54, .06), 0 2px 8px -4px rgba(23, 32, 54, .12);
   --r-lg: 18px;
@@ -86,7 +89,10 @@
   --rose-soft: #43203a;
   --slate: #a9b6d3;
   --slate-soft: #232d44;
-  --glass: rgba(20, 27, 44, .72);
+  --glass: rgba(16, 22, 38, .68);
+  --glow: 0 0 0 1px rgba(129, 147, 255, .25), 0 12px 40px -14px rgba(92, 196, 236, .5);
+  --grad-1: linear-gradient(135deg, #5766ff, #35b6e8 55%, #29d8a1);
+  --grad-2: linear-gradient(135deg, #b596ff, #ff7fb0);
   --shadow-lg: 0 18px 48px -18px rgba(0, 0, 0, .7);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, .3);
   color-scheme: dark;
@@ -95,6 +101,15 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { height: 100%; }
+body::before {
+  content: ""; position: fixed; inset: -20% -10% auto -10%; height: 70vh; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(45% 55% at 12% 0%, color-mix(in srgb, var(--brand) 26%, transparent), transparent 70%),
+    radial-gradient(40% 50% at 88% 6%, color-mix(in srgb, var(--jade) 22%, transparent), transparent 70%),
+    radial-gradient(35% 45% at 55% 0%, color-mix(in srgb, var(--violet) 18%, transparent), transparent 72%);
+  filter: blur(10px); opacity: .55;
+}
+:root[data-theme="dark"] body::before { opacity: .42; }
 body {
   margin: 0;
   font-family: var(--font);
@@ -122,6 +137,7 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .shell.collapsed { grid-template-columns: 72px 1fr; }
 
 .sidebar {
+  backdrop-filter: blur(12px);
   position: sticky; top: 0; height: 100vh;
   background: var(--surface); border-right: 1px solid var(--line);
   display: flex; flex-direction: column; padding: 14px 12px; gap: 6px; overflow-y: auto; z-index: 30;
@@ -137,7 +153,7 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
   color: var(--ink-2); font-weight: 600; text-align: left; white-space: nowrap;
 }
 .nav-btn:hover { background: var(--surface-2); }
-.nav-btn.on { background: var(--brand-soft); color: var(--brand); }
+.nav-btn.on { background: color-mix(in srgb, var(--brand) 14%, transparent); color: var(--brand); box-shadow: inset 2px 0 0 var(--brand); }
 .nav-btn .dot { width: 8px; height: 8px; border-radius: 50%; margin-left: auto; flex: none; }
 .nav-btn .count { margin-left: auto; font-size: 11.5px; background: var(--coral); color: #fff; border-radius: 99px; padding: 0 7px; line-height: 18px; }
 .sidebar-foot { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); display: grid; gap: 4px; }
@@ -192,7 +208,7 @@ kbd { font-family: var(--font); font-size: 11.5px; border: 1px solid var(--line)
 .wtab .x:hover { background: var(--surface-3); color: var(--coral); }
 .wtab .x svg.i { width: 14px; height: 14px; }
 
-.workspace { flex: 1; background: var(--surface); margin: 0 18px 18px; border: 1px solid var(--line); border-radius: 0 var(--r-lg) var(--r-lg) var(--r-lg); min-height: 70vh; }
+.workspace { flex: 1; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(10px); margin: 0 18px 18px; border: 1px solid var(--line); border-radius: 0 var(--r-lg) var(--r-lg) var(--r-lg); min-height: 70vh; }
 .win-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 18px 22px 0; }
 .win-title { display: flex; align-items: center; gap: 12px; }
 .win-title h1 { margin: 0; font-size: 21px; letter-spacing: -.02em; }
@@ -219,7 +235,7 @@ kbd { font-family: var(--font); font-size: 11.5px; border: 1px solid var(--line)
   font-weight: 600; font-size: 13.5px; cursor: pointer; white-space: nowrap; text-decoration: none;
 }
 .btn:hover { background: var(--surface-2); }
-.btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn.primary { background: var(--grad-1); border-color: transparent; color: #fff; box-shadow: var(--glow); }
 :root[data-theme="dark"] .btn.primary { color: #0c111e; }
 .btn.primary:hover { filter: brightness(1.07); }
 .btn.mod { background: var(--mc); border-color: var(--mc); color: #fff; }
@@ -245,8 +261,12 @@ kbd { font-family: var(--font); font-size: 11.5px; border: 1px solid var(--line)
   padding: 18px; border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--surface);
   transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; min-height: 172px; overflow: hidden;
 }
-.hub-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--mc); }
-.hub-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--mc); }
+.hub-card { backdrop-filter: blur(8px); background: color-mix(in srgb, var(--surface) 88%, transparent); }
+.hub-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg), 0 0 0 1px var(--mc); border-color: var(--mc); }
+.hub-card::after { content: ""; position: absolute; inset: auto -30% -60% auto; width: 220px; height: 220px; border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--mc) 26%, transparent), transparent 65%); opacity: .5; pointer-events: none; }
+.hub-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--grad-1); opacity: .95; }
+.hub-card.m-project::before { background: var(--grad-2); }
 .hub-card .hc-top { display: flex; align-items: center; gap: 10px; }
 .hub-card h3 { margin: 0; font-size: 15px; letter-spacing: -.01em; }
 .hub-card .hc-open { margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 600; }
@@ -275,7 +295,9 @@ kbd { font-family: var(--font); font-size: 11.5px; border: 1px solid var(--line)
 .stat small { display: block; color: var(--muted); font-size: 12.5px; }
 .stat b { display: block; font-size: 21px; letter-spacing: -.025em; margin-top: 2px; font-variant-numeric: tabular-nums; }
 .stat .sub { font-size: 12px; color: var(--muted); }
-.stat.accent { border-left: 4px solid var(--mc, var(--brand)); }
+.stat { transition: border-color .15s ease, box-shadow .15s ease; }
+.stat:hover { border-color: color-mix(in srgb, var(--mc, var(--brand)) 45%, var(--line)); }
+.stat.accent { border-left: 4px solid transparent; border-image: var(--grad-1) 1; box-shadow: inset 3px 0 0 var(--mc, var(--brand)); }
 .pos { color: var(--jade); } .neg { color: var(--coral); } .warn { color: var(--amber); } .muted { color: var(--muted); }
 .list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
 .list li { display: flex; gap: 10px; align-items: center; padding: 8px 6px; border-radius: 8px; }
@@ -325,7 +347,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .tbl select.inline { height: 28px; padding: 0 6px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); font-size: 12.5px; }
 
 .progress { height: 8px; border-radius: 99px; background: var(--surface-3); overflow: hidden; min-width: 70px; }
-.progress > i { display: block; height: 100%; border-radius: 99px; background: var(--mc, var(--brand)); }
+.progress > i { display: block; height: 100%; border-radius: 99px; background: var(--mc, var(--brand)); box-shadow: 0 0 10px -2px var(--mc, var(--brand)); transition: width .4s cubic-bezier(.4,0,.2,1); }
 .progress.lg { height: 11px; }
 
 /* ---------- timetable ---------- */
@@ -562,6 +584,21 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .lock-remember { justify-content: center; font-size: 12.5px; color: var(--muted); margin-bottom: 12px; }
 .lock-remember input { accent-color: var(--brand); }
 
+/* ---------- v3: elemen futuristik ---------- */
+.lang-switch { display: inline-flex; border: 1px solid var(--line); border-radius: 99px; overflow: hidden; height: 32px; }
+.lang-switch button { border: 0; background: transparent; padding: 0 10px; font-size: 12px; font-weight: 700; color: var(--muted); cursor: pointer; }
+.lang-switch button.on { background: var(--grad-1); color: #fff; }
+.chip.queue { border-color: var(--amber); color: var(--amber); }
+.tp-full { white-space: pre-wrap; line-height: 1.55; }
+.score-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.sheet-pill { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.sheet-pill.newone { border-color: var(--jade); box-shadow: 0 0 0 1px var(--jade-soft); }
+.sheet-pill .grow { min-width: 0; }
+.sheet-pill .t { font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sheet-pill .s { font-size: 11.5px; color: var(--muted); }
+.heat { display: inline-block; min-width: 42px; text-align: center; padding: 2px 7px; border-radius: 7px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.doc-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
   </style>
 </head>
 <body>
@@ -611,7 +648,7 @@ const SCHEMA = {
   Assignments: ['id', 'title', 'type', 'subject', 'className', 'given', 'deadline', 'status', 'link', 'note', 'gcalId', 'createdAt', 'updatedAt'],
   Logbook: ['id', 'date', 'className', 'subject', 'topic', 'present', 'total', 'method', 'score', 'reflection', 'createdAt', 'updatedAt'],
   TP: ['id', 'program', 'unit', 'code', 'objective', 'skill', 'month', 'status', 'note', 'createdAt', 'updatedAt'],
-  Projects: ['id', 'code', 'clientName', 'clientEmail', 'clientWa', 'campus', 'category', 'service', 'speed', 'price', 'discount', 'startDate', 'deadline', 'status', 'tasks', 'progress', 'portalToken', 'note', 'gcalId', 'createdAt', 'updatedAt'],
+  Projects: ['id', 'code', 'clientName', 'clientEmail', 'clientWa', 'campus', 'nim', 'category', 'service', 'speed', 'price', 'discount', 'startDate', 'deadline', 'status', 'tasks', 'progress', 'portalToken', 'note', 'gcalId', 'createdAt', 'updatedAt'],
   TutorClasses: ['id', 'name', 'clientName', 'clientEmail', 'clientWa', 'institution', 'tutorType', 'mode', 'participants', 'totalSessions', 'rateType', 'rate', 'durationMin', 'days', 'startTime', 'startDate', 'status', 'note', 'createdAt', 'updatedAt'],
   TutorSessions: ['id', 'classId', 'no', 'date', 'start', 'end', 'topic', 'status', 'paid', 'note', 'gcalId', 'createdAt', 'updatedAt'],
   Loans: ['id', 'creditor', 'principal', 'ratePct', 'interestType', 'tenor', 'startDate', 'installment', 'disbursed', 'status', 'note', 'createdAt', 'updatedAt'],
@@ -623,6 +660,7 @@ const SCHEMA = {
   Todos: ['id', 'text', 'date', 'priority', 'done', 'createdAt', 'updatedAt'],
   Files: ['id', 'module', 'refId', 'name', 'mime', 'size', 'driveId', 'url', 'note', 'createdAt', 'updatedAt'],
   _Kehadiran: ['id', 'date', 'program', 'className', 'tpCodes', 'topic', 'boysPresent', 'boysTotal', 'girlsPresent', 'girlsTotal', 'boysAchieved', 'girlsAchieved', 'method', 'note', 'createdAt', 'updatedAt'],
+  _Nilai: ['id', 'sheetName', 'className', 'studentName', 'gender', 'assessment', 'unit', 'component', 'score', 'maxScore', 'predicate', 'date', 'note', 'createdAt', 'updatedAt'],
   _Log: ['id', 'at', 'sheet', 'rowId', 'action', 'before', 'after', 'note', 'createdAt', 'updatedAt'],
   Deadlines: ['id', 'title', 'deadline', 'type', 'status', 'left', 'urgency', 'gcalId'],
   Jobdesc: ['id', 'no', 'field', 'activity', 'position', 'weight', 'jp', 'discipline', 'linearity', 'period', 'status', 'target', 'progress', 'prediction', 'risk', 'note'],
@@ -635,7 +673,7 @@ const PROTECTED = new Set(['Settings', 'Pricelist', 'Categories']);
 const NUMERIC = new Set(['amount', 'price', 'discount', 'progress', 'principal', 'ratePct', 'tenor', 'installment',
   'principalPart', 'interestPart', 'rate', 'durationMin', 'totalSessions', 'participants', 'present', 'total',
   'score', 'mood', 'no', 'day', 'size', 'dayOfMonth', 'normalMin', 'normalMax', 'expressMin', 'expressMax', 'daysNormal', 'daysExpress', 'target', 'weight', 'jp',
-  'boysPresent', 'boysTotal', 'girlsPresent', 'girlsTotal', 'boysAchieved', 'girlsAchieved']);
+  'boysPresent', 'boysTotal', 'girlsPresent', 'girlsTotal', 'boysAchieved', 'girlsAchieved', 'score', 'maxScore']);
 const BOOLEAN = new Set(['paid', 'done', 'active', 'disbursed']);
 
 const DEFAULT_SETTINGS = {
@@ -703,9 +741,23 @@ const diffDays = (a, b) => {
 const monthKey = (s) => String(s || '').slice(0, 7);
 const thisMonth = () => todayISO().slice(0, 7);
 const shiftMonth = (mk, n) => addMonths(mk + '-01', n).slice(0, 7);
-const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-const BLN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu'];
+const LOCALE = {
+  id: {
+    BULAN: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
+    BLN: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+    HARI: ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu']
+  },
+  en: {
+    BULAN: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    BLN: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    HARI: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  }
+};
+let BULAN = LOCALE.id.BULAN, BLN = LOCALE.id.BLN, HARI = LOCALE.id.HARI;
+function setLocale(lang) {
+  const L = LOCALE[lang] || LOCALE.id;
+  BULAN = L.BULAN; BLN = L.BLN; HARI = L.HARI;
+}
 const monthLabel = (mk) => { const [y, m] = String(mk).split('-'); return `${BULAN[(+m || 1) - 1]} ${y}`; };
 const fmtDate = (s, withDay = false) => {
   const d = parseISO(s);
@@ -947,16 +999,20 @@ const Api = {
     const msg = (j && j.error) || 'Permintaan gagal.';
     if (msg === 'SESSION_EXPIRED') {
       try { Lock.setSession(''); if (!Lock.active) Lock.lock(true); } catch (e) { }
-      return new Error('Sesi terkunci. Masukkan PIN lagi.');
+      const se = new Error('Sesi terkunci. Masukkan PIN lagi.');
+      se.kind = 'session';
+      return se;
     }
-    return new Error(msg);
+    const err = new Error(msg);
+    err.kind = 'server';
+    return err;
   },
   /** Jalur HtmlService: google.script.run.apiCall(json) */
   gsr(body) {
     return new Promise((resolve, reject) => {
       google.script.run
         .withSuccessHandler((s) => { try { resolve(typeof s === 'string' ? JSON.parse(s) : s); } catch (e) { reject(new Error('Respons server tidak valid.')); } })
-        .withFailureHandler((e) => reject(new Error((e && e.message) || String(e))))
+        .withFailureHandler((e) => { const err = new Error((e && e.message) || String(e)); err.kind = 'net'; reject(err); })
         .apiCall(JSON.stringify(body));
     });
   },
@@ -1144,7 +1200,14 @@ const Store = {
       return j;
     }).catch(async (e) => {
       this.lastError = e.message;
-      UI.toast('Gagal menyimpan ke Google Sheets: ' + e.message + ' — data dimuat ulang.', 'err', 8000);
+      if (e.kind === 'net' || e.kind === 'session' || !navigator.onLine) {
+        // jangan buang pekerjaan: antrekan & kirim ulang otomatis
+        SyncQueue.add(payload);
+        this.saveCache();
+        UI.toast(I18N.t('Koneksi terganggu — perubahan disimpan dan dikirim ulang otomatis.'), '', 6000);
+        return { ok: false, queued: true, error: e.message };
+      }
+      UI.toast(I18N.t('Gagal menyimpan: ') + e.message, 'err', 8000);
       await this.pull();
       App.refresh();
       return { ok: false, error: e.message };
@@ -1170,7 +1233,7 @@ const Store = {
  * ------------------------------------------------------------------- */
 const MODULES = {
   school: { nav: 'Sekolah & Mengajar', title: 'Sekolah & Kinerja Mengajar', short: 'Sekolah', icon: 'school', desc: 'Jadwal, logbook, KPI, tugas & ujian',
-    subs: [['jadwal', 'Jadwal & Kalender'], ['tugas', 'Tugas & Ujian'], ['deadline', 'Deadline Dinas'], ['kehadiran', 'Kehadiran & TP'], ['logbook', 'Logbook & KPI'], ['jobdesc', 'Jobdesc'], ['file', 'Tautan & File'], ['keuangan', 'Gaji & Honor'], ['lembar', 'Lembar Excel']] },
+    subs: [['jadwal', 'Jadwal & Kalender'], ['tugas', 'Tugas & Ujian'], ['deadline', 'Deadline Dinas'], ['kehadiran', 'Kehadiran & TP'], ['nilai', 'Nilai & Score List'], ['logbook', 'Logbook & KPI'], ['jobdesc', 'Jobdesc'], ['file', 'Tautan & File'], ['keuangan', 'Gaji & Honor'], ['lembar', 'Lembar Excel']] },
   project: { nav: 'Project & Klien', title: 'Project Management', short: 'Project', icon: 'project', desc: 'Klien, pengerjaan, invoice & kwitansi',
     subs: [['daftar', 'Daftar Project'], ['kanban', 'Kanban'], ['bayar', 'Pembayaran & Piutang'], ['harga', 'Pricelist & Kalkulator'], ['file', 'File Project']] },
   tutor: { nav: 'Tutor Class', title: 'Tutor Class', short: 'Tutor', icon: 'tutor', desc: 'Bimbel, les privat, workshop',
@@ -1208,8 +1271,10 @@ const UI = {
     const el = $('#sync-chip');
     if (!el) return;
     const st = Config.data.mode === 'gas' ? Store.status : 'local';
-    const label = { local: 'Mode lokal', busy: 'Menyinkronkan…', ok: 'Tersinkron', err: 'Gagal sinkron' }[st] || 'Mode lokal';
-    el.innerHTML = `<span class="led ${st === 'ok' ? 'ok' : st === 'busy' ? 'busy' : st === 'err' ? 'err' : 'local'}"></span><span class="lbl">${label}</span>`;
+    const q = typeof SyncQueue !== 'undefined' ? SyncQueue.count() : 0;
+    const label = q ? I18N.t(`${q} menunggu kirim`) : I18N.t({ local: 'Mode lokal', busy: 'Menyinkronkan…', ok: 'Tersinkron', err: 'Gagal sinkron' }[st] || 'Mode lokal');
+    el.classList.toggle('queue', !!q);
+    el.innerHTML = `<span class="led ${q ? 'busy' : st === 'ok' ? 'ok' : st === 'busy' ? 'busy' : st === 'err' ? 'err' : 'local'}"></span><span class="lbl">${label}</span>`;
     el.title = st === 'err' ? Store.lastError : (Store.lastSync ? 'Sinkron terakhir ' + Store.lastSync.toLocaleTimeString('id-ID') : 'Data tersimpan di browser ini');
   },
 
@@ -1226,6 +1291,7 @@ const UI = {
     this.modals.push(m);
     ov.addEventListener('mousedown', (e) => { if (e.target === ov) m.close(); });
     ov.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) m.close(); });
+    I18N.apply(m.box);
     if (onMount) onMount(m.box, m);
     const f = ov.querySelector('input:not([type=hidden]):not([type=checkbox]), select, textarea, [contenteditable]');
     if (f && !('ontouchstart' in window)) setTimeout(() => f.focus(), 30);
@@ -1379,12 +1445,12 @@ const UI = {
     if (doneLabel) return UI.badge(doneLabel, 'jade');
     if (!date) return '<span class="muted">—</span>';
     const d = diffDays(todayISO(), date);
-    if (d < 0) return UI.badge(`Lewat ${-d} hari`, 'coral');
-    if (d === 0) return UI.badge('Hari ini', 'coral');
-    if (d === 1) return UI.badge('Besok (H-1)', 'amber');
-    if (d <= 3) return UI.badge(`H-${d}`, 'amber');
-    if (d <= 7) return UI.badge(`${d} hari lagi`, 'sky');
-    return UI.badge(`${d} hari lagi`);
+    if (d < 0) return UI.badge(I18N.p(`Lewat ${-d} hari`, `${-d} days late`), 'coral');
+    if (d === 0) return UI.badge(I18N.p('Hari ini', 'Today'), 'coral');
+    if (d === 1) return UI.badge(I18N.p('Besok (H-1)', 'Tomorrow (D-1)'), 'amber');
+    if (d <= 3) return UI.badge(I18N.p(`H-${d}`, `D-${d}`), 'amber');
+    if (d <= 7) return UI.badge(I18N.p(`${d} hari lagi`, `in ${d} days`), 'sky');
+    return UI.badge(I18N.p(`${d} hari lagi`, `in ${d} days`));
   },
 
   progress(p, cls = '') { return `<div class="progress ${cls}" title="${Math.round(p)}%"><i style="width:${clamp(p, 0, 100)}%"></i></div>`; },
@@ -1435,6 +1501,7 @@ const App = {
           <button class="chip" id="sync-chip" data-act="syncNow"></button>
           <button class="chip desk-only" id="gw-chip" data-act="settings" data-tab="google"></button>
           <button class="icon-btn" data-act="notif" aria-label="Notifikasi" id="bell">${ic('bell')}</button>
+          <div class="lang-switch desk-only" id="lang-switch"><button data-act="lang" data-l="en">EN</button><button data-act="lang" data-l="id">ID</button></div>
           <button class="icon-btn" data-act="lockNow" aria-label="Kunci aplikasi" title="Kunci aplikasi" id="lock-btn" hidden>${ic('lock')}</button>
           <button class="icon-btn" data-act="theme" aria-label="Ganti tema" id="theme-btn"></button>
           <div class="clock" id="clock"></div>
@@ -1516,10 +1583,12 @@ const App = {
     }
     this.renderBell();
     this.renderGwChip();
+    $$('#lang-switch button').forEach((b) => b.classList.toggle('on', b.dataset.l === I18N.lang));
     const lb = $('#lock-btn');
     if (lb) lb.hidden = !(Store.isRemote() && Store.services && Store.services.pinSet);
     const tb = $('#theme-btn');
     if (tb) tb.innerHTML = ic(document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon');
+    I18N.apply($('#app'));
     if (focusKey) {
       const el = document.querySelector(`[data-fk="${focusKey}"]`);
       if (el) { el.focus(); if (caret != null && el.setSelectionRange) try { el.setSelectionRange(caret, caret); } catch (e) { } }
@@ -1569,40 +1638,41 @@ const Alerts = {
     Store.all('Projects').forEach((p) => {
       if (!p.deadline || ['Selesai', 'Batal'].includes(p.status)) return;
       const d = diffDays(t, p.deadline);
-      if (d < 0) push('danger', `Project ${p.code || ''} ${p.clientName} terlambat ${-d} hari`, `${p.service} — progres ${Math.round(p.progress || 0)}%`, 'project', 'daftar', d);
-      else if (d <= 3) push('warn', `Deadline project ${p.clientName} ${d === 0 ? 'hari ini' : 'H-' + d}`, `${p.service} — progres ${Math.round(p.progress || 0)}%`, 'project', 'daftar', d);
+      const sub = I18N.p(`${p.service} — progres ${Math.round(p.progress || 0)}%`, `${p.service} — ${Math.round(p.progress || 0)}% done`);
+      if (d < 0) push('danger', I18N.p(`Project ${p.code || ''} ${p.clientName} terlambat ${-d} hari`, `Project ${p.code || ''} ${p.clientName} is ${-d} days late`), sub, 'project', 'daftar', d);
+      else if (d <= 3) push('warn', I18N.p(`Deadline project ${p.clientName} ${d === 0 ? 'hari ini' : 'H-' + d}`, `Project deadline for ${p.clientName} ${d === 0 ? 'today' : 'in ' + d + ' days'}`), sub, 'project', 'daftar', d);
     });
     const loans = Object.fromEntries(Store.all('Loans').map((l) => [l.id, l]));
     Store.all('LoanInstallments').forEach((i) => {
       if (i.status === 'Lunas' || !i.dueDate) return;
       const d = diffDays(t, i.dueDate);
       const name = (loans[i.loanId] || {}).creditor || 'Pinjaman';
-      if (d < 0) push('danger', `Cicilan ${name} ke-${i.no} lewat ${-d} hari`, idr(i.amount), 'finance', 'pinjaman', d);
-      else if (d <= 5) push('warn', `Cicilan ${name} ke-${i.no} ${d === 0 ? 'jatuh tempo hari ini' : 'H-' + d}`, idr(i.amount) + ' — ' + fmtDate(i.dueDate), 'finance', 'pinjaman', d);
+      if (d < 0) push('danger', I18N.p(`Cicilan ${name} ke-${i.no} lewat ${-d} hari`, `Instalment ${i.no} of ${name} is ${-d} days late`), idr(i.amount), 'finance', 'pinjaman', d);
+      else if (d <= 5) push('warn', I18N.p(`Cicilan ${name} ke-${i.no} ${d === 0 ? 'jatuh tempo hari ini' : 'H-' + d}`, `Instalment ${i.no} of ${name} due ${d === 0 ? 'today' : 'in ' + d + ' days'}`), idr(i.amount) + ' — ' + fmtDate(i.dueDate), 'finance', 'pinjaman', d);
     });
     Store.all('Deadlines').forEach((d) => {
       if (!d.deadline || d.status === 'Done') return;
       const n = diffDays(t, d.deadline);
-      if (n < 0) push('danger', `Deadline dinas "${d.title}" lewat ${-n} hari`, d.type || '', 'school', 'deadline', n);
-      else if (n <= 3) push('warn', `Deadline dinas "${d.title}" ${n === 0 ? 'hari ini' : 'H-' + n}`, d.type || '', 'school', 'deadline', n);
+      if (n < 0) push('danger', I18N.p(`Deadline dinas "${d.title}" lewat ${-n} hari`, `Official deadline "${d.title}" is ${-n} days late`), d.type || '', 'school', 'deadline', n);
+      else if (n <= 3) push('warn', I18N.p(`Deadline dinas "${d.title}" ${n === 0 ? 'hari ini' : 'H-' + n}`, `Official deadline "${d.title}" ${n === 0 ? 'today' : 'in ' + n + ' days'}`), d.type || '', 'school', 'deadline', n);
     });
     Store.all('Assignments').forEach((a) => {
       if (!a.deadline || ['Selesai', 'Dinilai'].includes(a.status)) return;
       const d = diffDays(t, a.deadline);
-      if (d < 0) push('danger', `Tugas "${a.title}" lewat ${-d} hari`, `${a.className || ''} ${a.subject || ''}`, 'school', 'tugas', d);
-      else if (d <= 3) push('warn', `Deadline "${a.title}" ${d === 0 ? 'hari ini' : 'H-' + d}`, `${a.className || ''} ${a.subject || ''}`, 'school', 'tugas', d);
+      if (d < 0) push('danger', I18N.p(`Tugas "${a.title}" lewat ${-d} hari`, `Assignment "${a.title}" is ${-d} days late`), `${a.className || ''} ${a.subject || ''}`, 'school', 'tugas', d);
+      else if (d <= 3) push('warn', I18N.p(`Deadline "${a.title}" ${d === 0 ? 'hari ini' : 'H-' + d}`, `"${a.title}" is due ${d === 0 ? 'today' : 'in ' + d + ' days'}`), `${a.className || ''} ${a.subject || ''}`, 'school', 'tugas', d);
     });
     const cls = Object.fromEntries(Store.all('TutorClasses').map((c) => [c.id, c]));
     Store.all('TutorSessions').forEach((s) => {
-      if (s.date === t && s.status === 'Terjadwal') push('info', `Sesi ${(cls[s.classId] || {}).name || 'kelas'} ke-${s.no} hari ini`, `${s.start || ''}${s.end ? '–' + s.end : ''}`, 'tutor', 'sesi', 0);
+      if (s.date === t && s.status === 'Terjadwal') push('info', I18N.p(`Sesi ${(cls[s.classId] || {}).name || 'kelas'} ke-${s.no} hari ini`, `Session ${s.no} of ${(cls[s.classId] || {}).name || 'class'} today`), `${s.start || ''}${s.end ? '–' + s.end : ''}`, 'tutor', 'sesi', 0);
     });
     Store.all('Agenda').forEach((a) => {
-      if (a.date === t && a.status !== 'Batal' && a.status !== 'Selesai') push('info', `Agenda: ${a.title}`, `${a.start || 'Sepanjang hari'}${a.end ? '–' + a.end : ''}`, 'school', 'jadwal', 0);
+      if (a.date === t && a.status !== 'Batal' && a.status !== 'Selesai') push('info', I18N.p(`Agenda: ${a.title}`, `Agenda: ${a.title}`), `${a.start || 'Sepanjang hari'}${a.end ? '–' + a.end : ''}`, 'school', 'jadwal', 0);
     });
     Store.all('Projects').forEach((p) => {
       if (p.status !== 'Selesai') return;
       const rem = Fin.projectRemaining(p);
-      if (rem > 0) push('warn', `Piutang ${p.clientName} belum lunas`, `Sisa ${idr(rem)} — ${p.code || ''}`, 'project', 'bayar', 50);
+      if (rem > 0) push('warn', I18N.p(`Piutang ${p.clientName} belum lunas`, `${p.clientName} still owes a balance`), I18N.p(`Sisa ${idr(rem)} — ${p.code || ''}`, `${idr(rem)} outstanding — ${p.code || ''}`), 'project', 'bayar', 50);
     });
     const rank = { danger: 0, warn: 1, info: 2 };
     return out.sort((a, b) => rank[a.level] - rank[b.level] || a.order - b.order);
@@ -1614,7 +1684,7 @@ const Alerts = {
     const list = this.compute();
     const el = document.createElement('div');
     el.className = 'pop'; el.id = 'notif-pop';
-    el.innerHTML = `<h4>Perlu perhatian (${list.length})</h4>` + (list.length ? list.map((a) =>
+    el.innerHTML = `<h4>${I18N.p('Perlu perhatian', 'Needs attention')} (${list.length})</h4>` + (list.length ? list.map((a) =>
       `<div class="alert ${a.level}" data-act="open" data-mod="${a.mod}" data-sub="${a.subTab}"><span class="bar"></span><div><div class="t">${esc(a.text)}</div><div class="s">${esc(a.sub || '')}</div></div></div>`).join('')
       : `<div class="empty" style="margin:6px"><b>Semua aman</b>Tidak ada deadline atau tagihan mendesak.</div>`);
     document.body.appendChild(el);
@@ -1684,6 +1754,8 @@ const Palette = {
       ['Upload file', 'upload', () => { App.open('files'); Files.pick('umum'); }],
       ['Catat kehadiran & ketercapaian TP', 'plus', () => { App.open('school', 'kehadiran'); Hadir.form(); }],
       ['Kunci aplikasi (lock screen)', 'lock', () => Lock.lock()],
+      ['Tarik nilai dari Score List', 'download', () => { App.open('school', 'nilai'); Nilai.import(); }],
+      ['Ganti bahasa Indonesia / English', 'panel', () => I18N.set(I18N.lang === 'en' ? 'id' : 'en')],
       ['Riwayat perubahan & urungkan', 'refresh', () => ChangeLog.open()],
       ['Backup spreadsheet sekarang', 'cloud', () => ACT.backupNow()],
       ['Impor dari Excel', 'upload', () => Excel.importDialog()],
@@ -1751,6 +1823,8 @@ const Settings = {
           ${UI.fieldHTML({ k: 'semesterEnd', l: 'Akhir semester', t: 'date' }, st.semesterEnd)}
           ${UI.fieldHTML({ k: 'jpTarget', l: 'Target JP per minggu', t: 'number' }, st.jpTarget)}
           ${UI.fieldHTML({ k: 'kkm', l: 'KKM / batas ketercapaian TP (%)', t: 'number', min: 0, max: 100 }, st.kkm)}
+          ${UI.fieldHTML({ k: 'scoreSheetUrl', l: 'URL Google Sheet Score List', t: 'url', full: 1, hint: 'Sumber nilai untuk modul Nilai & Score List.' }, st.scoreSheetUrl)}
+          ${UI.fieldHTML({ k: 'address', l: 'Alamat (untuk kontrak & invoice)' }, st.address)}
         </div>
         <div class="btn-row mt"><button class="btn primary" data-s="saveProfile">${ic('check')}Simpan profil</button></div>
       </div>
@@ -1840,7 +1914,7 @@ const Settings = {
         break;
       }
       case 'saveProfile': {
-        const v = this.read(box, ['ownerName', 'ownerEmail', 'ownerWa', 'businessName', 'bankInfo', 'invoiceNote', 'schoolName', 'jpMinutes', 'semesterStart', 'semesterEnd', 'jpTarget', 'kkm']);
+        const v = this.read(box, ['ownerName', 'ownerEmail', 'ownerWa', 'businessName', 'bankInfo', 'invoiceNote', 'schoolName', 'jpMinutes', 'semesterStart', 'semesterEnd', 'jpTarget', 'kkm', 'scoreSheetUrl', 'address']);
         if (v.ownerEmail && !validEmail(v.ownerEmail)) throw new Error('Format email tidak valid.');
         await Store.saveSettings(v);
         UI.toast('Profil disimpan', 'ok');
@@ -2093,7 +2167,8 @@ const Home = {
     const st = Store.settings();
     const t = todayISO();
     const h = new Date().getHours();
-    const greet = h < 11 ? 'Selamat pagi' : h < 15 ? 'Selamat siang' : h < 18 ? 'Selamat sore' : 'Selamat malam';
+    const greet = I18N.p(h < 11 ? 'Selamat pagi' : h < 15 ? 'Selamat siang' : h < 18 ? 'Selamat sore' : 'Selamat malam',
+      h < 11 ? 'Good morning' : h < 15 ? 'Good afternoon' : h < 18 ? 'Good evening' : 'Good evening');
     const first = String(st.ownerName || '').split(/[ ,]/)[0] || '';
     const mk = thisMonth();
     const m = Fin.month(mk);
@@ -2142,18 +2217,18 @@ const Home = {
 
     return `<div class="home">
       <div class="hello">
-        <div><h1>${greet}${first ? ', ' + esc(first) : ''}.</h1><p>${fmtDate(t, true)} — ${alerts.filter((a) => a.level !== 'info').length ? `${alerts.filter((a) => a.level !== 'info').length} hal perlu perhatian hari ini.` : 'tidak ada deadline mendesak.'}</p></div>
+        <div><h1>${greet}${first ? ', ' + esc(first) : ''}.</h1><p>${fmtDate(t, true)} — ${alerts.filter((a) => a.level !== 'info').length ? I18N.p(`${alerts.filter((a) => a.level !== 'info').length} hal perlu perhatian hari ini.`, `${alerts.filter((a) => a.level !== 'info').length} items need your attention today.`) : I18N.p('tidak ada deadline mendesak.', 'no urgent deadlines.')}</p></div>
         <div class="btn-row"><button class="btn" data-act="quickTxn">${ic('plus')}Catat transaksi</button><button class="btn primary" data-act="palette">${ic('search')}Cari / perintah</button></div>
       </div>
       <div class="hub">
         ${card('finance', `<div><div class="big-label">Saldo berjalan</div><div class="big ${bal < 0 ? 'neg' : ''}">${idr(bal)}</div></div>${sparkline(series, bal < 0 ? 'var(--coral)' : 'var(--jade)')}
-          <div class="hc-stats" style="grid-template-columns:repeat(3,1fr)">${stat('Masuk ' + BLN[+mk.slice(5) - 1], idrShort(m.incomeOps), 'pos')}${stat('Keluar ' + BLN[+mk.slice(5) - 1], idrShort(m.expense), 'neg')}${stat('Rasio cicilan', `${Math.round(dr.ratio * 100)}% <span class="badge b-${drColor}">${drLabel}</span>`)}</div>
-          <div class="hc-note">${nextInst ? `Cicilan terdekat: <b>${esc(loanOf ? loanOf.creditor : '')}</b> ${idr(nextInst.amount)} — ${fmtDate(nextInst.dueDate)} ${UI.dueBadge(nextInst.dueDate)}` : 'Tidak ada tagihan cicilan.'}</div>`, 'wide finance')}
-        ${card('project', `<div class="hc-stats">${stat('Project aktif', activeP.length)}${stat('Piutang', idrShort(piutang), piutang ? 'warn' : '')}</div><div class="hc-note">${nextP ? `Deadline terdekat: ${esc(nextP.clientName)} ${UI.dueBadge(nextP.deadline)}` : 'Belum ada deadline aktif.'}</div>`)}
-        ${card('school', `<div class="hc-stats">${stat('Beban mengajar', `${jp} JP<span class="muted mini"> / ${esc(st.jpTarget)}</span>`)}${stat('Tugas aktif', activeTasks)}</div><div class="hc-note">${todaySched ? `${todaySched} jam pelajaran hari ini` : 'Tidak ada jadwal hari ini'}${openDl ? ` — ${openDl} deadline dinas terbuka` : ''}.</div>`)}
-        ${card('tutor', `<div class="hc-stats">${stat('Kelas aktif', activeC.length)}${stat('Sesi hari ini', todaySess)}</div><div class="hc-note">Honor belum dibayar: <b>${idr(tutorDue)}</b></div>`)}
-        ${card('journal', `<div class="hc-stats">${stat('Habit hari ini', `${doneToday}/${habits.length}`)}${stat('To-do terbuka', todos.length)}</div><div class="hc-note">${journaled ? 'Jurnal hari ini sudah ditulis.' : 'Jurnal hari ini belum ditulis.'}</div>`)}
-        ${card('files', `<div class="hc-stats">${stat('Dokumen', files.length)}${stat('Ukuran', fmtSize(sum(files, (f) => f.size)))}</div><div class="hc-note">${files.length ? `Terakhir: ${esc(files.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0].name)}` : 'Belum ada file.'}</div>`, 'wide')}
+          <div class="hc-stats" style="grid-template-columns:repeat(3,1fr)">${stat(I18N.p('Masuk ', 'In ') + BLN[+mk.slice(5) - 1], idrShort(m.incomeOps), 'pos')}${stat(I18N.p('Keluar ', 'Out ') + BLN[+mk.slice(5) - 1], idrShort(m.expense), 'neg')}${stat('Rasio cicilan', `${Math.round(dr.ratio * 100)}% <span class="badge b-${drColor}">${drLabel}</span>`)}</div>
+          <div class="hc-note">${nextInst ? `${I18N.p('Cicilan terdekat', 'Next instalment')}: <b>${esc(loanOf ? loanOf.creditor : '')}</b> ${idr(nextInst.amount)} — ${fmtDate(nextInst.dueDate)} ${UI.dueBadge(nextInst.dueDate)}` : I18N.p('Tidak ada tagihan cicilan.', 'No instalments due.')}</div>`, 'wide finance')}
+        ${card('project', `<div class="hc-stats">${stat('Project aktif', activeP.length)}${stat('Piutang', idrShort(piutang), piutang ? 'warn' : '')}</div><div class="hc-note">${nextP ? `${I18N.p('Deadline terdekat', 'Next deadline')}: ${esc(nextP.clientName)} ${UI.dueBadge(nextP.deadline)}` : I18N.p('Belum ada deadline aktif.', 'No active deadline.')}</div>`)}
+        ${card('school', `<div class="hc-stats">${stat('Beban mengajar', `${jp} JP<span class="muted mini"> / ${esc(st.jpTarget)}</span>`)}${stat('Tugas aktif', activeTasks)}</div><div class="hc-note">${todaySched ? I18N.p(`${todaySched} jam pelajaran hari ini`, `${todaySched} teaching slots today`) : I18N.p('Tidak ada jadwal hari ini', 'No classes today')}${openDl ? I18N.p(` — ${openDl} deadline dinas terbuka`, ` — ${openDl} open official deadlines`) : ''}.</div>`)}
+        ${card('tutor', `<div class="hc-stats">${stat('Kelas aktif', activeC.length)}${stat('Sesi hari ini', todaySess)}</div><div class="hc-note">${I18N.p('Honor belum dibayar', 'Unpaid fees')}: <b>${idr(tutorDue)}</b></div>`)}
+        ${card('journal', `<div class="hc-stats">${stat('Habit hari ini', `${doneToday}/${habits.length}`)}${stat('To-do terbuka', todos.length)}</div><div class="hc-note">${journaled ? I18N.p('Jurnal hari ini sudah ditulis.', "Today's journal is written.") : I18N.p('Jurnal hari ini belum ditulis.', "Today's journal is empty.")}</div>`)}
+        ${card('files', `<div class="hc-stats">${stat('Dokumen', files.length)}${stat('Ukuran', fmtSize(sum(files, (f) => f.size)))}</div><div class="hc-note">${files.length ? `${I18N.p('Terakhir', 'Latest')}: ${esc(files.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0].name)}` : I18N.p('Belum ada file.', 'No files yet.')}</div>`, 'wide')}
       </div>
       <div class="panels">
         <div class="card"><h3>${ic('alert')}Perlu perhatian</h3>${alerts.length ? `<ul class="list">${alerts.slice(0, 8).map((a) => `<li class="link" data-act="open" data-mod="${a.mod}" data-sub="${a.subTab}"><span class="dotc" style="background:var(--${a.level === 'danger' ? 'coral' : a.level === 'warn' ? 'amber' : 'sky'})"></span><div class="grow"><div class="t">${esc(a.text)}</div><div class="s">${esc(a.sub || '')}</div></div></li>`).join('')}</ul>` : UI.empty('Semua aman', 'Tidak ada deadline atau tagihan mendesak.')}</div>
@@ -2189,10 +2264,10 @@ const Home = {
     const row = (label, ok, note) => `<li><span class="dotc" style="background:var(--${ok ? 'jade' : 'muted'})"></span><div class="grow"><div class="t">${label}</div><div class="s">${note}</div></div></li>`;
     const withCal = ['Agenda', 'Assignments', 'Projects', 'TutorSessions', 'LoanInstallments', 'Schedule'].reduce((n, k) => n + Store.where(k, (r) => r.gcalId).length, 0);
     return `<ul class="list">
-      ${row('Google Sheets', Store.status !== 'err', Store.status === 'err' ? esc(Store.lastError) : `Sinkron ${Store.lastSync ? Store.lastSync.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '—'}`)}
-      ${row('Google Calendar', st.calendarSync !== 'off', st.calendarSync !== 'off' ? `${withCal} event tertaut` : 'Nonaktif')}
-      ${row('Gmail', s.gmail !== false, s.mailQuota != null ? `Sisa kuota ${s.mailQuota} email hari ini` : 'Siap')}
-      ${row('Ringkasan harian', !!s.digest, s.digest ? `Setiap pukul ${esc(st.digestHour)}.00` : 'Belum dipasang')}
+      ${row('Google Sheets', Store.status !== 'err', Store.status === 'err' ? esc(Store.lastError) : I18N.p(`Sinkron ${Store.lastSync ? Store.lastSync.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '—'}`, `Synced ${Store.lastSync ? Store.lastSync.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '—'}`))}
+      ${row('Google Calendar', st.calendarSync !== 'off', st.calendarSync !== 'off' ? I18N.p(`${withCal} event tertaut`, `${withCal} linked events`) : I18N.p('Nonaktif', 'Off'))}
+      ${row('Gmail', s.gmail !== false, s.mailQuota != null ? I18N.p(`Sisa kuota ${s.mailQuota} email hari ini`, `${s.mailQuota} emails left today`) : I18N.p('Siap', 'Ready'))}
+      ${row(I18N.p('Ringkasan harian', 'Daily digest'), !!s.digest, s.digest ? I18N.p(`Setiap pukul ${esc(st.digestHour)}.00`, `Every day at ${esc(st.digestHour)}:00`) : I18N.p('Belum dipasang', 'Not installed'))}
     </ul><button class="btn sm mt" data-act="syncNow">${ic('refresh')}Muat ulang data</button>`;
   }
 };
@@ -2480,7 +2555,7 @@ VIEWS.school = {
           ${Object.keys(progs).length ? `<div class="bars mb">${Object.entries(progs).map(([p, l]) => { const d = l.filter((x) => x.status === 'Selesai').length; return `<div class="bar-row"><span>${esc(p)}</span>${UI.progress(d / l.length * 100)}<span class="mini muted">${d}/${l.length}</span></div>`; }).join('')}</div>
           ${UI.table([
             { h: 'Kode', f: (x) => `<b>${esc(x.code)}</b><div class="s">${esc(x.unit)}</div>` },
-            { h: 'Tujuan pembelajaran', f: (x) => `<div style="max-width:560px">${esc(x.objective)}</div>` },
+            { h: 'Tujuan pembelajaran', f: (x) => `<div class="tp-full" style="max-width:600px">${esc(x.objective)}</div>` },
             { h: 'Skill', f: (x) => esc(x.skill) },
             { h: 'Status', f: (x) => `<select class="inline" data-chg="tpStatus" data-id="${x.id}">${['Belum', 'Proses', 'Selesai'].map((o) => `<option ${o === x.status ? 'selected' : ''}>${o}</option>`).join('')}</select>` },
             { h: '', cls: 'act', f: (x) => `<button class="btn xs" data-act="tpEdit" data-id="${x.id}">${ic('edit')}</button>` }
@@ -2888,6 +2963,7 @@ const Project = {
       { t: 'section', l: 'Data klien' },
       { k: 'clientName', l: 'Nama klien', req: 1 },
       { k: 'campus', l: 'Kampus / instansi' },
+      { k: 'nim', l: 'NIM / NPM (untuk kontrak)' },
       { k: 'clientEmail', l: 'Email klien', t: 'email', hint: 'Untuk kirim invoice & kwitansi via Gmail' },
       { k: 'clientWa', l: 'WhatsApp', t: 'tel', ph: '08…' },
       { t: 'section', l: 'Layanan & biaya' },
@@ -2975,10 +3051,16 @@ const Project = {
         <div>
           <div class="card soft mb">
             <div class="kv"><div><small>Total tagihan</small><b>${idr(total)}</b></div><div><small>Sudah dibayar</small><b class="pos">${idr(paid)}</b></div><div><small>Sisa</small><b class="${rem ? 'neg' : 'pos'}">${idr(rem)}</b></div><div><small>Status bayar</small><b>${rem <= 0 ? 'Lunas' : paid > 0 ? 'Sebagian' : 'Belum bayar'}</b></div></div>
-            <div class="btn-row mt"><button class="btn sm mod" data-act="projPay" data-id="${p.id}" ${rem <= 0 ? 'disabled' : ''}>${ic('pay')}Catat pembayaran</button><button class="btn sm" data-act="projInvoice" data-id="${p.id}">${ic('file')}Invoice PDF</button><button class="btn sm" data-act="projInvoice" data-id="${p.id}" data-send="1" ${p.clientEmail ? '' : 'disabled'}>${ic('mail')}Kirim invoice</button></div>
+            <div class="btn-row mt"><button class="btn sm mod" data-act="projPay" data-id="${p.id}" ${rem <= 0 ? 'disabled' : ''}>${ic('pay')}Catat pembayaran</button><button class="btn sm" data-act="projInvoice" data-id="${p.id}">${ic('file')}Invoice PDF</button><button class="btn sm" data-act="projInvoice" data-id="${p.id}" data-send="1" ${p.clientEmail ? '' : 'disabled'}>${ic('mail')}Kirim invoice</button>
+              <button class="btn sm" data-act="invoicePrint" data-id="${p.id}">${ic('printer')}Cetak invoice</button></div>
+            <div class="divider" style="margin:12px 0"></div>
+            <h4 style="margin:0 0 6px">Dokumen kesepakatan</h4>
+            <p class="mini muted" style="margin-top:0">Surat Perjanjian Kerja Sama (bahasa Indonesia) lengkap dengan Pasal 1–5, rincian termin 30/35/35, lampiran fasilitas paket, dan ketentuan layanan.</p>
+            <div class="doc-actions"><button class="btn sm" data-act="projContract" data-id="${p.id}">${ic('file')}Kontrak PDF</button>
+              <button class="btn sm" data-act="projContract" data-id="${p.id}" data-print="1">${ic('printer')}Cetak kontrak</button></div>
           </div>
           <h4 style="margin:0 0 6px">Riwayat pembayaran</h4>
-          ${pays.length ? `<ul class="list">${pays.map((t) => `<li><div class="grow"><div class="t">${esc(t.kind || 'Pembayaran')} — ${idr(t.amount)}</div><div class="s">${fmtDate(t.date)} — ${esc(t.method || '')}</div></div><button class="btn xs" data-act="receipt" data-id="${t.id}" title="Unduh kwitansi">${ic('download')}</button><button class="btn xs" data-act="receipt" data-id="${t.id}" data-send="1" ${p.clientEmail ? '' : 'disabled'} title="Kirim kwitansi ke email klien">${ic('mail')}</button></li>`).join('')}</ul>` : '<p class="muted mini">Belum ada pembayaran.</p>'}
+          ${pays.length ? `<ul class="list">${pays.map((t) => `<li><div class="grow"><div class="t">${esc(t.kind || 'Pembayaran')} — ${idr(t.amount)}</div><div class="s">${fmtDate(t.date)} — ${esc(t.method || '')}</div></div><button class="btn xs" data-act="receipt" data-id="${t.id}" title="Unduh kwitansi">${ic('download')}</button><button class="btn xs" data-act="receiptPrint" data-id="${t.id}" title="Cetak kwitansi">${ic('printer')}</button><button class="btn xs" data-act="receipt" data-id="${t.id}" data-send="1" ${p.clientEmail ? '' : 'disabled'} title="Kirim kwitansi ke email klien">${ic('mail')}</button></li>`).join('')}</ul>` : '<p class="muted mini">Belum ada pembayaran.</p>'}
           <div class="divider"></div>
           <h4 style="margin:0 0 6px">Portal klien (read-only)</h4>
           <p class="mini muted" style="margin-top:0">${Store.isRemote() ? 'Klien dapat memantau status & progres tanpa login.' : 'Portal aktif setelah terhubung ke Google Sheets.'}</p>
@@ -3139,7 +3221,7 @@ VIEWS.project = {
             { h: 'Tanggal', f: (t) => `<span class="nowrap">${fmtDate(t.date)}</span>` },
             { h: 'Keterangan', f: (t) => `<div class="t">${esc(t.description)}</div><div class="s">${esc(t.method)}</div>` },
             { h: 'Jumlah', cls: 'r', f: (t) => `<b class="pos">${idr(t.amount)}</b>` },
-            { h: '', cls: 'act', f: (t) => `<button class="btn xs" data-act="receipt" data-id="${t.id}">${ic('download')}Kwitansi</button> <button class="btn xs" data-act="receipt" data-id="${t.id}" data-send="1">${ic('mail')}</button>` }
+            { h: '', cls: 'act', f: (t) => `<button class="btn xs" data-act="receipt" data-id="${t.id}">${ic('download')}Kwitansi</button> <button class="btn xs" data-act="receiptPrint" data-id="${t.id}">${ic('printer')}</button> <button class="btn xs" data-act="receipt" data-id="${t.id}" data-send="1">${ic('mail')}</button>` }
           ], pays, { emptyMsg: 'Belum ada pembayaran project.' })}</div></div>`;
     }
   },
@@ -3471,6 +3553,7 @@ VIEWS.tutor = {
               <button class="btn xs" data-act="tutSessions" data-id="${c.id}">${ic('calendar')}Sesi</button>
               <button class="btn xs" data-act="tutPay" data-id="${c.id}" ${Fin.tutorRemaining(c) ? '' : 'disabled'}>${ic('pay')}Bayar</button>
               <button class="btn xs" data-act="tutReport" data-id="${c.id}">${ic('printer')}Laporan</button>
+              <button class="btn xs" data-act="tutorAgreement" data-id="${c.id}">${ic('file')}Kesepakatan</button>
               <button class="btn xs" data-act="tutEdit" data-id="${c.id}">${ic('edit')}</button>
               ${c.clientWa ? `<a class="btn xs" target="_blank" rel="noopener" href="${esc(waLink(c.clientWa, `Halo ${c.clientName}, pengingat sesi ${c.name}${st.next ? ' pada ' + fmtDate(st.next.date, true) + ' pukul ' + st.next.start : ''}.`))}">${ic('whatsapp')}</a>` : ''}
             </div></div>`;
@@ -3520,7 +3603,7 @@ VIEWS.tutor = {
           { h: 'Tanggal', f: (t) => `<span class="nowrap">${fmtDate(t.date)}</span>` },
           { h: 'Keterangan', f: (t) => `<div class="t">${esc(t.description)}</div><div class="s">${esc(t.method)}</div>` },
           { h: 'Jumlah', cls: 'r', f: (t) => `<b class="pos">${idr(t.amount)}</b>` },
-          { h: '', cls: 'act', f: (t) => `<button class="btn xs" data-act="receipt" data-id="${t.id}">${ic('download')}Kwitansi</button> <button class="btn xs" data-act="receipt" data-id="${t.id}" data-send="1">${ic('mail')}</button>` }
+          { h: '', cls: 'act', f: (t) => `<button class="btn xs" data-act="receipt" data-id="${t.id}">${ic('download')}Kwitansi</button> <button class="btn xs" data-act="receiptPrint" data-id="${t.id}">${ic('printer')}</button> <button class="btn xs" data-act="receipt" data-id="${t.id}" data-send="1">${ic('mail')}</button>` }
         ], pays, { emptyMsg: 'Belum ada pembayaran.' })}</div></div>`;
     }
   },
@@ -4938,8 +5021,10 @@ async function boot() {
   const portalTok = EMBEDDED ? BOOT.portal : params.get('portal');
   if (portalTok) { Config.load(); return Portal.render(portalTok, EMBEDDED ? 'embedded' : (params.get('api') || Config.data.url)); }
   Config.load();
+  I18N.init();
+  SyncQueue.init();
   const prefersDark = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
-  document.documentElement.dataset.theme = Config.data.theme || (prefersDark ? 'dark' : 'light');
+  document.documentElement.dataset.theme = Config.data.theme || 'dark';   // tampilan futuristik: gelap sebagai bawaan
   App.shell();
   bindGlobalEvents();
   try {
@@ -5190,7 +5275,7 @@ const Hadir = {
     const programs = [...new Set(Store.all('TP').map((t) => t.program).filter(Boolean))];
     const s = App.s('school');
     const prog0 = (r && r.program) || s.hProgram || programs[0] || '';
-    const tpOptions = (prog) => Store.where('TP', (t) => t.program === prog && t.code).map((t) => [String(t.code).trim(), `${t.code} — ${String(t.objective || '').slice(0, 70)}`]);
+    const tpOptions = (prog) => Store.where('TP', (t) => t.program === prog && t.code).map((t) => [String(t.code).trim(), `${t.code} — ${t.objective}`]);
     const chosen = r ? this.codesOf(r) : [];
     const box = (prog) => `<label style="font-size:12.5px;font-weight:700">TP yang dibahas</label>
       <div id="tp-pick" style="max-height:170px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:8px">
@@ -5284,7 +5369,7 @@ VIEWS.school.kehadiran = {
       <div class="card mb"><h3>${ic('check')}Ketercapaian tiap TP — ${esc(prog || '-')}</h3>
         ${UI.table([
           { h: 'Kode', f: (x) => `<b>${esc(x.tp.code)}</b><div class="s">${esc(x.tp.unit || '')}</div>` },
-          { h: 'Tujuan pembelajaran', f: (x) => `<div style="max-width:520px">${esc(String(x.tp.objective).slice(0, 160))}</div>` },
+          { h: 'Tujuan pembelajaran', f: (x) => `<div class="tp-full" style="max-width:560px">${esc(x.tp.objective)}</div>` },
           { h: 'Pertemuan', cls: 'r', f: (x) => x.meetings || '—' },
           { h: 'Ketercapaian', f: (x) => x.pct == null ? '<span class="muted">belum diukur</span>' : `<div style="min-width:110px">${UI.progress(x.pct)}<div class="s">${Math.round(x.pct)}%</div></div>` },
           { h: 'Status', f: (x) => UI.badge(x.tp.status || 'Belum', x.tp.status === 'Selesai' ? 'jade' : x.tp.status === 'Proses' ? 'amber' : '') }
@@ -5358,6 +5443,548 @@ ACT.backupNow = async () => {
   UI.toast(`Backup dibuat: ${j.name}${j.trashed ? ` — ${j.trashed} salinan lama dipindah ke Sampah` : ''}`, 'ok', 7000);
 };
 ACT.setupBackup = async () => { await Api.call('setupBackup'); Store.services.backup = true; UI.toast('Backup mingguan aktif (Sabtu dini hari)', 'ok'); };
+
+/* =====================================================================
+ * 30. UPGRADE v3 — Bahasa (EN/ID), Nilai (Score List), Dokumen kontrak,
+ *     dan antrean sinkronisasi anti-gagal
+ * ===================================================================== */
+
+/* ------------------------- 30.1 BAHASA ----------------------------- */
+const I18N = {
+  KEY: 'mph_lang',
+  lang: 'en',
+  dict: {
+    /* navigasi & modul */
+    'Beranda': 'Home', 'Modul': 'Modules', 'Sekolah & Mengajar': 'School & Teaching', 'Project & Klien': 'Projects & Clients',
+    'Tutor Class': 'Tutor Class', 'Personal Finance': 'Personal Finance', 'Jurnal & Habit': 'Journal & Habits', 'File Storage': 'File Storage',
+    'Cari & perintah': 'Search & commands', 'Pengaturan': 'Settings', 'Ciutkan menu': 'Collapse menu', 'Kunci aplikasi': 'Lock app',
+    'Sekolah & Kinerja Mengajar': 'School & Teaching Performance', 'Project Management': 'Project Management',
+    'Jurnal & Habit': 'Journal & Habits', 'Keuangan': 'Finance', 'Sekolah': 'School', 'Project': 'Projects', 'Tutor': 'Tutor', 'File': 'Files', 'Jurnal': 'Journal',
+    /* sub-tab */
+    'Jadwal & Kalender': 'Timetable & Calendar', 'Tugas & Ujian': 'Assignments & Exams', 'Deadline Dinas': 'Official Deadlines',
+    'Kehadiran & TP': 'Attendance & Objectives', 'Nilai & Score List': 'Scores & Score List', 'Logbook & KPI': 'Logbook & KPI', 'Jobdesc': 'Job Description',
+    'Tautan & File': 'Links & Files', 'Gaji & Honor': 'Salary & Fees', 'Lembar Excel': 'Excel Sheets', 'Daftar Project': 'Project List',
+    'Kanban': 'Kanban', 'Pembayaran & Piutang': 'Payments & Receivables', 'Pricelist & Kalkulator': 'Pricelist & Calculator',
+    'File Project': 'Project Files', 'Kelas & Klien': 'Classes & Clients', 'Sesi & Progres': 'Sessions & Progress', 'Pembayaran': 'Payments',
+    'File Kelas': 'Class Files', 'Ringkasan': 'Overview', 'Buku Kas': 'Cash Book', 'Pinjaman & Cicilan': 'Loans & Instalments',
+    'Rutin & Proyeksi': 'Recurring & Projection', 'Arsip Keuangan': 'Finance Archive', 'Jurnal Harian': 'Daily Journal',
+    'Habit Tracker': 'Habit Tracker', 'To-Do': 'To-Do', 'Semua File': 'All Files',
+    /* aksi umum */
+    'Simpan': 'Save', 'Batal': 'Cancel', 'Tutup': 'Close', 'Hapus': 'Delete', 'Ubah': 'Edit', 'Tambah': 'Add', 'Buka': 'Open', 'Bayar': 'Pay',
+    'Detail': 'Details', 'Impor': 'Import', 'Ekspor': 'Export', 'Unduh': 'Download', 'Cetak': 'Print', 'Kirim': 'Send', 'Muat ulang data': 'Reload data',
+    'Cari / perintah': 'Search / commands', 'Catat transaksi': 'Add transaction', 'Transaksi': 'Transaction', 'Transaksi baru': 'New transaction',
+    'Project baru': 'New project', 'Kelas baru': 'New class', 'Pinjaman baru': 'New loan', 'Agenda': 'Agenda', 'Jadwal': 'Schedule',
+    'Catat pertemuan': 'Log a meeting', 'Tulis hari ini': "Write today's entry", 'Habit baru': 'New habit', 'Upload file': 'Upload file',
+    'Tugas / ujian': 'Assignment / exam', 'Deadline dinas': 'Official deadline', 'Tautan': 'Link', 'Pos rutin': 'Recurring item',
+    'Sinkronkan ulang semua': 'Resync everything', 'Backup sekarang': 'Back up now', 'Kirim sekarang': 'Send now', 'Tes koneksi': 'Test connection',
+    /* status koneksi */
+    'Tersinkron': 'Synced', 'Menyinkronkan…': 'Syncing…', 'Gagal sinkron': 'Sync failed', 'Mode lokal': 'Local mode',
+    'Calendar aktif': 'Calendar on', 'Calendar mati': 'Calendar off', 'Gmail aktif': 'Gmail on', 'Google belum terhubung': 'Google not connected',
+    /* beranda */
+    'Perlu perhatian': 'Needs attention', '7 hari ke depan': 'Next 7 days', 'Google Workspace': 'Google Workspace',
+    'Jadwal hari ini': "Today's timetable", 'Kehadiran & ketercapaian TP': 'Attendance & objective attainment', 'Saldo berjalan': 'Running balance',
+    'Semua aman': 'All clear', 'Project aktif': 'Active projects', 'Piutang': 'Receivables', 'Beban mengajar': 'Teaching load', 'Tugas aktif': 'Open assignments',
+    'Kelas aktif': 'Active classes', 'Sesi hari ini': "Today's sessions", 'Habit hari ini': "Today's habits", 'To-do terbuka': 'Open to-dos',
+    'Dokumen': 'Documents', 'Ukuran': 'Size', 'Rasio cicilan': 'Debt ratio', 'Sehat': 'Healthy', 'Waspada': 'Caution', 'Berisiko': 'At risk',
+    /* sekolah */
+    'Jadwal mengajar mingguan': 'Weekly teaching timetable', 'Kelas diampu': 'Classes taught', 'Agenda bulan ini': 'Agenda this month',
+    'Jadwal hari ini': "Today's schedule", 'Pertemuan tercatat': 'Meetings logged', 'Kehadiran': 'Attendance', 'Ketercapaian TP rata-rata': 'Average attainment',
+    'TP tercapai': 'Objectives attained', 'Rekap per kelas': 'Class recap', 'Kehadiran vs ketercapaian per kelas': 'Attendance vs attainment by class',
+    'Catatan pertemuan': 'Meeting log', 'Tujuan pembelajaran': 'Learning objective', 'Ketercapaian': 'Attainment', 'Status': 'Status',
+    'Belum selesai': 'Not finished', 'Terlambat': 'Overdue', 'Selesai': 'Done', 'Semua': 'All', 'Semua bulan': 'All months', 'Semua kelas': 'All classes',
+    'Belum diukur': 'Not measured', 'belum diukur': 'not measured', 'Pekerjaan': 'Task', 'Deadline': 'Deadline', 'Sisa': 'Remaining', 'Urgensi': 'Urgency',
+    'Bidang / kepanitiaan': 'Field / committee', 'Kegiatan': 'Activity', 'Bobot / JP': 'Weight / periods', 'Progres': 'Progress', 'Prediksi': 'Forecast', 'Risiko': 'Risk',
+    'Tugas tambahan': 'Extra duties', 'Total setara JP / minggu': 'Total equivalent periods / week', 'Rata-rata progres': 'Average progress',
+    'Risiko tinggi': 'High risk', 'Beban per bidang': 'Load per field', 'Tautan dokumen kerja': 'Work document links',
+    /* nilai */
+    'Nilai & Score List': 'Scores & Score List', 'Siswa': 'Students', 'Rata-rata': 'Average', 'Nilai tertinggi': 'Highest', 'Nilai terendah': 'Lowest',
+    'Tuntas': 'Passed', 'Belum tuntas': 'Not passed', 'Sheet terdeteksi': 'Detected sheets', 'Impor semua sheet': 'Import all sheets',
+    'Segarkan daftar sheet': 'Refresh sheet list', 'Buka Score List': 'Open Score List', 'Komponen': 'Component', 'Penilaian': 'Assessment',
+    'Nilai per komponen': 'Score per component', 'Peringkat kelas': 'Class ranking', 'Rekap nilai siswa': 'Student score recap', 'Baru': 'New',
+    /* project & tutor */
+    'Nilai project aktif': 'Active project value', 'Sisa': 'Remaining', 'Tagihan': 'Invoice total', 'Layanan': 'Service', 'Klien': 'Client',
+    'Progres pengerjaan': 'Work progress', 'Riwayat pembayaran': 'Payment history', 'Portal klien (read-only)': 'Client portal (read-only)',
+    'Salin tautan': 'Copy link', 'Buat tautan baru': 'Generate new link', 'Catat pembayaran': 'Record payment', 'Invoice PDF': 'Invoice PDF',
+    'Kirim invoice': 'Email invoice', 'Kontrak PDF': 'Contract PDF', 'Cetak kontrak': 'Print contract', 'Ketentuan layanan': 'Terms of service',
+    'Kwitansi': 'Receipt', 'Cetak kwitansi': 'Print receipt', 'Kesepakatan belajar': 'Tutoring agreement', 'Laporan': 'Report',
+    'Sesi berikutnya': 'Next session', 'Prediksi selesai': 'Estimated finish', 'Sisa bayar': 'Balance due', 'Honor belum dibayar': 'Unpaid fees',
+    /* keuangan */
+    'Pemasukan': 'Income', 'Pengeluaran': 'Expense', 'Net bulan ini': 'Net this month', 'Tren 6 bulan': 'Six-month trend',
+    'Pengeluaran per kategori': 'Expenses by category', 'Sumber pemasukan': 'Income sources', 'Tagihan cicilan terdekat': 'Upcoming instalments',
+    'Sisa pokok utang': 'Outstanding principal', 'Kalkulator proyeksi': 'Projection calculator', 'Pemasukan & pengeluaran rutin': 'Recurring income & expenses',
+    'Masuk': 'In', 'Keluar': 'Out', 'Kategori': 'Category', 'Keterangan': 'Description', 'Tanggal': 'Date', 'Jumlah': 'Amount', 'Metode': 'Method', 'Sumber': 'Source',
+    /* form & umum */
+    'Wajib diisi': 'Required', 'Belum ada data.': 'No data yet.', 'Belum ada transaksi.': 'No transactions yet.', 'Belum ada file.': 'No files yet.',
+    'Cari klien, transaksi, pinjaman, file…': 'Search clients, transactions, loans, files…',
+    'Cari klien, transaksi, pinjaman…': 'Search clients, transactions, loans…',
+    'Notifikasi': 'Notifications', 'Ganti tema': 'Switch theme', 'Menu': 'Menu', 'Jendela terbuka': 'Open windows',
+    'Ringkasan harian': 'Daily digest', 'Google Calendar': 'Google Calendar', 'Google Sheets': 'Google Sheets', 'Gmail': 'Gmail',
+    'baris': 'rows', 'Semua penilaian': 'All assessments', 'nilai tersimpan': 'scores stored', 'Belum terhubung': 'Not connected',
+    'Rata-rata kelas per komponen dibanding KKM.': 'Class average per component against the passing grade.',
+    'Tempel URL Google Sheet Score List, lalu tarik seluruh nilainya ke dalam aplikasi ini.': 'Paste the Score List spreadsheet URL, then pull every score into this app.',
+    'Dokumen kesepakatan': 'Agreement documents', 'Cetak invoice': 'Print invoice', 'Kesepakatan': 'Agreement', 'Laporan': 'Report',
+    'Belum ada nilai untuk kelas ini.': 'No scores for this class yet.', 'Nilai': 'Score', 'Predikat': 'Grade', 'Rincian': 'Details',
+    'Tersimpan': 'Saved', 'Data dasar': 'Master data', 'Perangkat terpercaya': 'Trusted devices', 'Riwayat perubahan': 'Change history',
+    'Keamanan (PIN)': 'Security (PIN)', 'Backup Drive': 'Drive backup', 'Impor database lengkap': 'Import full database',
+    'Koneksi': 'Connection', 'Profil & Invoice': 'Profile & Invoice', 'Data & Cadangan': 'Data & Backup',
+    'Cari': 'Search', 'Filter': 'Filter', 'Bulan ini': 'This month', 'Hari ini': 'Today', 'Besok (H-1)': 'Tomorrow (D-1)', 'Semua modul': 'All modules'
+  },
+  init() {
+    const saved = Keep.get(this.KEY);
+    this.lang = saved === 'id' || saved === 'en' ? saved : 'en';
+    document.documentElement.lang = this.lang;
+    setLocale(this.lang);
+  },
+  set(l) {
+    this.lang = l === 'id' ? 'id' : 'en';
+    Keep.set(this.KEY, this.lang);
+    document.documentElement.lang = this.lang;
+    setLocale(this.lang);
+    App.refresh();
+  },
+  /** teks berparameter: p('teks Indonesia', 'English text') */
+  p(id, en) { return this.lang === 'en' ? en : id; },
+  t(s) {
+    if (this.lang !== 'en') return s;
+    const k = String(s).trim();
+    const v = this.dict[k];
+    if (!v) return s;
+    return String(s).replace(k, v);
+  },
+  /** Terjemahkan teks yang sudah tampil (hanya kecocokan persis dari kamus). */
+  apply(root) {
+    if (this.lang !== 'en' || !root) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    const jobs = [];
+    while (walker.nextNode()) {
+      const n = walker.currentNode;
+      const raw = n.nodeValue;
+      const k = raw.trim();
+      if (!k || k.length > 90) continue;
+      const v = this.dict[k];
+      if (v) jobs.push([n, raw.replace(k, v)]);
+    }
+    jobs.forEach(([n, v]) => { n.nodeValue = v; });
+    root.querySelectorAll('[placeholder],[title],[aria-label]').forEach((el) => {
+      ['placeholder', 'title', 'aria-label'].forEach((a) => {
+        const v = el.getAttribute(a);
+        if (v && this.dict[v.trim()]) el.setAttribute(a, this.dict[v.trim()]);
+      });
+    });
+  }
+};
+
+/* -------------- 30.2 ANTREAN SINKRONISASI ANTI-GAGAL ---------------- */
+const SyncQueue = {
+  KEY: 'mph_queue',
+  items: [],
+  timer: null,
+  busy: false,
+  load() { try { this.items = JSON.parse(Keep.get(this.KEY) || '[]'); } catch (e) { this.items = []; } return this.items; },
+  save() { try { Keep.set(this.KEY, JSON.stringify(this.items.slice(0, 200))); } catch (e) { } },
+  add(ops) {
+    this.items.push({ at: Date.now(), ops });
+    this.save();
+    UI.syncChip();
+    this.schedule(3000);
+  },
+  count() { return this.items.length; },
+  schedule(ms) {
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => this.flush(), ms || 8000);
+  },
+  async flush() {
+    if (this.busy || !this.items.length || !Store.isRemote() || !navigator.onLine) { if (this.items.length) this.schedule(15000); return; }
+    this.busy = true;
+    let delivered = 0;
+    try {
+      while (this.items.length) {
+        const job = this.items[0];
+        await Api.call('batch', { ops: job.ops });   // create bersifat idempoten di server
+        this.items.shift();
+        this.save();
+        delivered++;
+      }
+      if (delivered) {
+        UI.toast(I18N.t(`${delivered} perubahan tertunda berhasil dikirim`), 'ok');
+        await Store.pull();
+        App.refresh();
+      }
+    } catch (e) {
+      if (e && e.kind === 'server') {
+        // ditolak server (bukan gangguan jaringan) — jangan diulang tanpa henti
+        this.items.shift();
+        this.save();
+        UI.toast(I18N.t('Satu perubahan tertunda ditolak server: ') + e.message, 'err', 8000);
+        this.schedule(2000);
+      } else {
+        this.schedule(20000);
+      }
+    } finally {
+      this.busy = false;
+      UI.syncChip();
+    }
+  },
+  init() {
+    this.load();
+    if (this.items.length) this.schedule(4000);
+    window.addEventListener('online', () => this.flush());
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') this.flush(); });
+    setInterval(() => { if (this.items.length) this.flush(); }, 60000);
+  }
+};
+
+/* ---------------------- 30.3 NILAI / SCORE LIST --------------------- */
+const Nilai = {
+  rows() { return Store.all('_Nilai'); },
+  kkm() { return Number(Store.settings().kkm) || 75; },
+  pct(r) { const m = Number(r.maxScore) || 100; return m ? (Number(r.score) || 0) / m * 100 : 0; },
+  classes() { return [...new Set(this.rows().map((r) => r.className).filter(Boolean))].sort(); },
+  assessments(cls) { return [...new Set(this.rows().filter((r) => !cls || r.className === cls).map((r) => r.assessment).filter(Boolean))].sort(); },
+
+  heat(pct) {
+    const c = pct >= 90 ? 'jade' : pct >= this.kkm() ? 'sky' : pct >= 60 ? 'amber' : 'coral';
+    return `<span class="heat" style="background:var(--${c}-soft);color:var(--${c})">${Math.round(pct)}</span>`;
+  },
+
+  async connect() {
+    const st = Store.settings();
+    UI.form({
+      title: I18N.t('Hubungkan Score List'),
+      values: { scoreSheetUrl: st.scoreSheetUrl || '' },
+      note: I18N.t('Tempel URL Google Sheet daftar nilai. Aplikasi membaca seluruh sheet di dalamnya (grid UNIT, rubrik speaking, daily/mid test, dan sheet balasan Google Form).'),
+      fields: [{ k: 'scoreSheetUrl', l: I18N.t('URL Google Sheet Score List'), t: 'url', req: 1, full: 1, ph: 'https://docs.google.com/spreadsheets/d/…' }],
+      onSubmit: async (v) => {
+        await Store.saveSettings({ scoreSheetUrl: v.scoreSheetUrl });
+        await this.loadSheets(true);
+      }
+    });
+  },
+
+  async loadSheets(force) {
+    const s = App.s('school');
+    if (!Store.isRemote()) return UI.toast(I18N.t('Fitur ini perlu koneksi Google Sheets.'), 'err');
+    if (s.scoreSheets && !force) return;
+    try {
+      UI.toast(I18N.t('Membaca Score List…'), '', 2000);
+      const j = await Api.call('scoreSheets', {});
+      s.scoreSheets = j.sheets;
+      s.scoreName = j.name;
+      s.scoreUrl = j.url;
+      App.refresh();
+    } catch (e) { UI.toast(e.message, 'err', 6000); }
+  },
+
+  async import(sheets) {
+    if (!Store.isRemote()) return UI.toast(I18N.t('Fitur ini perlu koneksi Google Sheets.'), 'err');
+    UI.toast(I18N.t('Menarik nilai dari Score List…'), '', 4000);
+    try {
+      const j = await Api.call('scoreImport', sheets && sheets.length ? { sheets } : {});
+      await Store.pull();
+      App.refresh();
+      const ok = (j.summary || []).filter((x) => x.rows > 0);
+      UI.toast(I18N.t(`${j.total} nilai tersinkron dari ${ok.length} sheet`), 'ok', 6000);
+    } catch (e) { UI.toast(e.message, 'err', 7000); }
+  },
+
+  student(name, cls) {
+    const list = this.rows().filter((r) => r.studentName === name && (!cls || r.className === cls));
+    const body = UI.table([
+      { h: I18N.t('Penilaian'), f: (r) => `<div class="t">${esc(r.assessment)}</div><div class="s">${esc(r.sheetName)}${r.date ? ' — ' + fmtDate(r.date) : ''}</div>` },
+      { h: I18N.t('Komponen'), f: (r) => esc(r.component || '—') },
+      { h: I18N.t('Nilai'), cls: 'r', f: (r) => `${this.heat(this.pct(r))} <span class="mini muted">${r.score}/${r.maxScore}</span>` },
+      { h: I18N.t('Predikat'), f: (r) => r.predicate ? UI.badge(r.predicate, this.pct(r) >= this.kkm() ? 'jade' : 'amber') : '—' }
+    ], list.sort((a, b) => String(a.assessment).localeCompare(String(b.assessment))));
+    const avg = list.length ? sum(list, (r) => this.pct(r)) / list.length : 0;
+    UI.modal({
+      title: `${name} — ${cls || ''}`, size: 'wide',
+      body: `<div class="grid g3 mb"><div class="stat accent"><small>${I18N.t('Rata-rata')}</small><b>${Math.round(avg)}</b></div>
+        <div class="stat"><small>${I18N.t('Penilaian')}</small><b>${list.length}</b></div>
+        <div class="stat"><small>KKM ${this.kkm()}</small><b class="${avg >= this.kkm() ? 'pos' : 'neg'}">${avg >= this.kkm() ? I18N.t('Tuntas') : I18N.t('Belum tuntas')}</b></div></div>${body}`
+    });
+  }
+};
+
+VIEWS.school.nilai = {
+  actions: () => `<button class="btn" data-act="scoreConnect">${ic('link')}Score List</button><button class="btn" data-act="scoreSheets">${ic('refresh')}Segarkan daftar sheet</button><button class="btn mod" data-act="scoreImport">${ic('download')}Impor semua sheet</button>`,
+  render() {
+    const s = App.s('school');
+    const all = Nilai.rows();
+    const st = Store.settings();
+    const classes = Nilai.classes();
+    const cls = s.nCls && classes.includes(s.nCls) ? s.nCls : classes[0] || '';
+    const assessments = Nilai.assessments(cls);
+    const asm = s.nAsm && assessments.includes(s.nAsm) ? s.nAsm : '';
+    let list = all.filter((r) => r.className === cls);
+    if (asm) list = list.filter((r) => r.assessment === asm);
+    const known = new Set(all.map((r) => r.sheetName));
+    const sheets = s.scoreSheets || [];
+
+    const students = groupBy(list, (r) => r.studentName);
+    const names = Object.keys(students).sort();
+    const avgOf = (rows) => rows.length ? sum(rows, (r) => Nilai.pct(r)) / rows.length : 0;
+    const ranked = names.map((n) => ({ n, rows: students[n], avg: avgOf(students[n]) })).sort((a, b) => b.avg - a.avg);
+    const comps = [...new Set(list.map((r) => r.component).filter(Boolean))];
+    const avgAll = avgOf(list);
+    const passed = ranked.filter((r) => r.avg >= Nilai.kkm()).length;
+
+    const panel = `<div class="card mb"><h3>${ic('table')}${I18N.t('Sheet terdeteksi')} ${s.scoreName ? `<span class="badge b-brand">${esc(s.scoreName)}</span>` : ''}
+        ${s.scoreUrl ? `<a class="btn xs" href="${esc(s.scoreUrl)}" target="_blank" rel="noopener">${ic('eye')}${I18N.t('Buka Score List')}</a>` : ''}</h3>
+      ${sheets.length ? `<div class="score-grid">${sheets.map((x) => `<div class="sheet-pill ${!known.has(x.name) && x.type !== 'unknown' ? 'newone' : ''}">
+          <span class="fico" style="background:var(--${x.type === 'grid' ? 'sky' : x.type === 'rubric' ? 'violet' : x.type === 'list' ? 'jade' : x.type === 'form' ? 'amber' : 'slate'}-soft);color:var(--${x.type === 'grid' ? 'sky' : x.type === 'rubric' ? 'violet' : x.type === 'list' ? 'jade' : x.type === 'form' ? 'amber' : 'slate'})">${x.type === 'form' ? 'FORM' : x.type === 'grid' ? 'UNIT' : x.type === 'rubric' ? 'RUBR' : x.type === 'list' ? 'LIST' : '—'}</span>
+          <div class="grow"><div class="t">${esc(x.name)}</div><div class="s">${x.rows} ${I18N.t('baris')}${known.has(x.name) ? '' : x.type !== 'unknown' ? ' — ' + I18N.t('Baru') : ''}</div></div>
+          ${x.type !== 'unknown' ? `<button class="btn xs" data-act="scoreImport" data-sheet="${esc(x.name)}">${ic('download')}</button>` : ''}</div>`).join('')}</div>`
+        : UI.empty(I18N.t('Belum terhubung'), I18N.t('Tempel URL Google Sheet Score List, lalu tarik seluruh nilainya ke dalam aplikasi ini.'), `<button class="btn sm" data-act="scoreConnect">${ic('link')}Score List</button>`)}
+      ${st.scoreSheetUrl && !sheets.length ? `<div class="btn-row mt"><button class="btn sm" data-act="scoreSheets">${ic('refresh')}${I18N.t('Segarkan daftar sheet')}</button></div>` : ''}
+    </div>`;
+
+    if (!all.length) return panel;
+
+    return `${panel}
+      <div class="toolbar">
+        <select class="select" data-chg="nCls">${classes.map((c) => `<option ${c === cls ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+        <select class="select" data-chg="nAsm"><option value="">${I18N.t('Semua penilaian')}</option>${assessments.map((a) => `<option ${a === asm ? 'selected' : ''}>${esc(a)}</option>`).join('')}</select>
+        <span class="mini muted">KKM ${Nilai.kkm()} — ${all.length} ${I18N.t('nilai tersimpan')}</span>
+      </div>
+      <div class="grid g4 mb">
+        <div class="stat accent"><small>${I18N.t('Siswa')}</small><b>${ranked.length}</b><span class="sub">${esc(cls)}</span></div>
+        <div class="stat"><small>${I18N.t('Rata-rata')}</small><b>${Math.round(avgAll)}</b>${UI.progress(avgAll)}</div>
+        <div class="stat"><small>${I18N.t('Tuntas')}</small><b class="pos">${ranked.length ? Math.round(passed / ranked.length * 100) : 0}%</b><span class="sub">${passed}/${ranked.length}</span></div>
+        <div class="stat"><small>${I18N.t('Nilai tertinggi')} / ${I18N.t('Nilai terendah')}</small><b>${ranked.length ? Math.round(ranked[0].avg) + ' / ' + Math.round(ranked[ranked.length - 1].avg) : '—'}</b><span class="sub">${ranked.length ? esc(ranked[0].n.split(' ')[0]) : ''}</span></div>
+      </div>
+      <div class="grid g2 mb" style="grid-template-columns:1.25fr 1fr">
+        <div class="card"><h4>${I18N.t('Rekap nilai siswa')}</h4>
+          ${UI.table([
+            { h: '#', f: (r) => `<b>${ranked.indexOf(r) + 1}</b>` },
+            { h: I18N.t('Siswa'), f: (r) => `<div class="t">${esc(r.n)}</div><div class="s">${r.rows.length} ${I18N.t('Penilaian').toLowerCase()}</div>` },
+            ...comps.slice(0, 5).map((c) => ({ h: c, cls: 'r', f: (r) => { const rs = r.rows.filter((x) => x.component === c); return rs.length ? Nilai.heat(avgOf(rs)) : '<span class="muted">—</span>'; } })),
+            { h: I18N.t('Rata-rata'), cls: 'r', f: (r) => `${Nilai.heat(r.avg)}` },
+            { h: '', cls: 'act', f: (r) => `<button class="btn xs" data-act="scoreStudent" data-name="${esc(r.n)}" data-cls="${esc(cls)}">${ic('eye')}</button>` }
+          ], ranked, { emptyMsg: I18N.t('Belum ada nilai untuk kelas ini.') })}
+        </div>
+        <div class="card"><h4>${I18N.t('Nilai per komponen')}</h4><div class="chart-box"><canvas id="ch-score"></canvas></div>
+          <p class="mini muted">${I18N.t('Rata-rata kelas per komponen dibanding KKM.')}</p></div>
+      </div>`;
+  },
+  after() {
+    const s = App.s('school');
+    const classes = Nilai.classes();
+    const cls = s.nCls && classes.includes(s.nCls) ? s.nCls : classes[0] || '';
+    const list = Nilai.rows().filter((r) => r.className === cls && (!s.nAsm || r.assessment === s.nAsm));
+    const by = groupBy(list.filter((r) => r.component), (r) => r.component);
+    const labels = Object.keys(by);
+    if (!labels.length) return;
+    mkChart('ch-score', {
+      type: 'bar',
+      data: { labels, datasets: [
+        { label: I18N.t('Rata-rata'), data: labels.map((k) => Math.round(sum(by[k], (r) => Nilai.pct(r)) / by[k].length)), backgroundColor: cssVar('--sky'), borderRadius: 8 },
+        { label: 'KKM', type: 'line', data: labels.map(() => Nilai.kkm()), borderColor: cssVar('--coral'), borderDash: [5, 4], pointRadius: 0 }
+      ] },
+      options: { maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
+    });
+  }
+};
+
+Object.assign(ACT, {
+  scoreConnect: () => Nilai.connect(),
+  scoreSheets: () => Nilai.loadSheets(true),
+  scoreImport: (d) => Nilai.import(d.sheet ? [d.sheet] : null),
+  scoreStudent: (d) => Nilai.student(d.name, d.cls),
+  lang: (d) => I18N.set(d.l)
+});
+Object.assign(CHG, {
+  nCls: (v) => { App.s('school').nCls = v; App.s('school').nAsm = ''; App.refresh(); },
+  nAsm: (v) => { App.s('school').nAsm = v; App.refresh(); }
+});
+
+/* ------------- 30.4 KONTRAK, KETENTUAN LAYANAN, RESI ---------------- */
+const FASILITAS = [
+  ['Bimbingan substantif (Bab 1 – Bab akhir)', 'Full covered', 'Full covered', 'Full covered'],
+  ['Usulan judul & matriks riset', '3 opsi judul', '3 opsi judul', '3–5 opsi deep research'],
+  ['Pencarian referensi jurnal', 'Sinta 2–6 / Nasional', 'Sinta 1–3 / Scopus', 'Scopus Q1–Q3 / WoS'],
+  ['Penyusunan kuesioner / pedoman wawancara', 'Included', 'Included', 'Included'],
+  ['Olah data & interpretasi hasil', 'Basic (SPSS / SmartPLS)', 'Intermediate (PLS / AMOS / NVivo)', 'Advanced (Multi-method / R / Python)'],
+  ['Revisi pra-sidang dari dosen pembimbing', 'Unlimited (pra-sidang)', 'Unlimited (pra-sidang)', 'Unlimited (pra-sidang)'],
+  ['Sesi konsultasi Zoom / tatap muka', 'Maks. 4x sesi', 'Maks. 8x sesi', 'Unlimited sesi'],
+  ['Layanan chat support (WhatsApp)', 'Jam kerja (09.00–18.00)', 'Priority (08.00–20.00)', 'VIP 24/7 response'],
+  ['Slide presentasi sidang (PPT premium)', '10–15 slide standard', 'Professional visual', 'Executive interactive'],
+  ['Simulasi ujian sidang (mock defense)', '1x sesi', '2x sesi', '3x sesi + mental drill'],
+  ['Naskah prediksi Q&A sidang', 'Included', 'Included', 'Included'],
+  ['Cek plagiarisme Turnitin (no-repo)', 'Free 2x cek', 'Free 4x cek', 'Unlimited cek'],
+  ['Mendeley / EndNote formatting', 'Included', 'Included', 'Included']
+];
+
+Object.assign(Docs, {
+  levelOf(p) {
+    const s = `${p.category} ${p.service}`.toLowerCase();
+    return /disertasi|s3/.test(s) ? 2 : /tesis|s2/.test(s) ? 1 : 0;
+  },
+  levelName(i) { return ['Skripsi (S1)', 'Tesis (S2)', 'Disertasi (S3)'][i]; },
+
+  /** Surat Perjanjian Kerja Sama — bahasa Indonesia, siap tanda tangan di atas materai. */
+  contractDoc(p) {
+    const st = Store.settings();
+    const T = (x) => this.pdfText(x);
+    const lvl = this.levelOf(p);
+    const total = Fin.projectTotal(p);
+    const pays = Store.where('Transactions', (t) => t.source === 'project' && t.refId === p.id).sort((a, b) => a.date.localeCompare(b.date));
+    const d = new Date();
+    const number = `PKS/${d.getFullYear()}/${pad(d.getMonth() + 1)}/${p.code}`;
+    const doc = this.base('SURAT PERJANJIAN', number, todayISO());
+    let y = 46;
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(23, 32, 54);
+    doc.text(T('SURAT PERJANJIAN KERJA SAMA'), 105, y, { align: 'center' }); y += 6;
+    doc.setFontSize(9.5); doc.setFont('helvetica', 'normal');
+    doc.text(T('JASA PENDAMPINGAN KARYA ILMIAH (SKRIPSI / TESIS / DISERTASI)'), 105, y, { align: 'center' }); y += 9;
+    const wrap = (txt, size = 9.5, bold = false, indent = 0) => {
+      doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(size);
+      const lines = doc.splitTextToSize(T(txt), 180 - indent);
+      lines.forEach((ln) => { if (y > 275) { doc.addPage(); y = 20; } doc.text(ln, 15 + indent, y); y += size * 0.52; });
+      y += 1.5;
+    };
+    const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu'][d.getDay()];
+    wrap(`Pada hari ini, ${hari}, tanggal ${fmtDate(todayISO())}, bertempat di Pekanbaru, kami yang bertanda tangan di bawah ini:`);
+    wrap(`Nama Lembaga / Penyedia Jasa : ${st.businessName || st.ownerName}\nAlamat : ${st.address || 'Pekanbaru, Riau'}\nNo. Kontak / WA : ${st.ownerWa || '-'}\n(Selanjutnya disebut PIHAK PERTAMA / Penyedia Jasa)`);
+    wrap(`Nama Klien : ${p.clientName}\nNIM / NPM : ${p.nim || '-'}\nUniversitas / Prodi : ${p.campus || '-'}\nJenjang Program : ${this.levelName(lvl)}\nNo. Kontak / WA : ${p.clientWa || '-'}\n(Selanjutnya disebut PIHAK KEDUA / Klien)`);
+    wrap('Para Pihak sepakat untuk mengikatkan diri dalam Perjanjian Kerja Sama Pendampingan Karya Ilmiah dengan ketentuan sebagai berikut:');
+    wrap('PASAL 1: RUANG LINGKUP & FASILITAS PEKERJAAN', 10, true);
+    wrap(`1. PIHAK PERTAMA memberikan layanan pendampingan dan bimbingan penyusunan karya ilmiah kepada PIHAK KEDUA dari tahapan awal sampai Ujian Sidang Akhir, untuk paket: ${p.service} (${this.levelName(lvl)}).`);
+    wrap('2. Fasilitas yang didapatkan PIHAK KEDUA sebagaimana tercantum dalam Rincian Fasilitas Layanan (lampiran tak terpisahkan dari perjanjian ini).');
+    wrap('PASAL 2: MASA BERLAKU KONTRAK & PELEPASAN HAK PASCA-SIDANG', 10, true);
+    wrap('1. Perjanjian ini dan seluruh kewajiban PIHAK PERTAMA dinyatakan SELESAI DAN BERAKHIR SEPENUHNYA segera setelah PIHAK KEDUA selesai melaksanakan Ujian Sidang Akhir.');
+    wrap('2. Segala bentuk revisi/perbaikan dari Dosen Penguji hasil sidang akhir, penataan format hardcopy/perpustakaan, maupun publikasi jurnal pasca-sidang TIDAK TERMASUK dalam kontrak ini.');
+    wrap('3. Apabila PIHAK KEDUA memerlukan bantuan perbaikan pasca-sidang, akan dibuat kesepakatan dan skema biaya baru di luar kontrak ini.');
+    wrap('PASAL 3: BIAYA DAN METODE PEMBAYARAN', 10, true);
+    wrap(`1. Total biaya kesepakatan untuk layanan ini adalah sebesar ${idr(total)} (${terbilang(total)}).`);
+    wrap(`2. Pembayaran dilakukan bertahap (termin) melalui transfer ke rekening resmi PIHAK PERTAMA:\n${st.bankInfo || '[Bank / No. Rekening / Atas Nama]'}`);
+    const t1 = Math.round(total * 0.3), t2 = Math.round(total * 0.35), t3 = total - t1 - t2;
+    y += 1;
+    const finalY = this.table(doc, y, ['Termin', 'Nominal', 'Waktu pembayaran'], [
+      ['Termin I (DP 30%)', idr(t1), 'Saat penandatanganan kontrak (pengusulan judul / Bab 1)'],
+      ['Termin II (35%)', idr(t2), 'Saat draft seminar proposal / Bab 3 selesai'],
+      ['Termin III (35% pelunasan)', idr(t3), 'Paling lambat 3 hari sebelum Ujian Sidang Akhir']
+    ], { 1: { halign: 'right' } });
+    y = finalY + 5;
+    wrap('3. PIHAK PERTAMA berhak menunda penyerahan media presentasi (PPT) dan simulasi sidang apabila pelunasan Termin III belum diselesaikan.');
+    if (pays.length) {
+      wrap(`4. Pembayaran yang telah diterima sampai dokumen ini dibuat: ${idr(Fin.projectPaid(p))} (${pays.map((x) => `${x.kind || 'Bayar'} ${fmtDateShort(x.date)} ${idr(x.amount)}`).join('; ')}). Sisa: ${idr(Fin.projectRemaining(p))}.`);
+    }
+    wrap('PASAL 4: PEMBATALAN & KETENTUAN KHUSUS', 10, true);
+    wrap('1. Seluruh pembayaran yang telah disetorkan tidak dapat dikembalikan (non-refundable) jika pembatalan dilakukan secara sepihak oleh PIHAK KEDUA di tengah proses pengerjaan.');
+    wrap('2. Apabila terjadi perubahan total konsep/judul atas keinginan pribadi PIHAK KEDUA (bukan instruksi dosen) yang mengubah lebih dari 50% isi draft yang telah disetujui, akan dikenakan penyesuaian biaya re-work.');
+    wrap('PASAL 5: PENYELESAIAN PERSELISIHAN', 10, true);
+    wrap('Apabila terjadi perbedaan pendapat atau perselisihan dalam pelaksanaan kontrak ini, Para Pihak sepakat menyelesaikannya secara kekeluargaan melalui musyawarah mufakat.');
+    wrap('Demikian Perjanjian ini dibuat dalam 2 (dua) rangkap bernilai hukum sama, dibaca, dipahami, dan disetujui oleh kedua belah pihak tanpa ada paksaan dari pihak mana pun.');
+    if (y > 225) { doc.addPage(); y = 25; }
+    y += 6;
+    doc.setFontSize(9.5); doc.setFont('helvetica', 'normal');
+    doc.text(T(`Pekanbaru, ${fmtDate(todayISO())}`), 195, y, { align: 'right' }); y += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text(T('PIHAK PERTAMA'), 40, y, { align: 'center' });
+    doc.text(T('PIHAK KEDUA'), 160, y, { align: 'center' }); y += 5;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    doc.text(T('(Penyedia Jasa)'), 40, y, { align: 'center' });
+    doc.text(T('(Klien / Mahasiswa)'), 160, y, { align: 'center' });
+    doc.setDrawColor(200, 206, 220); doc.roundedRect(22, y + 4, 36, 22, 2, 2);
+    doc.setFontSize(7.5); doc.setTextColor(140, 148, 165);
+    doc.text(T('Materai 10.000'), 40, y + 16, { align: 'center' });
+    doc.setTextColor(23, 32, 54); doc.setFontSize(9.5);
+    y += 34;
+    doc.text(T(`( ${st.ownerName || '…'} )`), 40, y, { align: 'center' });
+    doc.text(T(`( ${p.clientName} )`), 160, y, { align: 'center' });
+
+    // Lampiran I — fasilitas & ketentuan
+    doc.addPage();
+    y = 20;
+    wrap('LAMPIRAN I — RINCIAN FASILITAS LAYANAN', 12, true);
+    const fy = this.table(doc, y, ['Fasilitas / Fitur', 'Skripsi (S1)', 'Tesis (S2)', 'Disertasi (S3)'],
+      FASILITAS.map((r) => r), { 0: { cellWidth: 60 } });
+    y = fy + 8;
+    wrap('LAMPIRAN II — ATURAN DAN KETENTUAN LAYANAN', 12, true);
+    wrap('PASAL A: CAKUPAN DAN BATAS LAYANAN', 10, true);
+    wrap('1. Layanan ini merupakan pendampingan, bimbingan materi, perbaikan penulisan, dan penyusunan instrumen/analisis data karya ilmiah dari tahap awal hingga Ujian Sidang Akhir (Munaqasyah).');
+    wrap('2. Seluruh kewajiban Penyedia Jasa dinyatakan selesai tuntas tepat setelah Klien menyelesaikan Ujian Sidang Akhir.');
+    wrap('3. Revisi pasca-sidang, pengurusan jilid/hardcover, format perpustakaan, dan konversi ke jurnal tidak termasuk paket ini; tersedia sebagai paket tambahan (add-on).');
+    wrap('PASAL B: HAK DAN TANGGUNG JAWAB BERSAMA', 10, true);
+    wrap('1. Penyedia Jasa menyediakan materi, bimbingan, dan perbaikan naskah sesuai standar akademik kampus Klien; mengerjakan revisi dosen pembimbing pada masa pra-sidang (estimasi 3–5 hari kerja per revisi); serta menjaga kerahasiaan identitas dan data penelitian Klien (100% confidential).');
+    wrap('2. Klien mempelajari dan menguasai materi yang dibimbingkan untuk persiapan ujian; menyampaikan catatan dosen pembimbing secara jujur dan tepat waktu; serta membayar sesuai jadwal termin.');
+    wrap('3. Kelulusan dan nilai ujian sepenuhnya bergantung pada pemahaman dan performa Klien di depan Dosen Penguji. Penyedia Jasa bertanggung jawab atas kualitas naskah, bukan performa lisan Klien saat sidang.');
+    wrap('ALUR KERJA SAMA', 10, true);
+    wrap('1. Screening & diagnosis awal (gratis 15 menit) → 2. Penandatanganan kontrak & DP → 3. Eksekusi & pembayaran bertahap per milestone → 4. Final check & pelunasan pra-sidang (maks. H-3) → 5. Serah terima final & penutupan kontrak setelah sidang.');
+    this.footer(doc, y + 4);
+    return { doc, number, name: `Perjanjian_${p.code}_${String(p.clientName).replace(/[^\w]+/g, '_')}.pdf` };
+  },
+
+  contract(projectId, print) {
+    const p = Store.get('Projects', projectId);
+    if (!p) return UI.toast('Project tidak ditemukan', 'err');
+    const r = this.contractDoc(p);
+    if (print) this.print(r.doc); else r.doc.save(r.name);
+  },
+
+  /** Kesepakatan bimbingan belajar untuk kelas tutor. */
+  tutorAgreement(classId, print) {
+    const c = Store.get('TutorClasses', classId);
+    const st = Store.settings();
+    const T = (x) => this.pdfText(x);
+    const total = Fin.tutorTotal(c);
+    const doc = this.base('KESEPAKATAN BELAJAR', `KB/${new Date().getFullYear()}/${String(c.name).slice(0, 12).toUpperCase()}`, todayISO());
+    let y = 46;
+    const wrap = (txt, size = 9.5, bold = false) => {
+      doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(size);
+      doc.splitTextToSize(T(txt), 180).forEach((ln) => { if (y > 275) { doc.addPage(); y = 20; } doc.text(ln, 15, y); y += size * 0.52; });
+      y += 2;
+    };
+    wrap('SURAT KESEPAKATAN BIMBINGAN BELAJAR', 12, true);
+    wrap(`Penyedia layanan: ${st.businessName || st.ownerName}${st.ownerWa ? ' (WA ' + st.ownerWa + ')' : ''}`);
+    wrap(`Klien / peserta : ${c.clientName}${c.institution ? ' — ' + c.institution : ''}${c.clientWa ? ' (WA ' + c.clientWa + ')' : ''}`);
+    const days = String(c.days || '').split(',').filter(Boolean).map((d) => HARI[d % 7]).join(', ');
+    const fy = this.table(doc, y + 2, ['Ketentuan', 'Rincian'], [
+      ['Program', `${c.name} — ${c.tutorType}`],
+      ['Bentuk kelas', `${c.mode}${c.mode === 'Kelompok' ? ` (${c.participants} peserta)` : ''}`],
+      ['Jumlah pertemuan', `${c.totalSessions} sesi @ ${c.durationMin || 60} menit`],
+      ['Jadwal rutin', `${days || '-'}${c.startTime ? ' pukul ' + c.startTime : ''}, mulai ${fmtDate(c.startDate)}`],
+      ['Skema tarif', c.rateType === 'paket' ? `Paket ${idr(c.rate)}` : c.rateType === 'jam' ? `${idr(c.rate)} / jam` : `${idr(c.rate)} / sesi`],
+      ['Total biaya', `${idr(total)} (${terbilang(total)})`],
+      ['Pembayaran', st.bankInfo || 'Transfer / tunai sesuai kesepakatan'],
+      ['Sudah dibayar', `${idr(Fin.tutorPaid(c))} — sisa ${idr(Fin.tutorRemaining(c))}`]
+    ], { 0: { cellWidth: 45 } });
+    y = fy + 6;
+    wrap('KETENTUAN', 10, true);
+    wrap('1. Pembatalan sesi oleh peserta paling lambat 3 jam sebelum jadwal; keterlambatan lebih dari 20 menit tanpa kabar dihitung sebagai satu sesi terpakai.');
+    wrap('2. Sesi pengganti (make-up class) diberikan bila pembatalan disampaikan tepat waktu atau berhalangan karena alasan darurat.');
+    wrap('3. Laporan perkembangan belajar diberikan setiap akhir paket; materi dan rekaman latihan menjadi hak peserta untuk keperluan belajar pribadi.');
+    wrap('4. Pelunasan paling lambat pada sesi terakhir, kecuali disepakati lain secara tertulis.');
+    y += 10;
+    doc.setFontSize(9.5);
+    doc.text(T(`Pekanbaru, ${fmtDate(todayISO())}`), 195, y, { align: 'right' }); y += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text(T('Penyedia layanan'), 40, y, { align: 'center' });
+    doc.text(T('Klien / wali peserta'), 160, y, { align: 'center' });
+    y += 30;
+    doc.setFont('helvetica', 'normal');
+    doc.text(T(`( ${st.ownerName || '…'} )`), 40, y, { align: 'center' });
+    doc.text(T(`( ${c.clientName} )`), 160, y, { align: 'center' });
+    this.footer(doc, y + 10);
+    const name = `Kesepakatan_${String(c.name).replace(/[^\w]+/g, '_')}.pdf`;
+    if (print) this.print(doc); else doc.save(name);
+  },
+
+  /** Buka PDF di jendela baru langsung pada dialog cetak. */
+  print(doc) {
+    try {
+      doc.autoPrint();
+      const url = doc.output('bloburl');
+      const w = window.open(url, '_blank');
+      if (!w) { UI.toast(I18N.t('Popup diblokir — berkas diunduh saja.'), '', 5000); doc.save('cetak.pdf'); }
+    } catch (e) { UI.toast(e.message, 'err'); }
+  }
+});
+
+ACT.projContract = (d) => Docs.contract(d.id, !!d.print);
+ACT.tutorAgreement = (d) => Docs.tutorAgreement(d.id, !!d.print);
+ACT.receiptPrint = (d) => { const r = Docs.receiptPDF(d.id, false); if (r) Docs.print(r.doc); };
+ACT.invoicePrint = (d) => { const p = Store.get('Projects', d.id); const r = Docs.invoiceDoc(p); Docs.print(r.doc); };
 
 /* Mulai aplikasi (setelah seluruh modul termuat) */
 boot();
