@@ -221,6 +221,7 @@ kbd { font-family: var(--font); font-size: 11.5px; border: 1px solid var(--line)
 .win-body { padding: 20px 22px 26px; }
 
 /* module colors */
+.m-planner { --mc: var(--brand); --mcs: var(--brand-soft); }
 .m-school { --mc: var(--sky); --mcs: var(--sky-soft); }
 .m-project { --mc: var(--violet); --mcs: var(--violet-soft); }
 .m-tutor { --mc: var(--amber); --mcs: var(--amber-soft); }
@@ -589,7 +590,8 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .lang-switch button { border: 0; background: transparent; padding: 0 10px; font-size: 12px; font-weight: 700; color: var(--muted); cursor: pointer; }
 .lang-switch button.on { background: var(--grad-1); color: #fff; }
 .chip.queue { border-color: var(--amber); color: var(--amber); }
-.tp-full { white-space: pre-wrap; line-height: 1.55; }
+.tp-full { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
+.tbl td .tp-full { max-width: 520px; }
 .score-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
 .sheet-pill { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .sheet-pill.newone { border-color: var(--jade); box-shadow: 0 0 0 1px var(--jade-soft); }
@@ -647,7 +649,7 @@ const SCHEMA = {
   Agenda: ['id', 'date', 'start', 'end', 'title', 'type', 'status', 'location', 'note', 'gcalId', 'createdAt', 'updatedAt'],
   Assignments: ['id', 'title', 'type', 'subject', 'className', 'given', 'deadline', 'status', 'link', 'note', 'gcalId', 'createdAt', 'updatedAt'],
   Logbook: ['id', 'date', 'className', 'subject', 'topic', 'present', 'total', 'method', 'score', 'reflection', 'createdAt', 'updatedAt'],
-  TP: ['id', 'program', 'unit', 'code', 'objective', 'skill', 'month', 'status', 'note', 'createdAt', 'updatedAt'],
+  TP: ['id', 'program', 'unit', 'code', 'objective', 'detail', 'skill', 'month', 'week', 'task', 'media', 'status', 'note', 'createdAt', 'updatedAt'],
   Projects: ['id', 'code', 'clientName', 'clientEmail', 'clientWa', 'campus', 'nim', 'category', 'service', 'speed', 'price', 'discount', 'startDate', 'deadline', 'status', 'tasks', 'progress', 'portalToken', 'note', 'gcalId', 'createdAt', 'updatedAt'],
   TutorClasses: ['id', 'name', 'clientName', 'clientEmail', 'clientWa', 'institution', 'tutorType', 'mode', 'participants', 'totalSessions', 'rateType', 'rate', 'durationMin', 'days', 'startTime', 'startDate', 'status', 'note', 'createdAt', 'updatedAt'],
   TutorSessions: ['id', 'classId', 'no', 'date', 'start', 'end', 'topic', 'status', 'paid', 'note', 'gcalId', 'createdAt', 'updatedAt'],
@@ -1234,6 +1236,8 @@ const Store = {
 const MODULES = {
   school: { nav: 'Sekolah & Mengajar', title: 'Sekolah & Kinerja Mengajar', short: 'Sekolah', icon: 'school', desc: 'Jadwal, logbook, KPI, tugas & ujian',
     subs: [['jadwal', 'Jadwal & Kalender'], ['tugas', 'Tugas & Ujian'], ['deadline', 'Deadline Dinas'], ['kehadiran', 'Kehadiran & TP'], ['nilai', 'Nilai & Score List'], ['logbook', 'Logbook & KPI'], ['jobdesc', 'Jobdesc'], ['file', 'Tautan & File'], ['keuangan', 'Gaji & Honor'], ['lembar', 'Lembar Excel']] },
+  planner: { nav: 'Agenda & Aktivitas', title: 'Agenda & Aktivitas', short: 'Agenda', icon: 'calendar', desc: 'Kalender terpadu, deadline, tugas, dan rekapnya',
+    subs: [['kalender', 'Kalender Terpadu'], ['rekap', 'Rekap Aktivitas']] },
   project: { nav: 'Project & Klien', title: 'Project Management', short: 'Project', icon: 'project', desc: 'Klien, pengerjaan, invoice & kwitansi',
     subs: [['daftar', 'Daftar Project'], ['kanban', 'Kanban'], ['bayar', 'Pembayaran & Piutang'], ['harga', 'Pricelist & Kalkulator'], ['file', 'File Project']] },
   tutor: { nav: 'Tutor Class', title: 'Tutor Class', short: 'Tutor', icon: 'tutor', desc: 'Bimbel, les privat, workshop',
@@ -2224,6 +2228,7 @@ const Home = {
         ${card('finance', `<div><div class="big-label">Saldo berjalan</div><div class="big ${bal < 0 ? 'neg' : ''}">${idr(bal)}</div></div>${sparkline(series, bal < 0 ? 'var(--coral)' : 'var(--jade)')}
           <div class="hc-stats" style="grid-template-columns:repeat(3,1fr)">${stat(I18N.p('Masuk ', 'In ') + BLN[+mk.slice(5) - 1], idrShort(m.incomeOps), 'pos')}${stat(I18N.p('Keluar ', 'Out ') + BLN[+mk.slice(5) - 1], idrShort(m.expense), 'neg')}${stat('Rasio cicilan', `${Math.round(dr.ratio * 100)}% <span class="badge b-${drColor}">${drLabel}</span>`)}</div>
           <div class="hc-note">${nextInst ? `${I18N.p('Cicilan terdekat', 'Next instalment')}: <b>${esc(loanOf ? loanOf.creditor : '')}</b> ${idr(nextInst.amount)} — ${fmtDate(nextInst.dueDate)} ${UI.dueBadge(nextInst.dueDate)}` : I18N.p('Tidak ada tagihan cicilan.', 'No instalments due.')}</div>`, 'wide finance')}
+        ${card('planner', `<div class="hc-stats">${stat(I18N.p('Aktivitas 7 hari', 'Next 7 days'), (typeof Planner !== 'undefined' ? Planner.items(t, addDays(t, 7)).filter((x) => !x.done && x.kind !== 'mengajar').length : 0))}${stat(I18N.p('Terlambat', 'Overdue'), (typeof Planner !== 'undefined' ? Planner.items('2000-01-01', addDays(t, -1)).filter((x) => !x.done && !x.cancelled && x.kind !== 'mengajar').length : 0), 'neg')}</div><div class="hc-note">${I18N.p('Agenda, tugas, deadline, sesi, dan cicilan dalam satu kalender.', 'Agenda, tasks, deadlines, sessions, and instalments in one calendar.')}</div>`)}
         ${card('project', `<div class="hc-stats">${stat('Project aktif', activeP.length)}${stat('Piutang', idrShort(piutang), piutang ? 'warn' : '')}</div><div class="hc-note">${nextP ? `${I18N.p('Deadline terdekat', 'Next deadline')}: ${esc(nextP.clientName)} ${UI.dueBadge(nextP.deadline)}` : I18N.p('Belum ada deadline aktif.', 'No active deadline.')}</div>`)}
         ${card('school', `<div class="hc-stats">${stat('Beban mengajar', `${jp} JP<span class="muted mini"> / ${esc(st.jpTarget)}</span>`)}${stat('Tugas aktif', activeTasks)}</div><div class="hc-note">${todaySched ? I18N.p(`${todaySched} jam pelajaran hari ini`, `${todaySched} teaching slots today`) : I18N.p('Tidak ada jadwal hari ini', 'No classes today')}${openDl ? I18N.p(` — ${openDl} deadline dinas terbuka`, ` — ${openDl} open official deadlines`) : ''}.</div>`)}
         ${card('tutor', `<div class="hc-stats">${stat('Kelas aktif', activeC.length)}${stat('Sesi hari ini', todaySess)}</div><div class="hc-note">${I18N.p('Honor belum dibayar', 'Unpaid fees')}: <b>${idr(tutorDue)}</b></div>`)}
@@ -2306,9 +2311,10 @@ function monthCal(mk, events, { dayAct = '', mod = '' } = {}) {
     cells += `<div class="dc ${monthKey(d) !== mk ? 'out' : ''} ${d === t ? 'today' : ''}" ${dayAct ? `data-act="${dayAct}" data-date="${d}" data-mod="${mod}"` : ''}>
       <span class="dn">${parseISO(d).getDate()}</span>
       ${evs.slice(0, 3).map((e) => `<span class="ev" style="background:var(--${e.color}-soft);color:var(--${e.color})" data-act="calEv" data-sheet="${e.sheet}" data-id="${e.id}" title="${esc(e.title)}">${e.time ? esc(e.time) + ' ' : ''}${esc(e.title)}</span>`).join('')}
-      ${evs.length > 3 ? `<span class="mini muted">+${evs.length - 3} lagi</span>` : ''}</div>`;
+      ${evs.length > 3 ? `<span class="mini muted">+${evs.length - 3} ${I18N.p('lagi', 'more')}</span>` : ''}</div>`;
   }
-  return `<div class="cal">${['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].map((d) => `<div class="dh">${d}</div>`).join('')}${cells}</div>`;
+  const DH = I18N.lang === 'en' ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] : ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+  return `<div class="cal">${DH.map((d) => `<div class="dh">${d}</div>`).join('')}${cells}</div>`;
 }
 
 ACT.calEv = (d, el, e) => {
@@ -2446,8 +2452,12 @@ const School = {
         { k: 'unit', l: 'Unit' },
         { k: 'code', l: 'Kode TP' },
         { k: 'skill', l: 'Skill', list: ['Reading', 'Listening', 'Speaking', 'Writing'] },
-        { k: 'objective', l: 'Tujuan pembelajaran', t: 'textarea', req: 1 },
+        { k: 'objective', l: 'Tujuan pembelajaran', t: 'textarea', rows: 3, req: 1, full: 1 },
+        { k: 'detail', l: 'Rincian materi spesifik', t: 'textarea', rows: 2, full: 1 },
+        { k: 'task', l: 'Penugasan (bentuk tugas / asesmen)', t: 'textarea', rows: 2, full: 1 },
+        { k: 'media', l: 'Media ajar (alat, bahan, platform)', t: 'textarea', rows: 2, full: 1 },
         { k: 'month', l: 'Rencana bulan' },
+        { k: 'week', l: 'Rencana minggu' },
         { k: 'status', l: 'Status', t: 'select', o: ['Belum', 'Proses', 'Selesai'] },
         { k: 'note', l: 'Catatan', full: 1 }
       ],
@@ -2555,7 +2565,9 @@ VIEWS.school = {
           ${Object.keys(progs).length ? `<div class="bars mb">${Object.entries(progs).map(([p, l]) => { const d = l.filter((x) => x.status === 'Selesai').length; return `<div class="bar-row"><span>${esc(p)}</span>${UI.progress(d / l.length * 100)}<span class="mini muted">${d}/${l.length}</span></div>`; }).join('')}</div>
           ${UI.table([
             { h: 'Kode', f: (x) => `<b>${esc(x.code)}</b><div class="s">${esc(x.unit)}</div>` },
-            { h: 'Tujuan pembelajaran', f: (x) => `<div class="tp-full" style="max-width:600px">${esc(x.objective)}</div>` },
+            { h: 'Tujuan pembelajaran', f: (x) => `<div class="tp-full" style="min-width:320px">${esc(x.objective)}</div>${x.detail ? `<div class="s tp-full">${esc(x.detail)}</div>` : ''}` },
+            { h: 'Penugasan', f: (x) => `<div class="tp-full" style="min-width:170px">${esc(x.task || '—')}</div>` },
+            { h: 'Media ajar', f: (x) => `<div class="tp-full" style="min-width:170px">${esc(x.media || '—')}</div>` },
             { h: 'Skill', f: (x) => esc(x.skill) },
             { h: 'Status', f: (x) => `<select class="inline" data-chg="tpStatus" data-id="${x.id}">${['Belum', 'Proses', 'Selesai'].map((o) => `<option ${o === x.status ? 'selected' : ''}>${o}</option>`).join('')}</select>` },
             { h: '', cls: 'act', f: (x) => `<button class="btn xs" data-act="tpEdit" data-id="${x.id}">${ic('edit')}</button>` }
@@ -5369,7 +5381,9 @@ VIEWS.school.kehadiran = {
       <div class="card mb"><h3>${ic('check')}Ketercapaian tiap TP — ${esc(prog || '-')}</h3>
         ${UI.table([
           { h: 'Kode', f: (x) => `<b>${esc(x.tp.code)}</b><div class="s">${esc(x.tp.unit || '')}</div>` },
-          { h: 'Tujuan pembelajaran', f: (x) => `<div class="tp-full" style="max-width:560px">${esc(x.tp.objective)}</div>` },
+          { h: 'Tujuan pembelajaran', f: (x) => `<div class="tp-full" style="min-width:320px">${esc(x.tp.objective)}</div>${x.tp.detail ? `<div class="s tp-full">${esc(x.tp.detail)}</div>` : ''}` },
+          { h: 'Penugasan', f: (x) => `<div class="tp-full" style="min-width:160px">${esc(x.tp.task || '—')}</div>` },
+          { h: 'Media ajar', f: (x) => `<div class="tp-full" style="min-width:160px">${esc(x.tp.media || '—')}</div>` },
           { h: 'Pertemuan', cls: 'r', f: (x) => x.meetings || '—' },
           { h: 'Ketercapaian', f: (x) => x.pct == null ? '<span class="muted">belum diukur</span>' : `<div style="min-width:110px">${UI.progress(x.pct)}<div class="s">${Math.round(x.pct)}%</div></div>` },
           { h: 'Status', f: (x) => UI.badge(x.tp.status || 'Belum', x.tp.status === 'Selesai' ? 'jade' : x.tp.status === 'Proses' ? 'amber' : '') }
@@ -5455,6 +5469,9 @@ const I18N = {
   lang: 'en',
   dict: {
     /* navigasi & modul */
+    'Agenda & Aktivitas': 'Agenda & Activities', 'Kalender Terpadu': 'Unified Calendar', 'Rekap Aktivitas': 'Activity Recap',
+    'Kalender terpadu, deadline, tugas, dan rekapnya': 'Unified calendar for deadlines, tasks, and their recap',
+    'Sinkron Google Calendar': 'Sync Google Calendar', 'Ekspor rekap': 'Export recap', 'Tandai selesai': 'Mark done',
     'Beranda': 'Home', 'Modul': 'Modules', 'Sekolah & Mengajar': 'School & Teaching', 'Project & Klien': 'Projects & Clients',
     'Tutor Class': 'Tutor Class', 'Personal Finance': 'Personal Finance', 'Jurnal & Habit': 'Journal & Habits', 'File Storage': 'File Storage',
     'Cari & perintah': 'Search & commands', 'Pengaturan': 'Settings', 'Ciutkan menu': 'Collapse menu', 'Kunci aplikasi': 'Lock app',
@@ -5490,7 +5507,7 @@ const I18N = {
     'Jadwal mengajar mingguan': 'Weekly teaching timetable', 'Kelas diampu': 'Classes taught', 'Agenda bulan ini': 'Agenda this month',
     'Jadwal hari ini': "Today's schedule", 'Pertemuan tercatat': 'Meetings logged', 'Kehadiran': 'Attendance', 'Ketercapaian TP rata-rata': 'Average attainment',
     'TP tercapai': 'Objectives attained', 'Rekap per kelas': 'Class recap', 'Kehadiran vs ketercapaian per kelas': 'Attendance vs attainment by class',
-    'Catatan pertemuan': 'Meeting log', 'Tujuan pembelajaran': 'Learning objective', 'Ketercapaian': 'Attainment', 'Status': 'Status',
+    'Catatan pertemuan': 'Meeting log', 'Tujuan pembelajaran': 'Learning objective', 'Penugasan': 'Task / assessment', 'Media ajar': 'Teaching media', 'Rincian materi spesifik': 'Specific material details', 'Rencana minggu': 'Planned week', 'Rencana bulan': 'Planned month', 'Kode': 'Code', 'Pertemuan': 'Meetings', 'Ketercapaian': 'Attainment', 'Status': 'Status',
     'Belum selesai': 'Not finished', 'Terlambat': 'Overdue', 'Selesai': 'Done', 'Semua': 'All', 'Semua bulan': 'All months', 'Semua kelas': 'All classes',
     'Belum diukur': 'Not measured', 'belum diukur': 'not measured', 'Pekerjaan': 'Task', 'Deadline': 'Deadline', 'Sisa': 'Remaining', 'Urgensi': 'Urgency',
     'Bidang / kepanitiaan': 'Field / committee', 'Kegiatan': 'Activity', 'Bobot / JP': 'Weight / periods', 'Progres': 'Progress', 'Prediksi': 'Forecast', 'Risiko': 'Risk',
@@ -5985,6 +6002,309 @@ ACT.projContract = (d) => Docs.contract(d.id, !!d.print);
 ACT.tutorAgreement = (d) => Docs.tutorAgreement(d.id, !!d.print);
 ACT.receiptPrint = (d) => { const r = Docs.receiptPDF(d.id, false); if (r) Docs.print(r.doc); };
 ACT.invoicePrint = (d) => { const p = Store.get('Projects', d.id); const r = Docs.invoiceDoc(p); Docs.print(r.doc); };
+
+/* =====================================================================
+ * 31. AGENDA & AKTIVITAS — kalender terpadu + rekap lintas modul
+ *     Menggabungkan agenda, tugas & ujian, deadline dinas, deadline
+ *     project, sesi tutor, cicilan, dan to-do dalam satu tampilan yang
+ *     saling terhubung (klik item → langsung ke sumbernya).
+ * ===================================================================== */
+
+const KIND = {
+  agenda: { sheet: 'Agenda', label: 'Agenda', en: 'Agenda', color: 'sky', mod: 'school', sub: 'jadwal' },
+  tugas: { sheet: 'Assignments', label: 'Tugas & Ujian', en: 'Assignment', color: 'amber', mod: 'school', sub: 'tugas' },
+  dinas: { sheet: 'Deadlines', label: 'Deadline Dinas', en: 'Official deadline', color: 'coral', mod: 'school', sub: 'deadline' },
+  project: { sheet: 'Projects', label: 'Deadline Project', en: 'Project deadline', color: 'violet', mod: 'project', sub: 'daftar' },
+  sesi: { sheet: 'TutorSessions', label: 'Sesi Tutor', en: 'Tutor session', color: 'rose', mod: 'tutor', sub: 'sesi' },
+  cicilan: { sheet: 'LoanInstallments', label: 'Cicilan', en: 'Instalment', color: 'jade', mod: 'finance', sub: 'pinjaman' },
+  todo: { sheet: 'Todos', label: 'To-Do', en: 'To-do', color: 'slate', mod: 'journal', sub: 'todo' },
+  mengajar: { sheet: 'Schedule', label: 'Jadwal Mengajar', en: 'Teaching slot', color: 'brand', mod: 'school', sub: 'jadwal' }
+};
+
+const Planner = {
+  kindLabel(k) { return I18N.p(KIND[k].label, KIND[k].en); },
+
+  /** Semua aktivitas dalam rentang tanggal, dari seluruh modul. */
+  items(from, to, opt = {}) {
+    const out = [];
+    const inR = (d) => d && d >= from && d <= to;
+    const push = (o) => out.push(o);
+    const cls = Object.fromEntries(Store.all('TutorClasses').map((c) => [c.id, c]));
+    const loans = Object.fromEntries(Store.all('Loans').map((l) => [l.id, l]));
+
+    Store.all('Agenda').forEach((a) => {
+      if (!inR(a.date)) return;
+      push({ kind: 'agenda', id: a.id, date: a.date, time: a.start || '', title: a.title, sub: [a.type, a.location].filter(Boolean).join(' — '), done: a.status === 'Selesai', cancelled: a.status === 'Batal', gcal: !!a.gcalId });
+    });
+    Store.all('Assignments').forEach((a) => {
+      if (!inR(a.deadline)) return;
+      push({ kind: 'tugas', id: a.id, date: a.deadline, time: '', title: a.title, sub: [a.className, a.subject, a.type].filter(Boolean).join(' — '), done: ['Selesai', 'Dinilai'].includes(a.status), gcal: !!a.gcalId });
+    });
+    Store.all('Deadlines').forEach((d) => {
+      if (!inR(d.deadline)) return;
+      push({ kind: 'dinas', id: d.id, date: d.deadline, time: '', title: d.title, sub: [d.type, d.urgency].filter(Boolean).join(' — '), done: d.status === 'Done', gcal: !!d.gcalId });
+    });
+    Store.all('Projects').forEach((p) => {
+      if (!inR(p.deadline)) return;
+      push({ kind: 'project', id: p.id, date: p.deadline, time: '', title: `${p.clientName} — ${p.service}`, sub: `${p.code} — ${Math.round(p.progress || 0)}%`, done: p.status === 'Selesai', cancelled: p.status === 'Batal', gcal: !!p.gcalId });
+    });
+    Store.all('TutorSessions').forEach((s) => {
+      if (!inR(s.date)) return;
+      const c = cls[s.classId] || {};
+      push({ kind: 'sesi', id: s.id, date: s.date, time: s.start || '', title: `${c.name || 'Kelas'} #${s.no}`, sub: [c.clientName, s.topic].filter(Boolean).join(' — '), done: s.status === 'Selesai', cancelled: s.status === 'Batal', gcal: !!s.gcalId });
+    });
+    Store.all('LoanInstallments').forEach((i) => {
+      if (!inR(i.dueDate)) return;
+      push({ kind: 'cicilan', id: i.id, date: i.dueDate, time: '', title: `${(loans[i.loanId] || {}).creditor || '—'} #${i.no}`, sub: idr(i.amount), done: i.status === 'Lunas', gcal: !!i.gcalId });
+    });
+    Store.all('Todos').forEach((t) => {
+      if (!inR(t.date)) return;
+      push({ kind: 'todo', id: t.id, date: t.date, time: '', title: t.text, sub: t.priority || '', done: !!t.done, gcal: false });
+    });
+    if (opt.teaching) {
+      const jpMin = Number(Store.settings().jpMinutes) || 40;
+      let d = from;
+      let guard = 0;
+      while (d <= to && guard++ < 400) {
+        const dow = parseISO(d).getDay() || 7;
+        Store.where('Schedule', (x) => Number(x.day) === dow).forEach((x) => {
+          push({ kind: 'mengajar', id: x.id, date: d, time: x.start, title: x.className || x.subject, sub: `${x.start}–${x.end}${x.room ? ' — ' + x.room : ''}`, done: false, jp: School.isDuty(x) ? 0 : School.jpOf(x, jpMin), gcal: !!x.gcalId });
+        });
+        d = addDays(d, 1);
+      }
+    }
+    return out.sort((a, b) => (a.date + (a.time || '99')).localeCompare(b.date + (b.time || '99')));
+  },
+
+  state() {
+    const s = App.s('planner');
+    s.month = s.month || thisMonth();
+    s.off = s.off || {};
+    return s;
+  },
+  active(list) { const s = this.state(); return list.filter((x) => !s.off[x.kind]); },
+
+  open(it) {
+    const k = KIND[it.kind];
+    const go = {
+      agenda: () => School.agendaForm(it.id),
+      tugas: () => School.assignForm(it.id),
+      dinas: () => Work.dlForm(it.id),
+      project: () => { App.open('project', 'daftar'); Project.detail(it.id); },
+      sesi: () => Tutor.sessionForm(it.id),
+      cicilan: () => Finance.payInst(it.id),
+      todo: () => { App.open('journal', 'todo'); },
+      mengajar: () => School.scheduleForm(it.id)
+    };
+    (go[it.kind] || (() => App.open(k.mod, k.sub)))();
+  },
+
+  /** Tandai selesai langsung dari rekap/kalender. */
+  complete(it) {
+    const map = {
+      agenda: ['Agenda', { status: 'Selesai' }],
+      tugas: ['Assignments', { status: 'Selesai' }],
+      dinas: ['Deadlines', { status: 'Done' }],
+      sesi: ['TutorSessions', { status: 'Selesai' }],
+      todo: ['Todos', { done: true }],
+      project: ['Projects', { status: 'Selesai', progress: 100 }]
+    };
+    const m = map[it.kind];
+    if (!m) { this.open(it); return; }
+    return Store.update(m[0], it.id, m[1]);
+  },
+
+  dayModal(date) {
+    const list = this.items(date, date, { teaching: true });
+    const body = list.length ? `<ul class="list">${list.map((x) => `<li class="link" data-act="planOpen" data-kind="${x.kind}" data-id="${x.id}">
+        <span class="dotc" style="background:var(--${KIND[x.kind].color})"></span>
+        <div class="grow"><div class="t" style="${x.done ? 'text-decoration:line-through;opacity:.6' : ''}">${x.time ? `<b>${esc(x.time)}</b> ` : ''}${esc(x.title)}</div><div class="s">${esc(x.sub || '')}</div></div>
+        <span class="badge b-${KIND[x.kind].color}">${esc(this.kindLabel(x.kind))}</span>
+        ${x.gcal ? UI.badge('GCal', 'brand') : ''}
+        ${!x.done && x.kind !== 'mengajar' && x.kind !== 'cicilan' ? `<button class="btn xs" data-act="planDone" data-kind="${x.kind}" data-id="${x.id}">${ic('check')}</button>` : ''}</li>`).join('')}</ul>`
+      : UI.empty(I18N.p('Tidak ada aktivitas', 'Nothing scheduled'), I18N.p('Tambahkan agenda, tugas, atau deadline untuk tanggal ini.', 'Add an agenda item, assignment, or deadline for this date.'));
+    UI.modal({
+      title: fmtDate(date, true), size: 'wide', body,
+      foot: `<button class="btn" data-close data-act="agAddOn" data-date="${date}">${ic('plus')}Agenda</button>
+        <button class="btn" data-close data-act="asgAddOn" data-date="${date}">${ic('plus')}Tugas</button>
+        <button class="btn" data-close data-act="dlAddOn" data-date="${date}">${ic('plus')}Deadline dinas</button>
+        <button class="btn primary" data-close>Tutup</button>`
+    });
+  }
+};
+
+VIEWS.planner = {
+  kalender: {
+    actions: () => `<button class="btn" data-act="planSync">${ic('refresh')}Sinkron Google Calendar</button><button class="btn mod" data-act="agAdd">${ic('plus')}Agenda</button>`,
+    render() {
+      const s = Planner.state();
+      const t = todayISO();
+      const from = s.month + '-01';
+      const to = addDays(addMonths(from, 1), -1);
+      const all = Planner.items(from, to, { teaching: !!s.teaching });
+      const list = Planner.active(all);
+      const byKind = groupBy(all, (x) => x.kind);
+      const evs = list.map((x) => ({ date: x.date, time: x.time, title: x.title, color: KIND[x.kind].color, sheet: KIND[x.kind].sheet, id: x.id, kind: x.kind }));
+      const week = Planner.active(Planner.items(t, addDays(t, 7), { teaching: false })).filter((x) => !x.done);
+      const today = Planner.active(Planner.items(t, t, { teaching: true }));
+      const late = Planner.active(Planner.items('2000-01-01', addDays(t, -1))).filter((x) => !x.done && !x.cancelled && x.kind !== 'mengajar');
+      return `
+        <div class="grid g5 mb">
+          <div class="stat accent"><small>${I18N.p('Aktivitas bulan ini', 'Activities this month')}</small><b>${all.filter((x) => x.kind !== 'mengajar').length}</b><span class="sub">${monthLabel(s.month)}</span></div>
+          <div class="stat"><small>${I18N.p('Hari ini', 'Today')}</small><b>${today.length}</b><span class="sub">${today.filter((x) => x.kind === 'mengajar').length} ${I18N.p('jam mengajar', 'teaching slots')}</span></div>
+          <div class="stat"><small>${I18N.p('7 hari ke depan', 'Next 7 days')}</small><b>${week.length}</b></div>
+          <div class="stat"><small>${I18N.p('Terlambat', 'Overdue')}</small><b class="${late.length ? 'neg' : 'pos'}">${late.length}</b></div>
+          <div class="stat"><small>${I18N.p('Tersambung Calendar', 'Linked to Calendar')}</small><b>${all.filter((x) => x.gcal).length}</b><span class="sub">${I18N.p('event otomatis', 'auto events')}</span></div>
+        </div>
+        <div class="toolbar">
+          <button class="btn sm" data-act="planMonth" data-n="-1">${ic('chevL')}</button>
+          <b style="min-width:150px;text-align:center">${monthLabel(s.month)}</b>
+          <button class="btn sm" data-act="planMonth" data-n="1">${ic('chevR')}</button>
+          <button class="btn sm ghost" data-act="planMonth" data-n="0">${I18N.p('Bulan ini', 'This month')}</button>
+          <span class="grow"></span>
+          ${Object.keys(KIND).filter((k) => k !== 'mengajar').map((k) => `<button class="badge b-${KIND[k].color}" data-act="planToggle" data-kind="${k}" style="cursor:pointer;opacity:${s.off[k] ? .35 : 1}"><span class="dotc" style="background:var(--${KIND[k].color})"></span>${esc(Planner.kindLabel(k))} ${(byKind[k] || []).length}</button>`).join('')}
+          <label class="checkline mini"><input type="checkbox" class="check" data-chg="planTeaching" ${s.teaching ? 'checked' : ''}> ${I18N.p('Tampilkan jadwal mengajar', 'Show teaching slots')}</label>
+        </div>
+        <div class="grid g2" style="grid-template-columns:1.55fr 1fr">
+          <div class="card">${monthCal(s.month, evs, { dayAct: 'planDay', mod: 'planner' })}
+            <p class="mini muted">${I18N.p('Klik tanggal untuk melihat & menambah aktivitas hari itu. Klik item untuk membuka sumbernya.', 'Click a date to see and add that day’s activities. Click an item to open its source.')}</p></div>
+          <div>
+            <div class="card mb"><h3>${ic('clock')}${I18N.p('Hari ini', 'Today')}</h3>
+              ${today.length ? `<ul class="list">${today.map((x) => `<li class="link" data-act="planOpen" data-kind="${x.kind}" data-id="${x.id}"><span class="dotc" style="background:var(--${KIND[x.kind].color})"></span><div class="grow"><div class="t" style="${x.done ? 'text-decoration:line-through;opacity:.6' : ''}">${x.time ? `<b>${esc(x.time)}</b> ` : ''}${esc(x.title)}</div><div class="s">${esc(x.sub || '')}</div></div><span class="badge b-${KIND[x.kind].color}">${esc(Planner.kindLabel(x.kind))}</span></li>`).join('')}</ul>`
+                : UI.empty(I18N.p('Hari ini lapang', 'Nothing today'))}</div>
+            <div class="card"><h3>${ic('calendar')}${I18N.p('7 hari ke depan', 'Next 7 days')}</h3>
+              ${week.length ? `<ul class="list">${week.slice(0, 12).map((x) => `<li class="link" data-act="planOpen" data-kind="${x.kind}" data-id="${x.id}"><span class="dotc" style="background:var(--${KIND[x.kind].color})"></span><div class="grow"><div class="t">${esc(x.title)}</div><div class="s">${fmtDate(x.date, true)}${x.time ? ' — ' + esc(x.time) : ''}</div></div>${UI.dueBadge(x.date)}</li>`).join('')}</ul>`
+                : UI.empty(I18N.p('Belum ada agenda', 'Nothing scheduled'))}</div>
+          </div>
+        </div>`;
+    }
+  },
+
+  rekap: {
+    actions: () => `<button class="btn" data-act="planExport">${ic('download')}Ekspor rekap</button><button class="btn mod" data-act="planSync">${ic('refresh')}Sinkron Google Calendar</button>`,
+    render() {
+      const s = Planner.state();
+      const t = todayISO();
+      const range = s.range || 'bulan';
+      const from = range === 'semua' ? '2000-01-01' : range === '30' ? t : s.month + '-01';
+      const to = range === 'semua' ? '2100-12-31' : range === '30' ? addDays(t, 30) : addDays(addMonths(s.month + '-01', 1), -1);
+      let list = Planner.active(Planner.items(from, to)).filter((x) => x.kind !== 'mengajar');
+      if (s.status === 'open') list = list.filter((x) => !x.done && !x.cancelled);
+      else if (s.status === 'done') list = list.filter((x) => x.done);
+      else if (s.status === 'late') list = list.filter((x) => !x.done && !x.cancelled && x.date < t);
+      const q = (s.q || '').toLowerCase();
+      if (q) list = list.filter((x) => `${x.title} ${x.sub}`.toLowerCase().includes(q));
+
+      const monthAll = Planner.items(s.month + '-01', addDays(addMonths(s.month + '-01', 1), -1)).filter((x) => x.kind !== 'mengajar');
+      const done = monthAll.filter((x) => x.done).length;
+      const late = Planner.items('2000-01-01', addDays(t, -1)).filter((x) => !x.done && !x.cancelled && x.kind !== 'mengajar');
+      const byKind = groupBy(monthAll, (x) => x.kind);
+
+      return `
+        <div class="grid g5 mb">
+          <div class="stat accent"><small>${I18N.p('Total aktivitas', 'Total activities')}</small><b>${monthAll.length}</b><span class="sub">${monthLabel(s.month)}</span></div>
+          <div class="stat"><small>${I18N.p('Selesai', 'Completed')}</small><b class="pos">${monthAll.length ? Math.round(done / monthAll.length * 100) : 0}%</b>${UI.progress(monthAll.length ? done / monthAll.length * 100 : 0)}</div>
+          <div class="stat"><small>${I18N.p('Terlambat', 'Overdue')}</small><b class="${late.length ? 'neg' : 'pos'}">${late.length}</b><span class="sub">${I18N.p('seluruh periode', 'all periods')}</span></div>
+          <div class="stat"><small>${I18N.p('Hari ini', 'Today')}</small><b>${Planner.items(t, t).filter((x) => x.kind !== 'mengajar' && !x.done).length}</b></div>
+          <div class="stat"><small>${I18N.p('Tersambung Calendar', 'Linked to Calendar')}</small><b>${monthAll.filter((x) => x.gcal).length}/${monthAll.length}</b></div>
+        </div>
+        <div class="grid g2 mb" style="grid-template-columns:1fr 1.3fr">
+          <div class="card"><h4>${I18N.p('Komposisi per jenis', 'Breakdown by type')}</h4>
+            <div class="bars">${Object.keys(KIND).filter((k) => k !== 'mengajar').map((k) => {
+              const l = byKind[k] || [];
+              const d = l.filter((x) => x.done).length;
+              return `<div class="bar-row" style="grid-template-columns:150px 1fr auto"><span>${esc(Planner.kindLabel(k))}</span>
+                <div class="progress" style="--mc:var(--${KIND[k].color})"><i style="width:${l.length ? d / l.length * 100 : 0}%"></i></div>
+                <span class="mini muted nowrap">${d}/${l.length}</span></div>`;
+            }).join('')}</div>
+            <p class="mini muted">${I18N.p('Bar menunjukkan bagian yang sudah diselesaikan.', 'Bars show the completed share.')}</p></div>
+          <div class="card"><h4>${I18N.p('Aktivitas per minggu', 'Activities per week')}</h4><div class="chart-box sm"><canvas id="ch-plan"></canvas></div></div>
+        </div>
+        <div class="toolbar">
+          <input class="input search" placeholder="${I18N.p('Cari aktivitas…', 'Search activities…')}" data-chg="planQ" data-live data-fk="planQ" value="${esc(s.q || '')}">
+          <select class="select" data-chg="planRange">${[['bulan', monthLabel(s.month)], ['30', I18N.p('30 hari ke depan', 'Next 30 days')], ['semua', I18N.p('Semua periode', 'All periods')]].map(([k, l]) => `<option value="${k}" ${k === range ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
+          <select class="select" data-chg="planStatus">${[['open', I18N.p('Belum selesai', 'Open')], ['late', I18N.p('Terlambat', 'Overdue')], ['done', I18N.p('Selesai', 'Completed')], ['all', I18N.p('Semua', 'All')]].map(([k, l]) => `<option value="${k}" ${k === (s.status || 'open') ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
+          <button class="btn sm" data-act="planMonth" data-n="-1">${ic('chevL')}</button><button class="btn sm" data-act="planMonth" data-n="1">${ic('chevR')}</button>
+        </div>
+        ${UI.table([
+          { h: I18N.p('Tanggal', 'Date'), f: (x) => `<span class="nowrap">${fmtDate(x.date)}</span><div class="s">${x.time ? esc(x.time) : fmtDate(x.date, true).split(',')[0]}</div>` },
+          { h: I18N.p('Jenis', 'Type'), f: (x) => UI.badge(Planner.kindLabel(x.kind), KIND[x.kind].color) },
+          { h: I18N.p('Aktivitas', 'Activity'), f: (x) => `<div class="t" style="${x.done ? 'text-decoration:line-through;opacity:.65' : ''}">${esc(x.title)}</div><div class="s">${esc(x.sub || '')}</div>` },
+          { h: I18N.p('Status', 'Status'), f: (x) => x.cancelled ? UI.badge(I18N.p('Batal', 'Cancelled')) : x.done ? UI.badge(I18N.p('Selesai', 'Done'), 'jade') : UI.dueBadge(x.date) },
+          { h: 'Calendar', f: (x) => x.gcal ? UI.badge('GCal', 'brand') : '<span class="muted mini">—</span>' },
+          { h: '', cls: 'act', f: (x) => `${!x.done && !x.cancelled && x.kind !== 'cicilan' ? `<button class="btn xs" data-act="planDone" data-kind="${x.kind}" data-id="${x.id}" title="${I18N.p('Tandai selesai', 'Mark done')}">${ic('check')}</button> ` : ''}<button class="btn xs" data-act="planOpen" data-kind="${x.kind}" data-id="${x.id}">${ic('eye')}</button>` }
+        ], list, { emptyMsg: I18N.p('Tidak ada aktivitas pada filter ini.', 'No activities for this filter.') })}`;
+    },
+    after() {
+      const s = Planner.state();
+      const from = s.month + '-01';
+      const to = addDays(addMonths(from, 1), -1);
+      const list = Planner.items(from, to).filter((x) => x.kind !== 'mengajar');
+      const weeks = {};
+      list.forEach((x) => {
+        const d = parseISO(x.date);
+        const w = Math.ceil(d.getDate() / 7);
+        weeks[w] = weeks[w] || { all: 0, done: 0 };
+        weeks[w].all++;
+        if (x.done) weeks[w].done++;
+      });
+      const labels = Object.keys(weeks).sort();
+      if (!labels.length) return;
+      mkChart('ch-plan', {
+        type: 'bar',
+        data: { labels: labels.map((w) => I18N.p('Minggu ' + w, 'Week ' + w)), datasets: [
+          { label: I18N.p('Selesai', 'Completed'), data: labels.map((w) => weeks[w].done), backgroundColor: cssVar('--jade'), borderRadius: 6, stack: 's' },
+          { label: I18N.p('Belum', 'Open'), data: labels.map((w) => weeks[w].all - weeks[w].done), backgroundColor: cssVar('--amber'), borderRadius: 6, stack: 's' }
+        ] },
+        options: { maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, ticks: { precision: 0 } } } }
+      });
+    }
+  }
+};
+
+Object.assign(ACT, {
+  planMonth: (d) => { const s = Planner.state(); s.month = d.n === '0' ? thisMonth() : shiftMonth(s.month, Number(d.n)); App.refresh(); },
+  planToggle: (d) => { const s = Planner.state(); s.off[d.kind] = !s.off[d.kind]; App.refresh(); },
+  planDay: (d) => Planner.dayModal(d.date),
+  planOpen: (d, el, e) => { if (e) e.stopPropagation(); UI.closeAll(); Planner.open({ kind: d.kind, id: d.id }); },
+  planDone: async (d, el, e) => {
+    if (e) e.stopPropagation();
+    await Planner.complete({ kind: d.kind, id: d.id });
+    UI.toast(I18N.p('Ditandai selesai', 'Marked as done'), 'ok', 1600);
+  },
+  planSync: async () => {
+    if (!Store.isRemote()) return UI.toast(I18N.p('Perlu koneksi Google Sheets.', 'Requires a Google Sheets connection.'), 'err');
+    UI.toast(I18N.p('Menyinkronkan kalender…', 'Syncing calendar…'), '', 4000);
+    const j = await Api.call('resyncCalendar');
+    (j.patches || []).forEach((p) => { const r = Store.get(p.sheet, p.id); if (r) r.gcalId = p.gcalId; });
+    Store.saveCache();
+    App.refresh();
+    UI.toast(I18N.p(`${j.synced} item diperiksa, ${j.patches.length} event diperbarui`, `${j.synced} items checked, ${j.patches.length} events updated`), 'ok', 6000);
+  },
+  planExport: () => {
+    const s = Planner.state();
+    const from = s.month + '-01';
+    const list = Planner.items(from, addDays(addMonths(from, 1), -1)).filter((x) => x.kind !== 'mengajar');
+    const X = Excel.lib();
+    const wb = X.utils.book_new();
+    const rows = list.map((x) => ({
+      Tanggal: x.date, Jam: x.time || '', Jenis: KIND[x.kind].label, Aktivitas: x.title, Rincian: x.sub || '',
+      Status: x.cancelled ? 'Batal' : x.done ? 'Selesai' : (x.date < todayISO() ? 'Terlambat' : 'Terjadwal'),
+      'Google Calendar': x.gcal ? 'Ya' : 'Tidak'
+    }));
+    X.utils.book_append_sheet(wb, X.utils.json_to_sheet(rows), 'Rekap ' + s.month);
+    X.writeFile(wb, `Rekap_Aktivitas_${s.month}.xlsx`);
+  },
+  agAddOn: (d) => School.agendaForm(null, d.date),
+  asgAddOn: (d) => School.assignForm(),
+  dlAddOn: (d) => Work.dlForm()
+});
+Object.assign(CHG, {
+  planQ: (v) => { Planner.state().q = v; App.refresh(); },
+  planRange: (v) => { Planner.state().range = v; App.refresh(); },
+  planStatus: (v) => { Planner.state().status = v; App.refresh(); },
+  planTeaching: (v) => { Planner.state().teaching = v; App.refresh(); }
+});
 
 /* Mulai aplikasi (setelah seluruh modul termuat) */
 boot();
