@@ -1073,6 +1073,7 @@ const Store = {
   CACHE_KEY: 'mph_cache_v1',
   data: {},
   meta: {},
+  dataVersion: '',
   services: {},
   status: 'local',      // local | busy | ok | err
   lastSync: null,
@@ -1108,7 +1109,11 @@ const Store = {
       return;
     }
     if (this.isRemote()) {
-      try { const c = JSON.parse(localStorage.getItem(this.CACHE_KEY) || 'null'); if (c && c.data) { this.setAll(c.data); this.services = c.services || {}; this.meta = c.meta || {}; } else this.setAll({}); } catch (e) { this.setAll({}); }
+      try {
+        const c = JSON.parse(Keep.get(this.CACHE_KEY) || 'null');
+        if (c && c.data) { this.setAll(c.data); this.services = c.services || {}; this.meta = c.meta || {}; this.dataVersion = c.dataVersion || ''; }
+        else this.setAll({});
+      } catch (e) { this.setAll({}); }
       await this.pull();
     } else {
       try { this.setAll(JSON.parse(localStorage.getItem(this.LOCAL_KEY) || '{}')); } catch (e) { this.setAll({}); }
@@ -1116,14 +1121,20 @@ const Store = {
     }
   },
 
-  async pull() {
+  async pull(opt = {}) {
     if (!this.isRemote()) { this.status = 'local'; return; }
     this.status = 'busy'; UI.syncChip();
     try {
-      const j = await Api.call('bootstrap');
+      const j = await Api.call('bootstrap', opt.force ? {} : { known: this.dataVersion || '' });
+      if (j.unchanged) {
+        this.status = 'ok'; this.lastSync = new Date(); this.lastError = '';
+        UI.syncChip();
+        return;
+      }
       this.setAll(j.data);
       this.services = j.services || {};
       this.meta = j.meta || {};
+      this.dataVersion = j.dataVersion || '';
       this.status = 'ok'; this.lastSync = new Date(); this.lastError = '';
       this.saveCache();
     } catch (e) {
@@ -1137,7 +1148,7 @@ const Store = {
     try { localStorage.setItem(this.LOCAL_KEY, JSON.stringify(this.data)); } catch (e) { UI.toast('Penyimpanan browser penuh. Ekspor cadangan lalu kurangi data.', 'err'); }
   },
   saveCache() {
-    try { localStorage.setItem(this.CACHE_KEY, JSON.stringify({ data: this.data, services: this.services, meta: this.meta, at: Date.now() })); } catch (e) { /* cache opsional */ }
+    try { Keep.set(this.CACHE_KEY, JSON.stringify({ data: this.data, services: this.services, meta: this.meta, dataVersion: this.dataVersion, at: Date.now() })); } catch (e) { /* cache opsional */ }
   },
 
   all(sheet) { return this.data[sheet] || []; },
@@ -1204,6 +1215,7 @@ const Store = {
     const payload = ops.map((op) => ({ op: op.op, sheet: op.sheet, id: op.id, row: op.row, noCal: !!op.noCal }));
     const p = this.queue.then(() => Api.call('batch', { ops: payload })).then((j) => {
       (j.patches || []).forEach((pt) => { const r = this.get(pt.sheet, pt.id); if (r) r.gcalId = pt.gcalId; });
+      this.dataVersion = '';
       if (ops.some((op) => op.sheet === 'Schedule')) return this.pull().then(() => { App.refresh(); return j; });
       if (j.warnings && j.warnings.length) UI.toast('Tersimpan. Catatan kalender: ' + j.warnings[0], '', 6000);
       else if (!silent) UI.flashSaved();
@@ -1245,7 +1257,7 @@ const Store = {
  * ------------------------------------------------------------------- */
 const MODULES = {
   school: { nav: 'Sekolah & Mengajar', title: 'Sekolah & Kinerja Mengajar', short: 'Sekolah', icon: 'school', desc: 'Jadwal, logbook, KPI, tugas & ujian',
-    subs: [['jadwal', 'Jadwal & Kalender'], ['tugas', 'Tugas & Ujian'], ['deadline', 'Deadline Dinas'], ['kehadiran', 'Kehadiran & TP'], ['nilai', 'Nilai & Score List'], ['logbook', 'Logbook & KPI'], ['jobdesc', 'Jobdesc'], ['file', 'Tautan & File'], ['keuangan', 'Gaji & Honor'], ['lembar', 'Lembar Excel']] },
+    subs: [['jadwal', 'Jadwal & Kalender'], ['tugas', 'Tugas & Ujian'], ['kegiatan', 'Kegiatan & Appointment'], ['deadline', 'Deadline Dinas'], ['kehadiran', 'Kehadiran & TP'], ['nilai', 'Nilai & Score List'], ['logbook', 'Logbook & KPI'], ['jobdesc', 'Jobdesc'], ['file', 'Tautan & File'], ['keuangan', 'Gaji & Honor'], ['lembar', 'Lembar Excel']] },
   planner: { nav: 'Agenda & Aktivitas', title: 'Agenda & Aktivitas', short: 'Agenda', icon: 'calendar', desc: 'Kalender terpadu, deadline, tugas, dan rekapnya',
     subs: [['kalender', 'Kalender Terpadu'], ['appointment', 'Daftar Kegiatan'], ['rekap', 'Rekap Aktivitas']] },
   project: { nav: 'Project & Klien', title: 'Project Management', short: 'Project', icon: 'project', desc: 'Klien, pengerjaan, invoice & kwitansi',
@@ -1866,7 +1878,7 @@ const Settings = {
           <div class="card soft span2"><h4>${ic('cloud')}Impor database lengkap</h4><p class="mini muted" style="margin-top:0">Pilih file <b>MyProductivityHub_Database.xlsx</b> (atau file cadangan). Semua sheet dimasukkan sekaligus; data yang sudah ada <b>tidak diubah dan tidak dihapus</b>. Sheet berawalan "ARSIP" disalin utuh sebagai arsip.</p><button class="btn sm primary" data-s="importFull">Impor database lengkap</button></div>
           <div class="card soft"><h4>${ic('upload')}Impor</h4><p class="mini muted" style="margin-top:0">Dari file cadangan aplikasi ini atau Excel lama Anda (Task Management, Appointment, Schedule, PROJECT, dll).</p><button class="btn sm" data-s="import">Impor dari Excel</button></div>
           <div class="card soft"><h4>${ic('cloud')}Pindahkan data lokal</h4><p class="mini muted" style="margin-top:0">Mengirim data yang tersimpan di browser (mode lokal) ke Google Sheets. Baris dengan ID yang sama dilewati.</p><button class="btn sm" data-s="migrate" ${remote && !EMBEDDED ? '' : 'disabled'}>Kirim data lokal ke Google Sheets</button></div>
-          <div class="card soft"><h4>${ic('lock')}Keamanan (PIN)</h4><p class="mini muted" style="margin-top:0">Lock screen sebelum Beranda; kunci otomatis setelah 10 menit tidak aktif. PIN disimpan sebagai hash di server. Status: <b>${svc.pinSet ? 'aktif' : 'belum dibuat'}</b>.</p><div class="btn-row"><button class="btn sm" data-s="pin" ${remote ? '' : 'disabled'}>${svc.pinSet ? 'Ganti PIN' : 'Buat PIN'}</button>${svc.pinSet ? `<button class="btn sm" data-s="lock">Kunci sekarang</button>` : ''}</div></div>
+          <div class="card soft"><h4>${ic('lock')}Keamanan (PIN)</h4><p class="mini muted" style="margin-top:0">Lock screen sebelum Beranda; kunci otomatis setelah 10 menit tidak aktif. PIN disimpan sebagai hash di server. Status: <b>${svc.pinSet ? 'aktif' : 'belum dibuat'}</b>.</p><div class="btn-row"><button class="btn sm" data-s="pin" ${remote ? '' : 'disabled'}>${svc.pinSet ? 'Ganti PIN' : 'Buat PIN'}</button>${svc.pinSet ? `<button class="btn sm" data-s="lock">Kunci sekarang</button><button class="btn sm danger" data-s="pinoff">Matikan PIN</button>` : ''}</div></div>
           <div class="card soft"><h4>${ic('lock')}Perangkat terpercaya</h4><p class="mini muted" style="margin-top:0">Perangkat yang dicentang "Ingat perangkat ini" bisa membuka aplikasi tanpa PIN selama 180 hari. Perangkat ini: <b>${Lock.device() ? 'terdaftar' : 'belum'}</b>.</p><div class="btn-row"><button class="btn sm" data-s="devices" ${remote ? '' : 'disabled'}>Lihat daftar</button><button class="btn sm danger" data-s="forget">Lupakan perangkat ini</button></div></div>
           <div class="card soft"><h4>${ic('cloud')}Backup Drive</h4><p class="mini muted" style="margin-top:0">Salinan spreadsheet ke folder <b>My Productivity Hub — Backup</b>; 8 salinan terakhir disimpan, sisanya ke Sampah. Trigger mingguan: <b>${svc.backup ? 'aktif' : 'belum dipasang'}</b>.</p><div class="btn-row"><button class="btn sm" data-s="backup" ${remote ? '' : 'disabled'}>Backup sekarang</button><button class="btn sm" data-s="backupTrigger" ${remote ? '' : 'disabled'}>Pasang backup mingguan</button></div></div>
           <div class="card soft"><h4>${ic('refresh')}Riwayat perubahan</h4><p class="mini muted" style="margin-top:0">Setiap tambah/ubah/hapus tercatat di sheet <b>_Log</b> dan bisa diurungkan (90 hari).</p><button class="btn sm" data-s="log" ${remote ? '' : 'disabled'}>Buka riwayat & urungkan</button></div>
@@ -1960,6 +1972,7 @@ const Settings = {
       }
       case 'forget': { await Lock.lock(false, true); break; }
       case 'lock': m.close(); Lock.lock(); break;
+      case 'pinoff': m.close(); Lock.disableForm(); break;
       case 'backup': await ACT.backupNow(); break;
       case 'backupTrigger': await ACT.setupBackup(); m.close(); this.open('data'); break;
       case 'log': m.close(); ChangeLog.open(); break;
@@ -2142,25 +2155,17 @@ const Fin = {
  * 16. EVENT TERPADU (kalender & agenda mendatang)
  * ------------------------------------------------------------------- */
 function collectEvents(from, to, mods = ['school', 'project', 'tutor', 'finance']) {
-  const out = [];
-  const inR = (d) => d && d >= from && d <= to;
-  if (mods.includes('school')) {
-    Store.all('Agenda').forEach((a) => { if (inR(a.date) && a.status !== 'Batal') out.push({ date: a.date, time: a.start, title: a.title, color: 'sky', mod: 'school', sub: 'jadwal', kind: 'Agenda', id: a.id, sheet: 'Agenda' }); });
-    Store.all('Deadlines').forEach((d) => { if (inR(d.deadline) && d.status !== 'Done') out.push({ date: d.deadline, time: '', title: `Deadline dinas: ${d.title}`, color: 'coral', mod: 'school', sub: 'deadline', kind: d.type || 'Dinas', id: d.id, sheet: 'Deadlines' }); });
-    Store.all('Assignments').forEach((a) => { if (inR(a.deadline) && !['Selesai', 'Dinilai'].includes(a.status)) out.push({ date: a.deadline, time: '', title: `Deadline: ${a.title}`, color: 'amber', mod: 'school', sub: 'tugas', kind: a.type || 'Tugas', id: a.id, sheet: 'Assignments' }); });
-  }
-  if (mods.includes('project')) {
-    Store.all('Projects').forEach((p) => { if (inR(p.deadline) && !['Selesai', 'Batal'].includes(p.status)) out.push({ date: p.deadline, time: '', title: `Deadline ${p.clientName}`, color: 'violet', mod: 'project', sub: 'daftar', kind: 'Project', id: p.id, sheet: 'Projects' }); });
-  }
-  if (mods.includes('tutor')) {
-    const cls = Object.fromEntries(Store.all('TutorClasses').map((c) => [c.id, c]));
-    Store.all('TutorSessions').forEach((s) => { if (inR(s.date) && s.status !== 'Batal') out.push({ date: s.date, time: s.start, title: `${(cls[s.classId] || {}).name || 'Kelas'} #${s.no}`, color: 'rose', mod: 'tutor', sub: 'sesi', kind: 'Sesi', id: s.id, sheet: 'TutorSessions', done: s.status === 'Selesai' }); });
-  }
-  if (mods.includes('finance')) {
-    const loans = Object.fromEntries(Store.all('Loans').map((l) => [l.id, l]));
-    Store.all('LoanInstallments').forEach((i) => { if (inR(i.dueDate) && i.status !== 'Lunas') out.push({ date: i.dueDate, time: '', title: `Cicilan ${(loans[i.loanId] || {}).creditor || ''}`, color: 'coral', mod: 'finance', sub: 'pinjaman', kind: 'Cicilan', id: i.id, sheet: 'LoanInstallments' }); });
-  }
-  return out.sort((a, b) => (a.date + (a.time || '99')).localeCompare(b.date + (b.time || '99')));
+  // memakai ekspansi Planner agar agenda berulang tampil di setiap hari pengulangan
+  // dan kegiatan berdurasi tampil di seluruh rentang harinya.
+  if (typeof Planner === 'undefined') return [];
+  return Planner.items(from, to).filter((x) => {
+    const k = KIND[x.kind];
+    return k && mods.includes(k.mod) && x.kind !== 'mengajar' && !x.cancelled;
+  }).map((x) => ({
+    date: x.date, time: x.time || '', title: x.title, color: KIND[x.kind].color,
+    mod: KIND[x.kind].mod, sub: KIND[x.kind].sub, kind: Planner.kindLabel(x.kind),
+    id: x.id, sheet: KIND[x.kind].sheet, done: x.done
+  }));
 }
 
 function sparkline(values, color = 'var(--jade)') {
@@ -2520,21 +2525,16 @@ VIEWS.school = {
           }).join('')}</div>` : UI.empty('Belum ada jadwal', 'Tambahkan manual atau impor dari sheet "Schedule" di Excel Anda.', `<button class="btn sm" data-act="schAdd">${ic('plus')}Tambah jadwal</button>`)}
           ${Object.keys(byClass).length ? `<div class="flex mt">${Object.entries(byClass).map(([k, v]) => `<span class="badge b-sky">${esc(k)}: ${v} JP</span>`).join('')}</div>` : ''}
         </div>
-        <div class="grid g2" style="grid-template-columns:1.6fr 1fr">
-          <div class="card">
+        <div class="card cal-full">
             <div class="cal-head"><h4>${monthLabel(s.month)}</h4>
               <button class="btn sm" data-act="calMove" data-n="-1" aria-label="Bulan sebelumnya">${ic('chevL')}</button>
               <button class="btn sm" data-act="calMove" data-n="0">Bulan ini</button>
               <button class="btn sm" data-act="calMove" data-n="1" aria-label="Bulan berikutnya">${ic('chevR')}</button>
               <label class="checkline mini" style="margin-left:auto"><input type="checkbox" class="check" data-chg="calAll" ${s.calAll ? 'checked' : ''}> Semua modul</label>
             </div>
-            ${monthCal(s.month, evs, { dayAct: 'calDay', mod: 'school' })}
-            <p class="mini muted">Klik tanggal untuk menambah agenda. Klik item untuk membuka detail.</p>
-          </div>
-          <div class="card"><h3>Agenda ${monthLabel(s.month)}</h3>
-            ${monthAg.length ? `<ul class="list">${monthAg.map((a) => `<li class="link" data-act="agEdit" data-id="${a.id}"><span class="dotc" style="background:var(--${a.status === 'Selesai' ? 'jade' : a.status === 'Batal' ? 'muted' : 'sky'})"></span><div class="grow"><div class="t">${esc(a.title)}</div><div class="s">${fmtDate(a.date, true)}${a.start ? ' — ' + esc(a.start) + (a.end ? '–' + esc(a.end) : '') : ''}${a.type ? ' — ' + esc(a.type) : ''}</div></div>${a.status === 'Terjadwal' ? UI.dueBadge(a.date) : UI.badge(a.status, a.status === 'Selesai' ? 'jade' : '')}</li>`).join('')}</ul>` : UI.empty('Tidak ada agenda', 'Klik tanggal di kalender untuk menambah.')}
-          </div>
-        </div>`;
+            ${monthCal(s.month, evs, { dayAct: 'planDay', mod: 'planner' })}
+            <p class="mini muted">Klik tanggal untuk melihat & menambah kegiatan hari itu. Daftar kegiatan ada di tab <b>Kegiatan & Appointment</b>.</p>
+          </div>`;
     }
   },
 
@@ -2637,7 +2637,7 @@ VIEWS.school = {
           { h: 'Deadline', f: (a) => `<span class="nowrap">${fmtDate(a.deadline)}</span><div>${UI.dueBadge(a.deadline, done(a) ? a.status : '')}</div>` },
           { h: 'Status', f: (a) => `<select class="inline" data-chg="asgSet" data-id="${a.id}">${['Diberikan', 'Dikumpulkan', 'Dinilai', 'Selesai'].map((o) => `<option ${o === a.status ? 'selected' : ''}>${o}</option>`).join('')}</select>` },
           { h: 'Kalender', f: (a) => a.gcalId ? UI.badge('Tersinkron', 'jade') : '<span class="muted mini">—</span>' },
-          { h: '', cls: 'act', f: (a) => `${a.link ? `<a class="btn xs" href="${esc(a.link)}" target="_blank" rel="noopener">${ic('link')}</a>` : ''}<button class="btn xs" data-act="asgEdit" data-id="${a.id}">${ic('edit')}Ubah</button>` }
+          { h: '', cls: 'act', f: (a) => `${done(a) ? '' : `<button class="btn xs mod" data-act="planDone" data-kind="tugas" data-id="${a.id}" title="${I18N.p('Tandai selesai', 'Mark done')}">${ic('check')}${I18N.p('Selesai', 'Done')}</button> `}${a.link && /^https?:/.test(a.link) ? `<a class="btn xs" href="${esc(a.link)}" target="_blank" rel="noopener">${ic('link')}</a>` : ''}<button class="btn xs" data-act="asgEdit" data-id="${a.id}">${ic('edit')}</button>` }
         ], list, { emptyMsg: 'Tidak ada tugas pada filter ini.' })}`;
     }
   },
@@ -2844,7 +2844,7 @@ VIEWS.school.deadline = {
         { h: 'Sisa', f: (d) => UI.dueBadge(d.deadline, d.status === 'Done' ? 'Selesai' : '') },
         { h: 'Urgensi', f: (d) => d.urgency ? UI.badge(d.urgency, /TERLAMBAT|SEGERA/.test(d.urgency) ? 'coral' : /MINGGU/.test(d.urgency) ? 'amber' : /SELESAI/.test(d.urgency) ? 'jade' : '') : '—' },
         { h: 'Status', f: (d) => `<select class="inline" data-chg="dlStatus" data-id="${d.id}">${DL_STATUS.map((o) => `<option ${o === d.status ? 'selected' : ''}>${o}</option>`).join('')}</select>` },
-        { h: '', cls: 'act', f: (d) => `<button class="btn xs" data-act="dlEdit" data-id="${d.id}">${ic('edit')}</button>` }
+        { h: '', cls: 'act', f: (d) => `${d.status === 'Done' ? '' : `<button class="btn xs mod" data-act="planDone" data-kind="dinas" data-id="${d.id}" title="${I18N.p('Tandai selesai', 'Mark done')}">${ic('check')}${I18N.p('Selesai', 'Done')}</button> `}<button class="btn xs" data-act="dlEdit" data-id="${d.id}">${ic('edit')}</button>` }
       ], list, { emptyMsg: 'Tidak ada deadline pada filter ini.' })}`;
   }
 };
@@ -2875,7 +2875,7 @@ VIEWS.school.jobdesc = {
         { h: 'Status', f: (j) => `<select class="inline" data-chg="jobStatus" data-id="${j.id}">${JOB_STATUS.map((o) => `<option ${o === j.status ? 'selected' : ''}>${o}</option>`).join('')}</select>` },
         { h: 'Prediksi', f: (j) => j.prediction ? UI.badge(j.prediction, /Terlambat|Meleset/.test(j.prediction) ? 'coral' : /Tercapai/.test(j.prediction) ? 'jade' : 'sky') : '—' },
         { h: 'Risiko', f: (j) => j.risk ? UI.badge(j.risk, j.risk === 'Tinggi' ? 'coral' : j.risk === 'Sedang' ? 'amber' : 'jade') : '—' },
-        { h: '', cls: 'act', f: (j) => `<button class="btn xs" data-act="jobEdit" data-id="${j.id}">${ic('edit')}</button>` }
+        { h: '', cls: 'act', f: (j) => `${j.status === 'Sudah Selesai' ? '' : `<button class="btn xs mod" data-act="planDone" data-kind="jobdesc" data-id="${j.id}" title="${I18N.p('Tandai selesai', 'Mark done')}">${ic('check')}</button> `}<button class="btn xs" data-act="jobEdit" data-id="${j.id}">${ic('edit')}</button>` }
       ], list, { emptyMsg: 'Belum ada jobdesc.' })}`;
   }
 };
@@ -4223,7 +4223,7 @@ VIEWS.journal = {
         <div class="todo-add"><input class="input" id="todo-text" placeholder="Tambah tugas cepat lalu tekan Enter…" data-fk="todoText"><input class="input" type="date" id="todo-date" style="width:auto" value="${t}"><select class="select" id="todo-pr" style="width:auto"><option>Sedang</option><option>Tinggi</option><option>Rendah</option></select><button class="btn mod" data-act="todoAdd">${ic('plus')}Tambah</button></div>
         <div class="toolbar"><select class="select" data-chg="todoF">${[['open', 'Belum selesai'], ['today', 'Hari ini & terlambat'], ['done', 'Selesai'], ['all', 'Semua']].map(([k, l]) => `<option value="${k}" ${k === f ? 'selected' : ''}>${l}</option>`).join('')}</select>
           ${Store.all('Todos').some((x) => x.done) ? `<button class="btn sm ghost" data-act="todoClear">${ic('trash')}Bersihkan yang selesai</button>` : ''}</div>
-        ${list.length ? list.map((x) => `<div class="todo ${x.done ? 'done' : ''}"><input type="checkbox" class="check" data-chg="todoTog" data-id="${x.id}" ${x.done ? 'checked' : ''} aria-label="Selesai"><span class="tx">${esc(x.text)}</span>${x.priority === 'Tinggi' ? UI.badge('Tinggi', 'coral') : x.priority === 'Rendah' ? UI.badge('Rendah') : ''}${x.date ? `<span class="mini muted nowrap">${fmtDateShort(x.date)}</span>${!x.done && x.date < t ? UI.badge('Terlambat', 'coral') : ''}` : ''}<button class="btn xs ghost" data-act="todoDel" data-id="${x.id}" aria-label="Hapus">${ic('x')}</button></div>`).join('') : UI.empty('Daftar kosong', 'Tidak ada tugas pada filter ini.')}`;
+        ${list.length ? list.map((x) => `<div class="todo ${x.done ? 'done' : ''}"><input type="checkbox" class="check" data-chg="todoTog" data-id="${x.id}" ${x.done ? 'checked' : ''} aria-label="Selesai"><span class="tx">${esc(x.text)}</span>${x.priority === 'Tinggi' ? UI.badge('Tinggi', 'coral') : x.priority === 'Rendah' ? UI.badge('Rendah') : ''}${x.date ? `<span class="mini muted nowrap">${fmtDateShort(x.date)}</span>${!x.done && x.date < t ? UI.badge('Terlambat', 'coral') : ''}` : ''}${x.done ? '' : `<button class="btn xs mod" data-act="planDone" data-kind="todo" data-id="${x.id}" title="${I18N.p('Tandai selesai', 'Mark done')}">${ic('check')}</button>`}<button class="btn xs ghost" data-act="todoDel" data-id="${x.id}" aria-label="Hapus">${ic('x')}</button></div>`).join('') : UI.empty('Daftar kosong', 'Tidak ada tugas pada filter ini.')}`;
     },
     after() {
       const inp = $('#todo-text');
@@ -5240,6 +5240,24 @@ const Lock = {
     reset();
   },
 
+  /** Mematikan PIN: aplikasi terbuka langsung tanpa sandi. */
+  disableForm() {
+    UI.form({
+      title: I18N.p('Matikan PIN', 'Turn off PIN'),
+      values: {},
+      note: I18N.p('Aplikasi akan terbuka langsung tanpa layar kunci. Keamanan bertumpu pada kerahasiaan alamat aplikasi.', 'The app will open directly without a lock screen. Security then relies on keeping the app URL private.'),
+      fields: [{ k: 'pin', l: I18N.p('PIN saat ini', 'Current PIN'), t: 'text', req: 1 }],
+      submit: I18N.p('Matikan PIN', 'Turn off PIN'),
+      onSubmit: async (v) => {
+        await Api.call('pinDisable', { pin: v.pin });
+        Store.services.pinSet = false;
+        this.setSession(''); this.setDevice('');
+        UI.toast(I18N.p('PIN dimatikan — aplikasi terbuka langsung.', 'PIN turned off — the app now opens directly.'), 'ok', 5000);
+        App.refresh();
+      }
+    });
+  },
+
   changeForm() {
     UI.form({
       title: Store.services.pinSet ? 'Ganti PIN' : 'Buat PIN',
@@ -5495,6 +5513,7 @@ const I18N = {
   lang: 'en',
   dict: {
     /* navigasi & modul */
+    'Kegiatan & Appointment': 'Activities & Appointments', 'Tandai selesai': 'Mark done', 'Selesai': 'Done',
     'Agenda & Aktivitas': 'Agenda & Activities', 'Daftar Kegiatan': 'Appointment List', 'Tandai selesai terpilih': 'Mark selected as done',
     'Durasi kegiatan': 'Activity duration', 'Pengulangan': 'Repeat', 'Tanggal mulai': 'Start date', 'Tanggal selesai': 'End date',
     'Jam mulai': 'Start time', 'Jam selesai': 'End time', 'Berulang': 'Repeats', 'Ulang sampai tanggal': 'Repeat until',
@@ -6128,6 +6147,55 @@ ACT.tutorAgreement = (d) => Docs.tutorAgreement(d.id, !!d.print);
 ACT.receiptPrint = (d) => { const r = Docs.receiptPDF(d.id, false); if (r) Docs.print(r.doc); };
 ACT.invoicePrint = (d) => { const p = Store.get('Projects', d.id); const r = Docs.invoiceDoc(p); Docs.print(r.doc); };
 
+/* Daftar kegiatan (Appointment) — dipakai di modul Agenda maupun Sekolah,
+   setara dengan daftar Tugas & Ujian dan Deadline Dinas. */
+const ApptList = {
+  actions() { return `<button class="btn" data-act="apptDoneSel">${ic('check')}Tandai selesai terpilih</button><button class="btn mod" data-act="agAdd">${ic('plus')}Agenda</button>`; },
+  render() {
+      const s = Planner.state();
+      const t = todayISO();
+      const f = s.apptFilter || 'upcoming';
+      let list = Store.all('Agenda').slice();
+      if (f === 'upcoming') list = list.filter((a) => a.status === 'Terjadwal' && (a.repeat || (a.endDate || a.date) >= t));
+      else if (f === 'late') list = list.filter((a) => a.status === 'Terjadwal' && !a.repeat && (a.endDate || a.date) < t);
+      else if (f === 'done') list = list.filter((a) => a.status === 'Selesai');
+      else if (f === 'repeat') list = list.filter((a) => a.repeat);
+      if (s.apptType) list = list.filter((a) => a.type === s.apptType);
+      const q = (s.apptQ || '').toLowerCase();
+      if (q) list = list.filter((a) => `${a.title} ${a.type} ${a.location}`.toLowerCase().includes(q));
+      list.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+      const all = Store.all('Agenda');
+      const types = [...new Set(all.map((a) => a.type).filter(Boolean))].sort();
+      const dur = (a) => {
+        if (a.endDate && a.endDate > a.date) return `${fmtDate(a.date)} – ${fmtDate(a.endDate)}`;
+        return fmtDate(a.date);
+      };
+      const days = (a) => (a.endDate && a.endDate > a.date ? diffDays(a.date, a.endDate) + 1 : 1);
+      return `
+        <div class="grid g4 mb">
+          <div class="stat accent"><small>${I18N.p('Kegiatan terjadwal', 'Scheduled activities')}</small><b>${all.filter((a) => a.status === 'Terjadwal').length}</b></div>
+          <div class="stat"><small>${I18N.p('Berulang', 'Recurring')}</small><b>${all.filter((a) => a.repeat).length}</b></div>
+          <div class="stat"><small>${I18N.p('Lebih dari 1 hari', 'Multi-day')}</small><b>${all.filter((a) => a.endDate && a.endDate > a.date).length}</b></div>
+          <div class="stat"><small>${I18N.p('Selesai', 'Completed')}</small><b class="pos">${all.filter((a) => a.status === 'Selesai').length}</b></div>
+        </div>
+        <div class="toolbar">
+          <input class="input search" placeholder="${I18N.p('Cari kegiatan…', 'Search activities…')}" data-chg="apptQ" data-live data-fk="apptQ" value="${esc(s.apptQ || '')}">
+          <select class="select" data-chg="apptFilter">${[['upcoming', I18N.p('Akan datang', 'Upcoming')], ['late', I18N.p('Terlewat', 'Past due')], ['repeat', I18N.p('Berulang', 'Recurring')], ['done', I18N.p('Selesai', 'Completed')], ['all', I18N.p('Semua', 'All')]].map(([k, l]) => `<option value="${k}" ${k === f ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
+          <select class="select" data-chg="apptType"><option value="">${I18N.p('Semua jenis', 'All types')}</option>${types.map((x) => `<option ${x === s.apptType ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
+          <span class="mini muted">${I18N.p('Centang beberapa kegiatan lalu tekan "Tandai selesai terpilih".', 'Tick several activities then press “Mark selected as done”.')}</span>
+        </div>
+        ${UI.table([
+          { h: `<input type="checkbox" class="check" data-chg="apptAll">`, f: (a) => `<input type="checkbox" class="check appt-pick" value="${a.id}" ${a.status === 'Selesai' ? 'disabled' : ''}>` },
+          { h: I18N.p('Kegiatan', 'Activity'), f: (a) => `<div class="t">${esc(a.title)}</div><div class="s">${esc([a.type, a.location].filter(Boolean).join(' — '))}</div>` },
+          { h: I18N.p('Durasi', 'Duration'), f: (a) => `<span class="nowrap">${dur(a)}</span><div class="s">${days(a) > 1 ? days(a) + ' ' + I18N.p('hari', 'days') : (a.start ? esc(a.start) + (a.end ? '–' + esc(a.end) : '') : I18N.p('sepanjang hari', 'all day'))}</div>` },
+          { h: I18N.p('Pengulangan', 'Repeat'), f: (a) => a.repeat ? UI.badge(Planner.repeatLabel(a.repeat) + (a.repeatUntil ? ' → ' + fmtDateShort(a.repeatUntil) : ''), 'brand') : '<span class="muted mini">—</span>' },
+          { h: I18N.p('Status', 'Status'), f: (a) => a.status === 'Selesai' ? UI.badge(I18N.p('Selesai', 'Done'), 'jade') : a.status === 'Batal' ? UI.badge(I18N.p('Batal', 'Cancelled'), 'coral') : UI.dueBadge(a.endDate && a.endDate > a.date ? a.endDate : a.date) },
+          { h: 'Calendar', f: (a) => a.gcalId ? UI.badge('GCal', 'brand') : '<span class="muted mini">—</span>' },
+          { h: '', cls: 'act', f: (a) => `${a.status !== 'Selesai' ? `<button class="btn xs" data-act="planDone" data-kind="agenda" data-id="${a.id}" title="${I18N.p('Tandai selesai', 'Mark done')}">${ic('check')}</button> ` : ''}<button class="btn xs" data-act="agEdit" data-id="${a.id}">${ic('edit')}</button>` }
+        ], list, { emptyMsg: I18N.p('Tidak ada kegiatan pada filter ini.', 'No activities for this filter.') })}`;
+  }
+};
+
 /* =====================================================================
  * 31. AGENDA & AKTIVITAS — kalender terpadu + rekap lintas modul
  *     Menggabungkan agenda, tugas & ujian, deadline dinas, deadline
@@ -6349,52 +6417,7 @@ VIEWS.planner = {
     }
   },
 
-  appointment: {
-    actions: () => `<button class="btn" data-act="apptDoneSel">${ic('check')}Tandai selesai terpilih</button><button class="btn mod" data-act="agAdd">${ic('plus')}Agenda</button>`,
-    render() {
-      const s = Planner.state();
-      const t = todayISO();
-      const f = s.apptFilter || 'upcoming';
-      let list = Store.all('Agenda').slice();
-      if (f === 'upcoming') list = list.filter((a) => a.status === 'Terjadwal' && (a.repeat || (a.endDate || a.date) >= t));
-      else if (f === 'late') list = list.filter((a) => a.status === 'Terjadwal' && !a.repeat && (a.endDate || a.date) < t);
-      else if (f === 'done') list = list.filter((a) => a.status === 'Selesai');
-      else if (f === 'repeat') list = list.filter((a) => a.repeat);
-      if (s.apptType) list = list.filter((a) => a.type === s.apptType);
-      const q = (s.apptQ || '').toLowerCase();
-      if (q) list = list.filter((a) => `${a.title} ${a.type} ${a.location}`.toLowerCase().includes(q));
-      list.sort((a, b) => String(a.date).localeCompare(String(b.date)));
-      const all = Store.all('Agenda');
-      const types = [...new Set(all.map((a) => a.type).filter(Boolean))].sort();
-      const dur = (a) => {
-        if (a.endDate && a.endDate > a.date) return `${fmtDate(a.date)} – ${fmtDate(a.endDate)}`;
-        return fmtDate(a.date);
-      };
-      const days = (a) => (a.endDate && a.endDate > a.date ? diffDays(a.date, a.endDate) + 1 : 1);
-      return `
-        <div class="grid g4 mb">
-          <div class="stat accent"><small>${I18N.p('Kegiatan terjadwal', 'Scheduled activities')}</small><b>${all.filter((a) => a.status === 'Terjadwal').length}</b></div>
-          <div class="stat"><small>${I18N.p('Berulang', 'Recurring')}</small><b>${all.filter((a) => a.repeat).length}</b></div>
-          <div class="stat"><small>${I18N.p('Lebih dari 1 hari', 'Multi-day')}</small><b>${all.filter((a) => a.endDate && a.endDate > a.date).length}</b></div>
-          <div class="stat"><small>${I18N.p('Selesai', 'Completed')}</small><b class="pos">${all.filter((a) => a.status === 'Selesai').length}</b></div>
-        </div>
-        <div class="toolbar">
-          <input class="input search" placeholder="${I18N.p('Cari kegiatan…', 'Search activities…')}" data-chg="apptQ" data-live data-fk="apptQ" value="${esc(s.apptQ || '')}">
-          <select class="select" data-chg="apptFilter">${[['upcoming', I18N.p('Akan datang', 'Upcoming')], ['late', I18N.p('Terlewat', 'Past due')], ['repeat', I18N.p('Berulang', 'Recurring')], ['done', I18N.p('Selesai', 'Completed')], ['all', I18N.p('Semua', 'All')]].map(([k, l]) => `<option value="${k}" ${k === f ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
-          <select class="select" data-chg="apptType"><option value="">${I18N.p('Semua jenis', 'All types')}</option>${types.map((x) => `<option ${x === s.apptType ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
-          <span class="mini muted">${I18N.p('Centang beberapa kegiatan lalu tekan "Tandai selesai terpilih".', 'Tick several activities then press “Mark selected as done”.')}</span>
-        </div>
-        ${UI.table([
-          { h: `<input type="checkbox" class="check" data-chg="apptAll">`, f: (a) => `<input type="checkbox" class="check appt-pick" value="${a.id}" ${a.status === 'Selesai' ? 'disabled' : ''}>` },
-          { h: I18N.p('Kegiatan', 'Activity'), f: (a) => `<div class="t">${esc(a.title)}</div><div class="s">${esc([a.type, a.location].filter(Boolean).join(' — '))}</div>` },
-          { h: I18N.p('Durasi', 'Duration'), f: (a) => `<span class="nowrap">${dur(a)}</span><div class="s">${days(a) > 1 ? days(a) + ' ' + I18N.p('hari', 'days') : (a.start ? esc(a.start) + (a.end ? '–' + esc(a.end) : '') : I18N.p('sepanjang hari', 'all day'))}</div>` },
-          { h: I18N.p('Pengulangan', 'Repeat'), f: (a) => a.repeat ? UI.badge(Planner.repeatLabel(a.repeat) + (a.repeatUntil ? ' → ' + fmtDateShort(a.repeatUntil) : ''), 'brand') : '<span class="muted mini">—</span>' },
-          { h: I18N.p('Status', 'Status'), f: (a) => a.status === 'Selesai' ? UI.badge(I18N.p('Selesai', 'Done'), 'jade') : a.status === 'Batal' ? UI.badge(I18N.p('Batal', 'Cancelled'), 'coral') : UI.dueBadge(a.endDate && a.endDate > a.date ? a.endDate : a.date) },
-          { h: 'Calendar', f: (a) => a.gcalId ? UI.badge('GCal', 'brand') : '<span class="muted mini">—</span>' },
-          { h: '', cls: 'act', f: (a) => `${a.status !== 'Selesai' ? `<button class="btn xs" data-act="planDone" data-kind="agenda" data-id="${a.id}" title="${I18N.p('Tandai selesai', 'Mark done')}">${ic('check')}</button> ` : ''}<button class="btn xs" data-act="agEdit" data-id="${a.id}">${ic('edit')}</button>` }
-        ], list, { emptyMsg: I18N.p('Tidak ada kegiatan pada filter ini.', 'No activities for this filter.') })}`;
-    }
-  },
+  appointment: { actions: () => ApptList.actions(), render: () => ApptList.render() },
 
   rekap: {
     actions: () => `<button class="btn" data-act="planExport">${ic('download')}Ekspor rekap</button><button class="btn mod" data-act="planSync">${ic('refresh')}Sinkron Google Calendar</button>`,
@@ -6477,6 +6500,8 @@ VIEWS.planner = {
     }
   }
 };
+
+VIEWS.school.kegiatan = { actions: () => ApptList.actions(), render: () => ApptList.render() };
 
 Object.assign(ACT, {
   planMonth: (d) => { const s = Planner.state(); s.month = d.n === '0' ? thisMonth() : shiftMonth(s.month, Number(d.n)); App.refresh(); },
