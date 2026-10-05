@@ -65,17 +65,17 @@
 }
 
 :root[data-theme="dark"] {
-  --bg: #0c111e;
-  --surface: #141b2c;
-  --surface-2: #19223a;
-  --surface-3: #212c47;
-  --ink: #e7ebf5;
-  --ink-2: #c3cbe0;
-  --muted: #8e9bb8;
-  --line: #27324c;
-  --brand: #8193ff;
-  --brand-soft: #232d5c;
-  --jade: #3ccf9f;
+  --bg: #070b16;
+  --surface: #0f1626;
+  --surface-2: #151e33;
+  --surface-3: #1d2944;
+  --ink: #eef2ff;
+  --ink-2: #c9d2ec;
+  --muted: #8794b5;
+  --line: #22304d;
+  --brand: #7c8cff;
+  --brand-soft: #1c2450;
+  --jade: #2fe0ad;
   --jade-soft: #123a31;
   --coral: #ff7a72;
   --coral-soft: #43201f;
@@ -83,8 +83,8 @@
   --amber-soft: #3f3016;
   --violet: #b596ff;
   --violet-soft: #2e2450;
-  --sky: #5cc4ec;
-  --sky-soft: #123547;
+  --sky: #4fd1ff;
+  --sky-soft: #0e3147;
   --rose: #ff7fb0;
   --rose-soft: #43203a;
   --slate: #a9b6d3;
@@ -606,6 +606,100 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .cal-full .cal .ev { font-size: 12px; padding: 2px 6px; }
 @media (max-width: 860px) { .cal-full .cal .dc { min-height: 84px; } }
 
+
+/* =========================================================
+   v3.6 — pembaruan tampilan: panel kaca, tepi bercahaya,
+   angka gradien, dan interaksi yang lebih halus.
+   ========================================================= */
+:root {
+  --ring: 0 0 0 1px color-mix(in srgb, var(--brand) 22%, transparent);
+  --panel: color-mix(in srgb, var(--surface) 82%, transparent);
+  --edge: linear-gradient(180deg, color-mix(in srgb, #fff 16%, transparent), transparent 42%);
+}
+:root[data-theme="dark"] { --edge: linear-gradient(180deg, color-mix(in srgb, #fff 8%, transparent), transparent 40%); }
+
+body::after {   /* kisi halus agar latar tidak datar */
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .35;
+  background-image: linear-gradient(color-mix(in srgb, var(--line) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--line) 55%, transparent) 1px, transparent 1px);
+  background-size: 54px 54px; mask-image: radial-gradient(120% 70% at 50% 0%, #000 10%, transparent 72%);
+}
+
+/* panel & kartu */
+.card, .stat, .ocard, .workspace, .sheet-pill, .table-wrap, .modal, .pop, .palette {
+  background: var(--panel); backdrop-filter: blur(16px) saturate(1.25); -webkit-backdrop-filter: blur(16px) saturate(1.25);
+}
+.card, .stat, .ocard { position: relative; border-radius: 16px; overflow: hidden; }
+.card::before, .stat::before, .ocard::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; background: var(--edge); opacity: .7;
+}
+.card:hover, .ocard:hover { border-color: color-mix(in srgb, var(--mc, var(--brand)) 35%, var(--line)); }
+.workspace { border-radius: 20px; }
+.hub-card { border-radius: 20px; }
+
+/* angka besar dengan gradien */
+.stat b, .hub-card .big, .hc-stat b {
+  background: linear-gradient(180deg, var(--ink), color-mix(in srgb, var(--ink) 62%, var(--mc, var(--brand))));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.stat b.pos, .hc-stat b.pos { background: linear-gradient(180deg, var(--jade), color-mix(in srgb, var(--jade) 65%, var(--ink))); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.stat b.neg, .hc-stat b.neg { background: linear-gradient(180deg, var(--coral), color-mix(in srgb, var(--coral) 65%, var(--ink))); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* navigasi */
+.nav-btn { transition: background .15s ease, color .15s ease, transform .12s ease; }
+.nav-btn:hover { transform: translateX(2px); }
+.nav-btn.on { background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 20%, transparent), transparent); }
+.brand-mark { box-shadow: 0 8px 24px -10px var(--brand); }
+
+/* topbar & chip */
+.topbar { border-bottom-color: color-mix(in srgb, var(--line) 70%, transparent); }
+.chip, .search-btn, .icon-btn { transition: border-color .15s ease, background .15s ease, box-shadow .15s ease; }
+.chip:hover, .search-btn:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); box-shadow: var(--ring); }
+
+/* tab jendela */
+.wtab { border-radius: 12px 12px 0 0; transition: background .15s ease, color .15s ease; }
+.wtab.on { background: var(--panel); box-shadow: inset 0 2px 0 var(--mc, var(--brand)), 0 -6px 18px -12px var(--mc, var(--brand)); }
+.subtab { border-radius: 10px 10px 0 0; }
+.subtab:hover { color: var(--ink); background: color-mix(in srgb, var(--surface-2) 70%, transparent); }
+.subtab.on { background: color-mix(in srgb, var(--mc, var(--brand)) 10%, transparent); }
+
+/* tombol */
+.btn { transition: transform .12s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease; }
+.btn:active { transform: translateY(1px); }
+.btn.primary, .btn.mod { box-shadow: 0 10px 24px -14px var(--mc, var(--brand)), var(--ring); }
+.btn.primary:hover, .btn.mod:hover { box-shadow: 0 14px 30px -14px var(--mc, var(--brand)), var(--ring); }
+
+/* tabel */
+.tbl th { letter-spacing: .02em; text-transform: none; background: color-mix(in srgb, var(--surface-2) 85%, transparent); }
+.tbl tbody tr { transition: background .12s ease; }
+.tbl tbody tr:hover td { background: color-mix(in srgb, var(--mc, var(--brand)) 7%, transparent); }
+.table-wrap { border-radius: 14px; }
+
+/* badge & progres */
+.badge { backdrop-filter: blur(6px); }
+.progress { background: color-mix(in srgb, var(--line) 70%, transparent); }
+
+/* kalender */
+.cal { border-radius: 14px; overflow: hidden; }
+.cal .dc { transition: background .12s ease; }
+.cal .dc:hover { background: color-mix(in srgb, var(--brand) 8%, transparent); }
+.cal .dc.today { background: color-mix(in srgb, var(--brand) 10%, transparent); }
+.cal .ev { border: 1px solid color-mix(in srgb, currentColor 22%, transparent); }
+
+/* layar kunci */
+.lock-box { border-radius: 26px; background: var(--panel); backdrop-filter: blur(20px); }
+.lock-box::before { content: ""; position: absolute; inset: 0; border-radius: 26px; background: var(--edge); pointer-events: none; }
+.lock-box { position: relative; }
+.pinpad button { transition: transform .1s ease, background .15s ease; }
+.pin-dots span { transition: background .15s ease, border-color .15s ease, transform .15s ease; }
+.pin-dots span.on { transform: scale(1.12); box-shadow: 0 0 14px -2px var(--brand); }
+
+/* animasi masuk yang halus */
+@media (prefers-reduced-motion: no-preference) {
+  .win-body > *, .home > * { animation: fadeUp .28s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } }
+}
+
   </style>
 </head>
 <body>
@@ -1074,6 +1168,7 @@ const Store = {
   data: {},
   meta: {},
   dataVersion: '',
+  loaded: {},
   services: {},
   status: 'local',      // local | busy | ok | err
   lastSync: null,
@@ -1097,10 +1192,37 @@ const Store = {
     o.id = String(r.id || uid());
     return o;
   },
-  setAll(raw) {
+  /** Membuka format ringkas {c:[kolom], r:[[nilai]]} maupun format lama (array objek). */
+  unpack(sheet, blob) {
+    if (!blob) return [];
+    if (Array.isArray(blob)) return blob.map((r) => this.normalizeRow(sheet, r));
+    const cols = blob.c || SCHEMA[sheet];
+    return (blob.r || []).map((arr) => {
+      const o = {};
+      cols.forEach((h, i) => { o[h] = arr[i]; });
+      return this.normalizeRow(sheet, o);
+    });
+  },
+  setAll(raw, keep) {
     const d = this.emptyData();
-    Object.keys(SCHEMA).forEach((k) => { d[k] = (raw && Array.isArray(raw[k]) ? raw[k] : []).map((r) => this.normalizeRow(k, r)); });
+    Object.keys(SCHEMA).forEach((k) => {
+      if (raw && raw[k] !== undefined) d[k] = this.unpack(k, raw[k]);
+      else if (keep && this.data[k]) d[k] = this.data[k];           // tabel yang belum dimuat tetap dipertahankan
+    });
     this.data = d;
+  },
+
+  /** Memuat tabel berat (_Nilai, _Log) hanya saat modulnya dibuka. */
+  async ensure(name, force) {
+    if (!this.isRemote()) return this.all(name);
+    if (!force && this.loaded[name]) return this.all(name);
+    try {
+      const j = await Api.call('table', { name });
+      this.data[name] = this.unpack(name, j.data);
+      this.loaded[name] = true;
+      this.saveCache();
+    } catch (e) { UI.toast(e.message, 'err', 6000); }
+    return this.all(name);
   },
 
   async init() {
@@ -1111,7 +1233,7 @@ const Store = {
     if (this.isRemote()) {
       try {
         const c = JSON.parse(Keep.get(this.CACHE_KEY) || 'null');
-        if (c && c.data) { this.setAll(c.data); this.services = c.services || {}; this.meta = c.meta || {}; this.dataVersion = c.dataVersion || ''; }
+        if (c && c.data) { this.setAll(c.data); this.services = c.services || {}; this.meta = c.meta || {}; this.dataVersion = c.dataVersion || ''; this.loaded = c.loaded || {}; }
         else this.setAll({});
       } catch (e) { this.setAll({}); }
       await this.pull();
@@ -1131,7 +1253,8 @@ const Store = {
         UI.syncChip();
         return;
       }
-      this.setAll(j.data);
+      this.setAll(j.data, true);
+      (j.lazy || []).forEach((n) => { if (!this.loaded[n]) this.data[n] = this.data[n] || []; });
       this.services = j.services || {};
       this.meta = j.meta || {};
       this.dataVersion = j.dataVersion || '';
@@ -1148,7 +1271,7 @@ const Store = {
     try { localStorage.setItem(this.LOCAL_KEY, JSON.stringify(this.data)); } catch (e) { UI.toast('Penyimpanan browser penuh. Ekspor cadangan lalu kurangi data.', 'err'); }
   },
   saveCache() {
-    try { Keep.set(this.CACHE_KEY, JSON.stringify({ data: this.data, services: this.services, meta: this.meta, dataVersion: this.dataVersion, at: Date.now() })); } catch (e) { /* cache opsional */ }
+    try { Keep.set(this.CACHE_KEY, JSON.stringify({ data: this.data, services: this.services, meta: this.meta, dataVersion: this.dataVersion, loaded: this.loaded, at: Date.now() })); } catch (e) { /* cache opsional */ }
   },
 
   all(sheet) { return this.data[sheet] || []; },
@@ -1216,6 +1339,7 @@ const Store = {
     const p = this.queue.then(() => Api.call('batch', { ops: payload })).then((j) => {
       (j.patches || []).forEach((pt) => { const r = this.get(pt.sheet, pt.id); if (r) r.gcalId = pt.gcalId; });
       this.dataVersion = '';
+      ops.forEach((op) => { if (op.sheet === '_Nilai' || op.sheet === '_Log') this.loaded[op.sheet] = false; });
       if (ops.some((op) => op.sheet === 'Schedule')) return this.pull().then(() => { App.refresh(); return j; });
       if (j.warnings && j.warnings.length) UI.toast('Tersimpan. Catatan kalender: ' + j.warnings[0], '', 6000);
       else if (!silent) UI.flashSaved();
@@ -5513,7 +5637,7 @@ Object.assign(CHG, {
 /* ------------------ Riwayat perubahan & Urungkan -------------------- */
 const ChangeLog = {
   async open() {
-    if (Store.isRemote()) { UI.toast('Memuat riwayat…', '', 1200); await Store.pull(); }
+    if (Store.isRemote()) { UI.toast(I18N.p('Memuat riwayat…', 'Loading history…'), '', 1200); await Store.ensure('_Log', true); }
     this.render();
   },
   render() {
@@ -5970,6 +6094,7 @@ VIEWS.school.nilai = {
       </div>`;
   },
   after() {
+    if (!Store.loaded['_Nilai'] && Store.isRemote()) { Store.ensure('_Nilai').then(() => App.refresh()); return; }
     const s = App.s('school');
     const classes = Nilai.classes();
     const cls = s.nCls && classes.includes(s.nCls) ? s.nCls : classes[0] || '';
