@@ -700,6 +700,116 @@ body::after {   /* kisi halus agar latar tidak datar */
   @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } }
 }
 
+
+/* =========================================================
+   v4 — skin "kekinian": warna berani, sudut membulat besar,
+   tombol pil, kartu bento, dan blob gradien di latar.
+   ========================================================= */
+:root {
+  --violet: #7c5cff; --violet-soft: #ece7ff;
+  --rose: #ff4d97; --rose-soft: #ffe3ef;
+  --jade: #12b981; --jade-soft: #d7f7ec;
+  --sky: #0ea5e9; --sky-soft: #ddf1fd;
+  --amber: #f59e0b; --amber-soft: #fdf0d5;
+  --brand: #6d4bff; --brand-soft: #e9e4ff;
+  --coral: #ff4d4d; --coral-soft: #ffe2e2;
+  --grad-1: linear-gradient(135deg, #6d4bff 0%, #b14bff 45%, #ff4d97 100%);
+  --grad-2: linear-gradient(135deg, #0ea5e9 0%, #12b981 100%);
+  --grad-3: linear-gradient(135deg, #ff9f43 0%, #ff4d97 100%);
+  --r-lg: 26px; --r-md: 20px; --r-sm: 14px;
+}
+:root[data-theme="dark"] {
+  --violet: #a78bff; --violet-soft: #2a2250;
+  --rose: #ff6fae; --rose-soft: #3f1a30;
+  --jade: #2fe0ad; --jade-soft: #0e3a2e;
+  --sky: #38bdf8; --sky-soft: #0c2f45;
+  --amber: #fbbf24; --amber-soft: #3a2c0f;
+  --brand: #8b6bff; --brand-soft: #241f55;
+  --coral: #ff6b6b; --coral-soft: #3d1d1d;
+  --grad-1: linear-gradient(135deg, #7c5cff 0%, #b14bff 45%, #ff5db1 100%);
+  --grad-2: linear-gradient(135deg, #38bdf8 0%, #2fe0ad 100%);
+  --grad-3: linear-gradient(135deg, #ffa94d 0%, #ff5db1 100%);
+}
+
+/* blob gradien yang bergerak pelan */
+body::before {
+  inset: -25% -15% auto -15%; height: 80vh; filter: blur(18px); opacity: .5;
+  background:
+    radial-gradient(38% 46% at 14% 2%, color-mix(in srgb, var(--brand) 55%, transparent), transparent 68%),
+    radial-gradient(34% 42% at 86% 0%, color-mix(in srgb, var(--rose) 45%, transparent), transparent 70%),
+    radial-gradient(32% 40% at 52% 8%, color-mix(in srgb, var(--sky) 42%, transparent), transparent 72%);
+  animation: floatBlob 18s ease-in-out infinite alternate;
+}
+@keyframes floatBlob { to { transform: translate3d(0, 3%, 0) scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
+
+/* tipografi lebih tebal & rapat */
+h1, .hello h1 { font-weight: 800; letter-spacing: -.035em; }
+.win-title h1 { font-size: 23px; font-weight: 800; }
+.card h3, .card h4 { font-weight: 800; letter-spacing: -.015em; }
+.stat small, .hc-stat small { text-transform: none; font-weight: 600; letter-spacing: .01em; }
+.stat b { font-size: 24px; font-weight: 800; }
+
+/* tombol pil */
+.btn { border-radius: 999px; font-weight: 700; padding: 0 16px; }
+.btn.sm { border-radius: 999px; padding: 0 12px; }
+.btn.xs { border-radius: 999px; padding: 0 10px; }
+.btn.primary, .btn.mod { background: var(--grad-1); border: 0; color: #fff; }
+.btn.mod { background: linear-gradient(135deg, var(--mc, var(--brand)), color-mix(in srgb, var(--mc, var(--brand)) 45%, var(--rose))); }
+.btn.primary:hover, .btn.mod:hover { filter: saturate(1.12) brightness(1.06); }
+.icon-btn { border-radius: 16px; }
+.chip { border-radius: 999px; font-weight: 700; }
+.badge { border-radius: 999px; font-weight: 800; letter-spacing: .01em; }
+.lang-switch { border-radius: 999px; }
+
+/* kartu bento */
+.hub { gap: 16px; }
+.hub-card { border-radius: 28px; padding: 20px; min-height: 186px; border-width: 1.5px; }
+.hub-card::before { height: 0; }
+.hub-card::after { inset: auto -20% -70% auto; width: 260px; height: 260px; opacity: .55; }
+.hub-card .mod-ico { border-radius: 18px; background: var(--mcs); box-shadow: 0 10px 24px -14px var(--mc); }
+.hub-card h3 { font-weight: 800; letter-spacing: -.02em; }
+.hub-card .hc-open { border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; font-size: 11.5px; }
+.hub-card:hover .hc-open { border-color: var(--mc); color: var(--mc); }
+.hub-card.finance .big { font-size: clamp(30px, 3.6vw, 44px); font-weight: 800; }
+
+.card, .stat, .ocard, .sheet-pill { border-radius: 22px; }
+.stat { padding: 16px 18px; }
+.workspace { border-radius: 28px; }
+.table-wrap { border-radius: 18px; }
+.modal { border-radius: 26px; }
+.input, .select, textarea.input { border-radius: 14px; }
+.subtab { border-radius: 999px; padding: 8px 14px; border-bottom: 0; }
+.subtab.on { background: var(--grad-1); color: #fff; }
+.subtabs { gap: 6px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.wtab { border-radius: 16px; border-bottom: 1px solid var(--line); }
+.wtab.on { background: var(--grad-1); color: #fff; border-color: transparent; box-shadow: 0 10px 26px -16px var(--brand); }
+.wtab.on .x { color: rgba(255, 255, 255, .85); }
+.nav-btn { border-radius: 14px; font-weight: 700; }
+.nav-btn.on { background: var(--grad-1); color: #fff; box-shadow: 0 10px 26px -16px var(--brand); }
+.nav-btn.on svg.i { stroke: #fff; }
+.brand-mark { border-radius: 14px; background: var(--grad-1); }
+
+/* progres & kalender lebih ramah */
+.progress { height: 10px; }
+.progress.lg { height: 14px; }
+.progress > i { background: var(--grad-1); }
+.cal { border-radius: 20px; }
+.cal .ev { border-radius: 999px; padding: 2px 8px; font-weight: 700; }
+.heat { border-radius: 999px; font-weight: 800; }
+
+/* daftar & hover */
+.list li { border-radius: 14px; }
+.list li:hover { background: color-mix(in srgb, var(--brand) 8%, transparent); }
+.tbl th:first-child { border-top-left-radius: 18px; }
+.tbl th:last-child { border-top-right-radius: 18px; }
+
+/* layar kunci */
+.lock-box { border-radius: 32px; }
+.lock-mark { border-radius: 20px; background: var(--grad-1); }
+.pinpad button { border-radius: 18px; font-weight: 800; }
+.lock-go { border-radius: 999px; }
+
   </style>
 </head>
 <body>
@@ -1164,7 +1274,7 @@ const Api = {
  * ------------------------------------------------------------------- */
 const Store = {
   LOCAL_KEY: 'mph_data_v1',
-  CACHE_KEY: 'mph_cache_v1',
+  CACHE_KEY: 'mph_cache_' + APP_VERSION,
   data: {},
   meta: {},
   dataVersion: '',
@@ -1236,7 +1346,7 @@ const Store = {
         if (c && c.data) { this.setAll(c.data); this.services = c.services || {}; this.meta = c.meta || {}; this.dataVersion = c.dataVersion || ''; this.loaded = c.loaded || {}; }
         else this.setAll({});
       } catch (e) { this.setAll({}); }
-      await this.pull();
+      await this.pull({ force: true });     // buka aplikasi = selalu tarik data terbaru
     } else {
       try { this.setAll(JSON.parse(localStorage.getItem(this.LOCAL_KEY) || '{}')); } catch (e) { this.setAll({}); }
       this.status = 'local';
@@ -1249,6 +1359,8 @@ const Store = {
     try {
       const j = await Api.call('bootstrap', opt.force ? {} : { known: this.dataVersion || '' });
       if (j.unchanged) {
+        const empty = !Object.keys(SCHEMA).some((k) => (this.data[k] || []).length);
+        if (empty) return this.pull({ force: true });
         this.status = 'ok'; this.lastSync = new Date(); this.lastError = '';
         UI.syncChip();
         return;
@@ -1258,6 +1370,11 @@ const Store = {
       this.services = j.services || {};
       this.meta = j.meta || {};
       this.dataVersion = j.dataVersion || '';
+      if (opt.force) {
+        const reload = Object.keys(this.loaded).filter((k) => this.loaded[k]);
+        this.loaded = {};
+        reload.forEach((k) => { this.ensure(k, true); });
+      }
       this.status = 'ok'; this.lastSync = new Date(); this.lastError = '';
       this.saveCache();
     } catch (e) {
@@ -2151,7 +2268,10 @@ Object.assign(ACT, {
   closeMobileNav: () => $('#shell').classList.remove('mobile-open'),
   syncNow: async () => {
     if (!Store.isRemote()) { Settings.open('koneksi'); return; }
-    await Store.pull(); App.refresh(); if (Store.status === 'ok') UI.toast('Data terbaru dimuat', 'ok');
+    UI.toast(I18N.p('Menarik data terbaru…', 'Pulling the latest data…'), '', 2000);
+    await Store.pull({ force: true });                 // paksa, abaikan penanda versi
+    App.refresh();
+    if (Store.status === 'ok') UI.toast(I18N.p('Data terbaru dimuat', 'Latest data loaded'), 'ok');
   },
   stop: (d, el, e) => e.stopPropagation()
 });
@@ -2387,7 +2507,7 @@ const Home = {
         ${card('school', `<div class="hc-stats">${stat('Beban mengajar', `${jp} JP<span class="muted mini"> / ${esc(st.jpTarget)}</span>`)}${stat('Tugas aktif', activeTasks)}</div><div class="hc-note">${todaySched ? I18N.p(`${todaySched} jam pelajaran hari ini`, `${todaySched} teaching slots today`) : I18N.p('Tidak ada jadwal hari ini', 'No classes today')}${openDl ? I18N.p(` — ${openDl} deadline dinas terbuka`, ` — ${openDl} open official deadlines`) : ''}.</div>`)}
         ${card('tutor', `<div class="hc-stats">${stat('Kelas aktif', activeC.length)}${stat('Sesi hari ini', todaySess)}</div><div class="hc-note">${I18N.p('Honor belum dibayar', 'Unpaid fees')}: <b>${idr(tutorDue)}</b></div>`)}
         ${card('journal', `<div class="hc-stats">${stat('Habit hari ini', `${doneToday}/${habits.length}`)}${stat('To-do terbuka', todos.length)}</div><div class="hc-note">${journaled ? I18N.p('Jurnal hari ini sudah ditulis.', "Today's journal is written.") : I18N.p('Jurnal hari ini belum ditulis.', "Today's journal is empty.")}</div>`)}
-        ${card('files', `<div class="hc-stats">${stat('Dokumen', files.length)}${stat('Ukuran', fmtSize(sum(files, (f) => f.size)))}</div><div class="hc-note">${files.length ? `${I18N.p('Terakhir', 'Latest')}: ${esc(files.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0].name)}` : I18N.p('Belum ada file.', 'No files yet.')}</div>`, 'wide')}
+        ${card('files', `<div class="hc-stats">${stat('Dokumen', files.length)}${stat('Ukuran', fmtSize(sum(files, (f) => f.size)))}</div><div class="hc-note">${files.length ? `${I18N.p('Terakhir', 'Latest')}: ${esc(files.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0].name)}` : I18N.p('Belum ada file.', 'No files yet.')}</div>`)}
       </div>
       <div class="panels">
         <div class="card"><h3>${ic('alert')}Perlu perhatian</h3>${alerts.length ? `<ul class="list">${alerts.slice(0, 8).map((a) => `<li class="link" data-act="open" data-mod="${a.mod}" data-sub="${a.subTab}"><span class="dotc" style="background:var(--${a.level === 'danger' ? 'coral' : a.level === 'warn' ? 'amber' : 'sky'})"></span><div class="grow"><div class="t">${esc(a.text)}</div><div class="s">${esc(a.sub || '')}</div></div></li>`).join('')}</ul>` : UI.empty('Semua aman', 'Tidak ada deadline atau tagihan mendesak.')}</div>
@@ -5253,11 +5373,23 @@ async function boot() {
       onMount: (box) => box.querySelector('#demo-go').addEventListener('click', () => Demo.load())
     });
   }
+  let ticks = 0;
   setInterval(() => {
-    if (Store.isRemote() && document.visibilityState === 'visible' && Store.pending === 0 && !UI.modals.length && !$('#palette')) {
-      Store.pull().then(() => { if (!UI.modals.length) App.refresh(); });
-    }
-  }, 5 * 60 * 1000);
+    if (!(Store.isRemote() && document.visibilityState === 'visible' && Store.pending === 0 && !UI.modals.length && !$('#palette'))) return;
+    ticks++;
+    Store.pull({ force: ticks % 5 === 0 }).then(() => { if (!UI.modals.length) App.refresh(); });
+  }, 3 * 60 * 1000);
+  // kembali ke aplikasi (ganti tab / buka lagi dari layar HP) → tarik data terbaru
+  let lastFocusPull = 0;
+  const freshen = () => {
+    if (!Store.isRemote() || Store.pending || UI.modals.length || document.visibilityState !== 'visible') return;
+    if (Date.now() - lastFocusPull < 15000) return;
+    lastFocusPull = Date.now();
+    Store.pull({ force: true }).then(() => { if (!UI.modals.length) App.refresh(); });
+  };
+  document.addEventListener('visibilitychange', freshen);
+  window.addEventListener('focus', freshen);
+  window.addEventListener('online', freshen);
 }
 /* =====================================================================
  * 29. UPGRADE v2 — Lock Screen, Kehadiran & Ketercapaian TP,
@@ -5730,6 +5862,7 @@ const I18N = {
     'Tugas tambahan': 'Extra duties', 'Total setara JP / minggu': 'Total equivalent periods / week', 'Rata-rata progres': 'Average progress',
     'Risiko tinggi': 'High risk', 'Beban per bidang': 'Load per field', 'Tautan dokumen kerja': 'Work document links',
     /* nilai */
+    'Sheet nilai baru': 'New score sheet', 'Input nilai': 'Enter scores', 'Simpan nilai': 'Save scores',
     'Nilai & Score List': 'Scores & Score List', 'Siswa': 'Students', 'Rata-rata': 'Average', 'Nilai tertinggi': 'Highest', 'Nilai terendah': 'Lowest',
     'Tuntas': 'Passed', 'Belum tuntas': 'Not passed', 'Sheet terdeteksi': 'Detected sheets', 'Impor semua sheet': 'Import all sheets',
     'Segarkan daftar sheet': 'Refresh sheet list', 'Buka Score List': 'Open Score List', 'Komponen': 'Component', 'Penilaian': 'Assessment',
@@ -5970,6 +6103,127 @@ const Nilai = {
     });
   },
 
+  /** Membuat sheet nilai baru di Score List (siswa + komponen penilaian). */
+  newSheet() {
+    const classes = Nilai.classes();
+    const names = (cls) => [...new Set(this.rows().filter((r) => !cls || r.className === cls).map((r) => r.studentName))].sort();
+    UI.form({
+      title: I18N.p('Buat sheet nilai baru', 'Create a new score sheet'), size: 'wide',
+      values: { max: 100, components: 'Reading, Listening, Writing, Speaking', className: classes[0] || '' },
+      note: I18N.p('Sheet dibuat langsung di Google Sheet Score List: judul kolom, daftar siswa, rumus Nilai Akhir, dan Predikat otomatis.', 'The sheet is created directly in the Score List spreadsheet, complete with headers, student list, final-score formula, and grade.'),
+      fields: [
+        { k: 'name', l: I18N.p('Nama sheet', 'Sheet name'), req: 1, ph: 'DT-EW-XI2-U7', full: 1 },
+        { k: 'className', l: I18N.p('Kelas (sumber daftar siswa)', 'Class (student list source)'), t: 'select', o: () => ['', ...classes], empty: I18N.p('Ketik manual', 'Type manually') },
+        { k: 'max', l: I18N.p('Nilai maksimum per komponen', 'Maximum score per component'), t: 'number', min: 1 },
+        { k: 'components', l: I18N.p('Komponen penilaian (pisahkan koma)', 'Assessment components (comma separated)'), req: 1, full: 1 },
+        { k: 'students', l: I18N.p('Daftar siswa (satu nama per baris)', 'Student list (one name per line)'), t: 'textarea', rows: 7, full: 1,
+          hint: I18N.p('Terisi otomatis dari kelas yang dipilih; boleh ditambah atau dikurangi.', 'Filled automatically from the chosen class; feel free to edit.') }
+      ],
+      onMount: (box) => {
+        const fill = () => {
+          const cls = box.querySelector('[name="className"]').value;
+          const list = names(cls);
+          if (list.length) box.querySelector('[name="students"]').value = list.join('\n');
+        };
+        fill();
+        box.querySelector('[name="className"]').addEventListener('change', fill);
+      },
+      onSubmit: async (v) => {
+        const spec = {
+          name: v.name.trim(),
+          className: v.className,
+          max: Number(v.max) || 100,
+          components: String(v.components).split(',').map((x) => x.trim()).filter(Boolean),
+          students: String(v.students).split(/\n+/).map((x) => x.trim()).filter(Boolean)
+        };
+        if (!spec.components.length) { UI.toast(I18N.p('Isi minimal satu komponen.', 'Add at least one component.'), 'err'); return false; }
+        const j = await Api.call('scoreNewSheet', { spec });
+        await this.loadSheets(true);
+        await Store.ensure('_Nilai', true);
+        App.refresh();
+        UI.toast(I18N.p(`Sheet "${j.name}" dibuat dengan ${j.students} siswa & ${j.components} komponen`, `Sheet "${j.name}" created with ${j.students} students and ${j.components} components`), 'ok', 7000);
+        this.input(j.name);
+      }
+    });
+  },
+
+  /** Input / ubah nilai satu komponen untuk satu kelas, langsung tersimpan ke Score List. */
+  async input(sheetName) {
+    const s = App.s('school');
+    const sheets = (s.scoreSheets || []).map((x) => x.name);
+    if (!sheets.length) { await this.loadSheets(true); }
+    const list = ((App.s('school').scoreSheets) || []).map((x) => x.name);
+    const pick = sheetName || list[0];
+    if (!pick) return UI.toast(I18N.p('Belum ada sheet nilai.', 'No score sheet yet.'), 'err');
+    let meta;
+    try {
+      UI.toast(I18N.p('Membuka sheet…', 'Opening sheet…'), '', 1500);
+      meta = await Api.call('scoreSheetMeta', { name: pick });
+    } catch (e) { return UI.toast(e.message, 'err', 7000); }
+
+    const render = (m, comp) => `
+      <div class="form mb">
+        <div class="field"><label>${I18N.p('Sheet', 'Sheet')}</label>
+          <select class="select" id="in-sheet">${list.map((n) => `<option ${n === m.name ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
+        <div class="field"><label>${I18N.p('Komponen yang diisi', 'Component to fill')}</label>
+          <select class="select" id="in-comp">${m.components.map((c) => `<option ${c.label === comp ? 'selected' : ''}>${esc(c.label)}</option>`).join('')}<option value="__new">${I18N.p('+ Komponen baru…', '+ New component…')}</option></select></div>
+        <div class="field full" id="in-newwrap" hidden><label>${I18N.p('Nama komponen baru', 'New component name')}</label><input class="input" id="in-new" placeholder="Daily Test 3"></div>
+      </div>
+      <div class="table-wrap" style="max-height:52vh;overflow:auto"><table class="tbl"><thead><tr><th>#</th><th>${I18N.p('Siswa', 'Student')}</th><th class="r">${I18N.p('Nilai', 'Score')}</th></tr></thead>
+        <tbody>${m.students.map((st, i) => `<tr><td class="mini muted">${i + 1}</td><td class="t">${esc(st.name)}</td>
+          <td class="r"><input class="input score-in" data-name="${esc(st.name)}" type="number" inputmode="numeric" style="width:110px;text-align:right" value="${esc(st.scores[comp] == null ? '' : st.scores[comp])}"></td></tr>`).join('')}</tbody></table></div>
+      <div class="todo-add mt"><input class="input" id="in-add" placeholder="${I18N.p('Tambah siswa baru (nama)…', 'Add a new student (name)…')}"><button class="btn sm" id="in-addbtn">${ic('plus')}${I18N.p('Tambah', 'Add')}</button></div>`;
+
+    let comp = (meta.components[0] || {}).label || '';
+    const m = UI.modal({
+      title: `${I18N.p('Input nilai', 'Enter scores')} — ${esc(meta.name)}`, size: 'wide',
+      body: render(meta, comp),
+      foot: `<a class="btn left" id="in-open" href="#" target="_blank" rel="noopener">${ic('table')}${I18N.p('Buka di Sheets', 'Open in Sheets')}</a><button class="btn" data-close>Batal</button><button class="btn primary" id="in-save">${ic('check')}${I18N.p('Simpan nilai', 'Save scores')}</button>`,
+      onMount: (box, mm) => {
+        const url = (Store.services.spreadsheetUrl || '') && '';
+        const openLink = box.querySelector('#in-open');
+        if (App.s('school').scoreUrl) openLink.href = App.s('school').scoreUrl;
+        const compSel = box.querySelector('#in-comp');
+        compSel.addEventListener('change', () => {
+          box.querySelector('#in-newwrap').hidden = compSel.value !== '__new';
+          if (compSel.value !== '__new') {
+            comp = compSel.value;
+            $$('.score-in', box).forEach((inp) => {
+              const st = meta.students.find((x) => x.name === inp.dataset.name);
+              inp.value = st && st.scores[comp] != null ? st.scores[comp] : '';
+            });
+          }
+        });
+        box.querySelector('#in-sheet').addEventListener('change', (e) => { mm.close(); this.input(e.target.value); });
+        box.querySelector('#in-addbtn').addEventListener('click', () => {
+          const nm = box.querySelector('#in-add').value.trim();
+          if (!nm) return;
+          const tb = box.querySelector('tbody');
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td class="mini muted">${tb.children.length + 1}</td><td class="t">${esc(nm)}</td><td class="r"><input class="input score-in" data-name="${esc(nm)}" type="number" style="width:110px;text-align:right"></td>`;
+          tb.appendChild(tr);
+          box.querySelector('#in-add').value = '';
+        });
+        box.querySelector('#in-save').addEventListener('click', async () => {
+          const target = compSel.value === '__new' ? box.querySelector('#in-new').value.trim() : compSel.value;
+          if (!target) return UI.toast(I18N.p('Isi nama komponen.', 'Enter a component name.'), 'err');
+          const values = $$('.score-in', box).map((inp) => ({ name: inp.dataset.name, score: inp.value === '' ? '' : Number(inp.value) }))
+            .filter((v) => v.score !== '');
+          if (!values.length) return UI.toast(I18N.p('Belum ada nilai yang diisi.', 'No scores entered yet.'), 'err');
+          const btn = box.querySelector('#in-save');
+          btn.disabled = true;
+          try {
+            const j = await Api.call('scoreSet', { name: meta.name, component: target, values });
+            await Store.ensure('_Nilai', true);
+            App.refresh();
+            mm.close();
+            UI.toast(I18N.p(`${j.written} nilai tersimpan ke sheet ${j.sheet}${j.added ? ` (+${j.added} siswa baru)` : ''}`, `${j.written} scores saved to ${j.sheet}${j.added ? ` (+${j.added} new students)` : ''}`), 'ok', 7000);
+          } catch (e) { UI.toast(e.message, 'err', 8000); btn.disabled = false; }
+        });
+      }
+    });
+  },
+
   /** Pemetaan manual: pilih baris judul, kolom nama, dan kolom nilai. */
   async map(sheetName) {
     try {
@@ -6032,7 +6286,7 @@ const Nilai = {
 };
 
 VIEWS.school.nilai = {
-  actions: () => `<button class="btn" data-act="scoreConnect">${ic('link')}Score List</button><button class="btn" data-act="scoreSheets">${ic('refresh')}Segarkan daftar sheet</button><button class="btn mod" data-act="scoreImport">${ic('download')}Impor semua sheet</button>`,
+  actions: () => `<button class="btn" data-act="scoreNew">${ic('plus')}Sheet nilai baru</button><button class="btn mod" data-act="scoreInput">${ic('edit')}Input nilai</button><button class="btn" data-act="scoreConnect">${ic('link')}Score List</button><button class="btn" data-act="scoreSheets">${ic('refresh')}Segarkan daftar sheet</button><button class="btn mod" data-act="scoreImport">${ic('download')}Impor semua sheet</button>`,
   render() {
     const s = App.s('school');
     const all = Nilai.rows();
@@ -6060,6 +6314,7 @@ VIEWS.school.nilai = {
           <span class="fico" style="background:var(--${x.type === 'grid' ? 'sky' : x.type === 'rubric' ? 'violet' : x.type === 'list' ? 'jade' : x.type === 'form' ? 'amber' : 'slate'}-soft);color:var(--${x.type === 'grid' ? 'sky' : x.type === 'rubric' ? 'violet' : x.type === 'list' ? 'jade' : x.type === 'form' ? 'amber' : 'slate'})">${x.type === 'form' ? 'FORM' : x.type === 'grid' ? 'UNIT' : x.type === 'rubric' ? 'RUBR' : x.type === 'list' ? 'LIST' : '—'}</span>
           <div class="grow"><div class="t">${esc(x.name)}</div><div class="s">${x.rows} ${I18N.t('baris')}${(s.scoreStatus || {})[x.name] ? ((s.scoreStatus[x.name].rows ? ` — ${s.scoreStatus[x.name].rows} ${I18N.p('nilai', 'scores')}` : ` — ${esc(s.scoreStatus[x.name].reason || '')}`)) : (known.has(x.name) ? '' : x.type !== 'unknown' ? ' — ' + I18N.t('Baru') : '')}</div></div>
           <button class="btn xs" data-act="scoreImport" data-sheet="${esc(x.name)}" title="${I18N.p('Impor sheet ini', 'Import this sheet')}">${ic('download')}</button>
+          <button class="btn xs" data-act="scoreInput" data-sheet="${esc(x.name)}" title="${I18N.p('Input nilai', 'Enter scores')}">${ic('edit')}</button>
           <button class="btn xs ghost" data-act="scoreMap" data-sheet="${esc(x.name)}" title="${I18N.p('Petakan manual', 'Map manually')}">${ic('table')}</button></div>`).join('')}</div>`
         : UI.empty(I18N.t('Belum terhubung'), I18N.t('Tempel URL Google Sheet Score List, lalu tarik seluruh nilainya ke dalam aplikasi ini.'), `<button class="btn sm" data-act="scoreConnect">${ic('link')}Score List</button>`)}
       ${st.scoreSheetUrl && !sheets.length ? `<div class="btn-row mt"><button class="btn sm" data-act="scoreSheets">${ic('refresh')}${I18N.t('Segarkan daftar sheet')}</button></div>` : ''}
@@ -6119,6 +6374,8 @@ Object.assign(ACT, {
   scoreImport: (d) => Nilai.import(d.sheet ? [d.sheet] : null),
   scoreStudent: (d) => Nilai.student(d.name, d.cls),
   scoreMap: (d) => { UI.closeAll(); Nilai.map(d.sheet); },
+  scoreNew: () => Nilai.newSheet(),
+  scoreInput: (d) => Nilai.input(d.sheet || null),
   lang: (d) => I18N.set(d.l)
 });
 Object.assign(CHG, {
