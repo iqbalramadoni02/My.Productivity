@@ -820,7 +820,38 @@ h1, .hello h1 { font-weight: 800; letter-spacing: -.035em; }
 .boot .logo { animation: logoPulse 1.6s ease-in-out infinite; }
 @keyframes logoPulse { 50% { transform: translateY(-4px) scale(1.04); } }
 
-  </style>
+  
+
+/* ---------- v4: editor lembar ---------- */
+.sheet-grid { max-height: 62vh; overflow: auto; border: 1px solid var(--line); border-radius: 14px; }
+.tbl.grid td, .tbl.grid th { padding: 0; border: 1px solid var(--line); }
+.tbl.grid th { padding: 6px 8px; font-size: 11.5px; text-align: center; position: sticky; top: 0; z-index: 2; }
+.tbl.grid th.rownum { left: 0; z-index: 3; min-width: 38px; }
+.tbl.grid td.rownum, .tbl.grid th.rownum { background: var(--surface-2); color: var(--muted); text-align: center; font-size: 11px; position: sticky; left: 0; }
+.cell-in { width: 100%; min-width: 108px; border: 0; background: transparent; color: var(--ink); padding: 6px 8px; font-size: 12.5px; border-radius: 0; }
+.cell-in:focus { outline: 2px solid var(--brand); outline-offset: -2px; background: color-mix(in srgb, var(--brand) 10%, transparent); }
+.cell-f { position: relative; padding: 6px 8px; font-size: 12.5px; color: var(--muted); background: color-mix(in srgb, var(--slate) 8%, transparent); min-width: 108px; }
+.cell-f i { position: absolute; top: 2px; right: 4px; font-size: 9px; font-style: normal; color: var(--violet); }
+
+/* ---------- v4: pipeline marketing ---------- */
+.pipe { display: grid; grid-template-columns: repeat(6, minmax(150px, 1fr)); gap: 10px; overflow-x: auto; }
+.pipe-col h4 { margin: 0 0 8px; font-size: 12.5px; display: flex; align-items: center; gap: 6px; }
+.pipe-card { background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; transition: transform .12s ease, border-color .15s ease; }
+.pipe-card:hover { transform: translateY(-2px); border-color: var(--brand); }
+.pipe-card .t { font-weight: 700; font-size: 13px; }
+.pipe-card .s { font-size: 11.5px; color: var(--muted); }
+.pipe-act { display: flex; gap: 4px; margin-top: 6px; }
+@media (max-width: 900px) { .pipe { grid-template-columns: repeat(3, minmax(150px, 1fr)); } }
+
+/* ---------- v4: halaman siswa ---------- */
+.student-mode { background: var(--bg); }
+.student-wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
+.student-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.student-head h1 { margin: 0; font-size: 22px; }
+.student-wrap .card { margin-bottom: 14px; }
+.cell-in.edited { background: color-mix(in srgb, var(--amber) 22%, transparent); font-weight: 700; }
+
+</style>
 </head>
 <body>
   <div id="app" class="app">
@@ -839,7 +870,7 @@ h1, .hello h1 { font-weight: 800; letter-spacing: -.035em; }
   <div id="modal-root"></div>
   <div id="toast-root" class="toasts" aria-live="polite"></div>
   <!-- Diisi otomatis oleh Apps Script (doGet). Bila file ini di-hosting statis, isinya diabaikan. -->
-  <script type="application/json" id="mph-boot">{}</script>
+  <script type="application/json" id="mph-boot"><?!= boot ?></script>
   <script>
     /* Service worker hanya aktif saat file ini di-hosting sendiri (GitHub Pages / Netlify / APK). */
     if ('serviceWorker' in navigator && location.protocol === 'https:' && !location.host.includes('googleusercontent')) {
@@ -891,6 +922,13 @@ const SCHEMA = {
   Todos: ['id', 'text', 'date', 'priority', 'done', 'createdAt', 'updatedAt'],
   Files: ['id', 'module', 'refId', 'name', 'mime', 'size', 'driveId', 'url', 'note', 'createdAt', 'updatedAt'],
   _Kehadiran: ['id', 'date', 'program', 'className', 'tpCodes', 'topic', 'boysPresent', 'boysTotal', 'girlsPresent', 'girlsTotal', 'boysAchieved', 'girlsAchieved', 'method', 'note', 'createdAt', 'updatedAt'],
+  _Siswa: ['id', 'className', 'name', 'gender', 'nis', 'note', 'createdAt', 'updatedAt'],
+  _DaftarNilai: ['id', 'name', 'className', 'program', 'components', 'maxScore', 'kkm', 'note', 'createdAt', 'updatedAt'],
+  _NilaiSiswa: ['id', 'bookId', 'className', 'studentName', 'component', 'tpCode', 'score', 'maxScore', 'date', 'source', 'refId', 'note', 'createdAt', 'updatedAt'],
+  _Tugas: ['id', 'className', 'subject', 'title', 'instruction', 'type', 'assignDate', 'dueDate', 'tpCode', 'bookId', 'component', 'maxScore', 'status', 'link', 'createdAt', 'updatedAt'],
+  _Pengumpulan: ['id', 'taskId', 'className', 'studentName', 'content', 'link', 'submittedAt', 'score', 'feedback', 'status', 'createdAt', 'updatedAt'],
+  _Leads: ['id', 'name', 'wa', 'email', 'source', 'program', 'stage', 'value', 'nextFollowUp', 'lastContact', 'note', 'createdAt', 'updatedAt'],
+  _LeadLog: ['id', 'leadId', 'at', 'channel', 'action', 'note', 'createdAt', 'updatedAt'],
   _Nilai: ['id', 'sheetName', 'className', 'studentName', 'gender', 'assessment', 'unit', 'component', 'score', 'maxScore', 'predicate', 'date', 'note', 'createdAt', 'updatedAt'],
   _Log: ['id', 'at', 'sheet', 'rowId', 'action', 'before', 'after', 'note', 'createdAt', 'updatedAt'],
   Deadlines: ['id', 'title', 'deadline', 'type', 'status', 'left', 'urgency', 'gcalId'],
@@ -904,7 +942,7 @@ const PROTECTED = new Set(['Settings', 'Pricelist', 'Categories']);
 const NUMERIC = new Set(['amount', 'price', 'discount', 'progress', 'principal', 'ratePct', 'tenor', 'installment',
   'principalPart', 'interestPart', 'rate', 'durationMin', 'totalSessions', 'participants', 'present', 'total',
   'score', 'mood', 'no', 'day', 'size', 'dayOfMonth', 'normalMin', 'normalMax', 'expressMin', 'expressMax', 'daysNormal', 'daysExpress', 'target', 'weight', 'jp',
-  'boysPresent', 'boysTotal', 'girlsPresent', 'girlsTotal', 'boysAchieved', 'girlsAchieved', 'score', 'maxScore']);
+  'boysPresent', 'boysTotal', 'girlsPresent', 'girlsTotal', 'boysAchieved', 'girlsAchieved', 'score', 'maxScore', 'value']);
 const BOOLEAN = new Set(['paid', 'done', 'active', 'disbursed']);
 
 const DEFAULT_SETTINGS = {
@@ -1143,6 +1181,8 @@ const ICONS = {
   chevR: '<path d="m9 6 6 6-6 6"/>',
   copy: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  wa: '<path d="M21 11.5a8.4 8.4 0 0 1-12.6 7.3L3 20.5l1.8-5.2A8.5 8.5 0 1 1 21 11.5z"/><path d="M8.6 9.3c.3-.7.6-.7.9-.7h.7c.2 0 .5 0 .7.6l.8 1.9c.1.3 0 .5-.1.7l-.4.5c-.1.2-.3.4-.1.7a7 7 0 0 0 3 2.6c.3.1.5 0 .7-.2l.5-.6c.2-.2.4-.2.6-.1l1.8.9c.3.1.5.3.5.5v.6c0 .4-.3 1-1 1.3a4 4 0 0 1-3.6-.5 11 11 0 0 1-4.6-4.6c-.6-1-.7-2.1-.4-3.1z"/>',
+  copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
   lock: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14.5v2.5"/>',
   pay: '<rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5v5M18 9.5v5"/>'
 };
@@ -1537,15 +1577,17 @@ const Store = {
  * ------------------------------------------------------------------- */
 const MODULES = {
   school: { nav: 'Sekolah & Mengajar', title: 'Sekolah & Kinerja Mengajar', short: 'Sekolah', icon: 'school', desc: 'Jadwal, logbook, KPI, tugas & ujian',
-    subs: [['jadwal', 'Jadwal & Kalender'], ['tugas', 'Tugas & Ujian'], ['kegiatan', 'Kegiatan & Appointment'], ['deadline', 'Deadline Dinas'], ['kehadiran', 'Kehadiran & TP'], ['nilai', 'Nilai & Score List'], ['logbook', 'Logbook & KPI'], ['jobdesc', 'Jobdesc'], ['file', 'Tautan & File'], ['keuangan', 'Gaji & Honor'], ['lembar', 'Lembar Excel']] },
+    subs: [['jadwal', 'Jadwal & Kalender'], ['tugas', 'Tugas & Ujian'], ['kegiatan', 'Kegiatan & Appointment'], ['deadline', 'Deadline Dinas'], ['kehadiran', 'Kehadiran & TP'], ['nilai', 'Nilai & Score List'], ['daftarnilai', 'Daftar Nilai'], ['tugassiswa', 'Tugas Siswa'], ['logbook', 'Logbook & KPI'], ['jobdesc', 'Jobdesc'], ['keuangan', 'Gaji & Honor'], ['lembar', 'Lembar Excel']] },
+  pustaka: { nav: 'Pustaka Link & File', title: 'Pustaka Link & File', short: 'Pustaka', icon: 'link', desc: 'Tautan kerja & dokumen, tertata per kategori',
+    subs: [['tautan', 'Tautan per Kategori'], ['file', 'Semua Berkas']] },
   planner: { nav: 'Agenda & Aktivitas', title: 'Agenda & Aktivitas', short: 'Agenda', icon: 'calendar', desc: 'Kalender terpadu, deadline, tugas, dan rekapnya',
     subs: [['kalender', 'Kalender Terpadu'], ['appointment', 'Daftar Kegiatan'], ['rekap', 'Rekap Aktivitas']] },
   project: { nav: 'Project & Klien', title: 'Project Management', short: 'Project', icon: 'project', desc: 'Klien, pengerjaan, invoice & kwitansi',
-    subs: [['daftar', 'Daftar Project'], ['kanban', 'Kanban'], ['bayar', 'Pembayaran & Piutang'], ['harga', 'Pricelist & Kalkulator'], ['file', 'File Project']] },
+    subs: [['daftar', 'Daftar Project'], ['kanban', 'Kanban'], ['marketing', 'Marketing & Leads'], ['bayar', 'Pembayaran & Piutang'], ['harga', 'Pricelist & Kalkulator'], ['file', 'File Project']] },
   tutor: { nav: 'Tutor Class', title: 'Tutor Class', short: 'Tutor', icon: 'tutor', desc: 'Bimbel, les privat, workshop',
     subs: [['kelas', 'Kelas & Klien'], ['sesi', 'Sesi & Progres'], ['bayar', 'Pembayaran'], ['file', 'File Kelas']] },
   finance: { nav: 'Personal Finance', title: 'Personal Finance', short: 'Keuangan', icon: 'finance', desc: 'Buku kas pusat, pinjaman, proyeksi',
-    subs: [['ringkasan', 'Ringkasan'], ['kas', 'Buku Kas'], ['pinjaman', 'Pinjaman & Cicilan'], ['proyeksi', 'Rutin & Proyeksi'], ['file', 'Arsip Keuangan'], ['lembar', 'Lembar Excel']] },
+    subs: [['ringkasan', 'Ringkasan'], ['kas', 'Buku Kas'], ['pinjaman', 'Pinjaman & Cicilan'], ['proyeksi', 'Rutin & Proyeksi'], ['kelola', 'Isi & Ubah Lembar'], ['file', 'Arsip Keuangan'], ['lembar', 'Lembar Excel']] },
   journal: { nav: 'Jurnal & Habit', title: 'Jurnal & Habit', short: 'Jurnal', icon: 'journal', desc: 'Refleksi harian, kebiasaan, to-do',
     subs: [['jurnal', 'Jurnal Harian'], ['habit', 'Habit Tracker'], ['todo', 'To-Do']] },
   files: { nav: 'File Storage', title: 'File Storage', short: 'File', icon: 'files', desc: 'Semua dokumen dari seluruh modul',
@@ -3179,22 +3221,6 @@ VIEWS.school.jobdesc = {
 };
 
 VIEWS.school.lembar = { render: () => SheetView.render('teaching', 'svSchool'), after: () => SheetView.load('svSchool') };
-
-VIEWS.school.file = {
-  actions: () => `<button class="btn" data-act="linkAdd">${ic('link')}Tautan</button><button class="btn mod" data-act="filePick" data-mod="school">${ic('upload')}Upload file</button>`,
-  render() {
-    const links = Store.all('Links').filter((l) => l.title || l.label);
-    const active = links.filter((l) => l.status !== 'Archived');
-    const byDiv = groupBy(active, (l) => l.division || 'Lainnya');
-    return `
-      <div class="card mb"><h3>${ic('link')}Tautan dokumen kerja${Store.bound('Links') ? ` <span class="badge b-jade">sheet Important Link</span>` : ''}</h3>
-        ${active.length ? Object.entries(byDiv).map(([d, l]) => `<h4 style="margin:12px 0 4px;font-size:13px" class="muted">${esc(d)}</h4><ul class="list">${l.map((x) => `<li>${ic('file')}<div class="grow"><div class="t">${esc(x.title)}</div><div class="s">${esc(x.label)}</div></div>${x.url ? `<a class="btn xs" href="${esc(x.url)}" target="_blank" rel="noopener">${ic('eye')}Buka</a>` : ''}<button class="btn xs" data-act="linkEdit" data-id="${x.id}">${ic('edit')}</button></li>`).join('')}</ul>`).join('')
-          : UI.empty('Belum ada tautan', 'Tambahkan tautan RPP, silabus, bank soal, atau rekap nilai.', `<button class="btn sm" data-act="linkAdd">${ic('plus')}Tautan</button>`)}
-        ${links.length !== active.length ? `<p class="mini muted">${links.length - active.length} tautan berstatus Archived disembunyikan.</p>` : ''}
-      </div>
-      ${Files.panel('school')}`;
-  }
-};
 
 Object.assign(ACT, {
   dlAdd: () => Work.dlForm(),
@@ -5384,6 +5410,13 @@ async function boot() {
   const params = new URLSearchParams(location.search);
   const portalTok = EMBEDDED ? BOOT.portal : params.get('portal');
   if (portalTok) { Config.load(); return Portal.render(portalTok, EMBEDDED ? 'embedded' : (params.get('api') || Config.data.url)); }
+  const studentMode = EMBEDDED ? !!BOOT.student : params.get('p') === 'siswa';
+  if (studentMode) {                                   // halaman pengumpulan tugas untuk siswa
+    Config.load();
+    I18N.init();
+    document.documentElement.dataset.theme = Config.data.theme || 'light';
+    return Siswa.render(EMBEDDED ? (BOOT.studentClass || '') : (params.get('kelas') || ''));
+  }
   Config.load();
   I18N.init();
   SyncQueue.init();
@@ -7025,8 +7058,766 @@ Object.assign(CHG, {
 });
 
 /* Mulai aplikasi (setelah seluruh modul termuat) */
+
+/* =====================================================================
+ * 32. v4 — Editor Lembar, Mini LMS (daftar nilai + tugas siswa),
+ *      Pustaka (tautan & file), dan Marketing (leads + WhatsApp)
+ * ===================================================================== */
+
+/* ------------------------- 32.1 EDITOR LEMBAR ----------------------- */
+const SheetEd = {
+  state() { const s = App.s('sheeted'); s.edits = s.edits || {}; return s; },
+
+  async open(name) {
+    const s = this.state();
+    if (!Store.isRemote()) return UI.toast(I18N.p('Fitur ini perlu koneksi Google Sheets.', 'This needs a Google Sheets connection.'), 'err');
+    s.loading = true;
+    App.refresh();
+    try {
+      const j = await Api.call('sheetEdit', { name });
+      s.sheet = j;
+      s.name = name;
+      s.edits = {};
+    } catch (e) { UI.toast(e.message, 'err', 7000); }
+    s.loading = false;
+    App.refresh();
+  },
+
+  async save() {
+    const s = this.state();
+    const edits = Object.keys(s.edits).map((k) => {
+      const [r, c] = k.split(':').map(Number);
+      return { r, c, v: s.edits[k] };
+    });
+    if (!edits.length) return UI.toast(I18N.p('Belum ada perubahan.', 'No changes yet.'), 'err');
+    try {
+      const j = await Api.call('sheetSave', { name: s.name, edits });
+      UI.toast(I18N.p(`${j.written} sel tersimpan${j.added ? `, ${j.added} baris baru` : ''}${j.skipped ? `, ${j.skipped} sel berumus dilewati` : ''}`,
+        `${j.written} cells saved${j.added ? `, ${j.added} new rows` : ''}${j.skipped ? `, ${j.skipped} formula cells skipped` : ''}`), 'ok', 6000);
+      await this.open(s.name);
+    } catch (e) { UI.toast(e.message, 'err', 8000); }
+  },
+
+  grid() {
+    const s = this.state();
+    const j = s.sheet;
+    if (!j) return '';
+    const colL = (c) => { let x = ''; while (c > 0) { const m = (c - 1) % 26; x = String.fromCharCode(65 + m) + x; c = Math.floor((c - 1) / 26); } return x; };
+    const head = `<tr><th class="rownum"></th>${[...Array(j.cols)].map((_, i) => `<th>${colL(i + 1)}</th>`).join('')}</tr>`;
+    const body = j.values.map((row, r) => `<tr><th class="rownum">${r + 1}</th>${[...Array(j.cols)].map((_, c) => {
+      const f = (j.formulas[r] || [])[c] || '';
+      const v = (row[c] == null ? '' : row[c]);
+      if (f) return `<td class="cell-f" title="${esc(f)}">${esc(v)}<i>ƒ</i></td>`;
+      const pend = s.edits[(r + 1) + ':' + (c + 1)];
+      return `<td><input class="cell-in${pend !== undefined ? ' edited' : ''}" data-chg="cellEdit" data-live data-rc="${r + 1}:${c + 1}" value="${esc(pend !== undefined ? pend : v)}"></td>`;
+    }).join('')}</tr>`).join('');
+    return `<div class="sheet-grid"><table class="tbl grid"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+  }
+};
+
+VIEWS.finance.kelola = {
+  actions: () => `<button class="btn" data-act="sheetReload">${ic('refresh')}Muat ulang</button><button class="btn mod" data-act="sheetSaveNow">${ic('check')}Simpan perubahan</button>`,
+  render() {
+    const s = SheetEd.state();
+    const all = (Store.meta.sheets || []).filter((x) => x && x.name && !SCHEMA[x.name] && String(x.name).charAt(0) !== '_');
+    const fin = all.filter((x) => x.group === 'finance');
+    const show = (fin.length ? fin : all).map((x) => ({ g: x.group, n: x.name }));
+    return `
+      <div class="toolbar">
+        <select class="select" data-chg="sheetPick" style="min-width:280px">
+          <option value="">${I18N.p('Pilih lembar untuk diisi / diubah…', 'Choose a sheet to fill in / edit…')}</option>
+          ${show.map((x) => `<option ${x.n === s.name ? 'selected' : ''}>${esc(x.n)}</option>`).join('')}
+          ${fin.length ? `<optgroup label="${I18N.p('Lembar lain', 'Other sheets')}">${all.filter((x) => x.group !== 'finance').map((x) => `<option ${x.name === s.name ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</optgroup>` : ''}
+        </select>
+        ${s.name ? `<span class="badge b-brand">${esc(s.name)}</span>` : ''}
+        <button class="btn sm" data-act="sheetAddRow" ${s.sheet ? '' : 'disabled'}>${ic('plus')}${I18N.p('Baris baru', 'New row')}</button>
+        <span class="mini muted">${I18N.p('Sel berumus ditandai ƒ dan tidak bisa diubah — rumus asli di Google Sheets tetap aman.', 'Formula cells are marked ƒ and cannot be edited — the original Sheets formulas stay intact.')}</span>
+      </div>
+      ${s.loading ? UI.empty(I18N.p('Memuat lembar…', 'Loading sheet…'))
+        : s.sheet ? `<div class="card">${SheetEd.grid()}
+
+            ${s.sheet.truncated ? `<p class="mini warn">${I18N.p('Hanya 300 baris × 30 kolom pertama yang ditampilkan.', 'Only the first 300 rows × 30 columns are shown.')}</p>` : ''}</div>`
+          : UI.empty(I18N.p('Belum ada lembar dipilih', 'No sheet selected'), I18N.p('Semua lembar keuangan di spreadsheet bisa diisi dan diubah langsung dari sini.', 'Every finance sheet in the spreadsheet can be filled in and edited right here.'))}`;
+  }
+};
+VIEWS.school.lembarEdit = VIEWS.finance.kelola;
+
+Object.assign(ACT, {
+  sheetReload: () => { const s = SheetEd.state(); if (s.name) SheetEd.open(s.name); },
+  sheetSaveNow: () => SheetEd.save(),
+  sheetAddRow: async () => {
+    const s = SheetEd.state();
+    if (!s.name) return;
+    try {
+      await Api.call('sheetSave', { name: s.name, edits: [], appends: [['']] });
+      await SheetEd.open(s.name);
+      UI.toast(I18N.p('Baris baru siap diisi di bagian bawah lembar.', 'A new row is ready at the bottom of the sheet.'), 'ok', 4000);
+    } catch (e) { UI.toast(e.message, 'err', 7000); }
+  }
+});
+Object.assign(CHG, {
+  sheetPick: (v) => { if (v) SheetEd.open(v); },
+  cellEdit: (v, el) => {
+    const s = SheetEd.state();
+    s.edits[el.dataset.rc] = v;
+    el.classList.add('edited');
+    const n = Object.keys(s.edits).length;
+    const btn = $('[data-act="sheetSaveNow"]');
+    if (btn) btn.textContent = I18N.p(`Simpan ${n} perubahan`, `Save ${n} changes`);
+  }
+});
+
+/* ------------------- 32.2 DAFTAR NILAI (GRADEBOOK) ------------------ */
+const Rapor = {
+  books() { return Store.all('_DaftarNilai'); },
+  grades(bookId) { return Store.all('_NilaiSiswa').filter((g) => g.bookId === bookId); },
+  comps(b) { return String(b.components || '').split(',').map((x) => x.trim()).filter(Boolean); },
+  students(b) {
+    const g = this.grades(b.id);
+    const names = [...new Set(g.map((x) => x.studentName))];
+    Store.all('_Siswa').filter((s) => s.className === b.className).forEach((s) => { if (!names.includes(s.name)) names.push(s.name); });
+    return names.sort();
+  },
+  scoreOf(bookId, name, comp) {
+    return this.grades(bookId).filter((g) => g.studentName === name && g.component === comp)[0] || null;
+  },
+  avg(b, name) {
+    const rows = this.grades(b.id).filter((g) => g.studentName === name && g.score !== '' && g.score !== null);
+    if (!rows.length) return null;
+    return sum(rows, (g) => (Number(g.score) || 0) / (Number(g.maxScore) || 100) * 100) / rows.length;
+  },
+
+  form(id) {
+    const b = id ? Store.get('_DaftarNilai', id) : null;
+    const programs = [...new Set(Store.all('TP').map((t) => t.program).filter(Boolean))];
+    UI.form({
+      title: b ? I18N.p('Ubah daftar nilai', 'Edit gradebook') : I18N.p('Daftar nilai baru', 'New gradebook'), size: 'wide',
+      values: b || { components: 'Reading, Listening, Writing, Speaking', maxScore: 100, kkm: Number(Store.settings().kkm) || 75 },
+      note: I18N.p('Nama dan kelas bisa diubah kapan saja; nilai yang sudah masuk tetap terbawa.', 'The name and class can be changed anytime; existing scores stay attached.'),
+      fields: [
+        { k: 'name', l: I18N.p('Nama daftar nilai', 'Gradebook name'), req: 1, full: 1, ph: 'Daftar Nilai EW XI.2 — Semester 1' },
+        { k: 'className', l: I18N.p('Kelas', 'Class'), req: 1, list: () => School.classes() },
+        { k: 'program', l: I18N.p('Program TP', 'Objective program'), t: 'select', o: () => ['', ...programs] },
+        { k: 'maxScore', l: I18N.p('Nilai maksimum', 'Maximum score'), t: 'number', min: 1 },
+        { k: 'kkm', l: 'KKM', t: 'number', min: 0, max: 100 },
+        { k: 'components', l: I18N.p('Komponen / section (pisahkan koma)', 'Components / sections (comma separated)'), full: 1, req: 1 },
+        { k: 'note', l: I18N.p('Catatan', 'Note'), t: 'textarea', rows: 2, full: 1 }
+      ],
+      extraFoot: b ? `<button class="btn danger left" data-act="delRow" data-sheet="_DaftarNilai" data-id="${b.id}">${ic('trash')}Hapus</button>` : '',
+      onSubmit: (v) => b ? Store.update('_DaftarNilai', b.id, v) : Store.create('_DaftarNilai', v)
+    });
+  },
+
+  /** Salin satu sheet Score List menjadi daftar nilai di database aplikasi. */
+  async copyFromScore(sheetName) {
+    const rows = Store.all('_Nilai').filter((r) => !sheetName || r.sheetName === sheetName);
+    if (!rows.length) return UI.toast(I18N.p('Tidak ada nilai pada sheet itu.', 'No scores on that sheet.'), 'err');
+    const groups = groupBy(rows, (r) => r.sheetName);
+    const ops = [];
+    let books = 0, grades = 0;
+    Object.keys(groups).forEach((sheet) => {
+      const list = groups[sheet];
+      const comps = [...new Set(list.map((r) => r.component).filter(Boolean))];
+      const cls = (list.find((r) => r.className) || {}).className || '';
+      const exist = this.books().filter((b) => b.note === 'scorelist:' + sheet)[0];
+      const bookId = exist ? exist.id : uid();
+      if (!exist) {
+        ops.push({ op: 'create', sheet: '_DaftarNilai', row: { id: bookId, name: sheet, className: cls, program: '', components: comps.join(', '), maxScore: Math.max(...list.map((r) => Number(r.maxScore) || 100)), kkm: Number(Store.settings().kkm) || 75, note: 'scorelist:' + sheet } });
+        books++;
+      }
+      const had = this.grades(bookId);
+      list.forEach((r) => {
+        const old = had.filter((g) => g.studentName === r.studentName && g.component === r.component)[0];
+        const row = { bookId, className: r.className || cls, studentName: r.studentName, component: r.component || sheet, tpCode: '', score: r.score, maxScore: r.maxScore || 100, date: r.date || todayISO(), source: 'scorelist', refId: r.id, note: '' };
+        ops.push(old ? { op: 'update', sheet: '_NilaiSiswa', id: old.id, row } : { op: 'create', sheet: '_NilaiSiswa', row: Object.assign({ id: uid() }, row) });
+        grades++;
+      });
+    });
+    UI.toast(I18N.p('Menyalin ke database…', 'Copying into the database…'), '', 4000);
+    for (let i = 0; i < ops.length; i += 200) await Store.commit(ops.slice(i, i + 200));
+    await Store.ensure('_NilaiSiswa', true);
+    App.refresh();
+    UI.toast(I18N.p(`${books} daftar nilai & ${grades} nilai tersalin ke database`, `${books} gradebooks and ${grades} scores copied into the database`), 'ok', 7000);
+  },
+
+  /** Matriks nilai: siswa × komponen, bisa langsung diisi. */
+  open(id) {
+    const b = Store.get('_DaftarNilai', id);
+    if (!b) return;
+    const comps = this.comps(b);
+    const studs = this.students(b);
+    const tps = Store.where('TP', (t) => !b.program || t.program === b.program);
+    const att = typeof Hadir !== 'undefined' ? Hadir.byClass().filter((c) => c.cls === b.className)[0] : null;
+    const body = `
+      <div class="grid g4 mb">
+        <div class="stat accent"><small>${I18N.p('Siswa', 'Students')}</small><b>${studs.length}</b><span class="sub">${esc(b.className)}</span></div>
+        <div class="stat"><small>${I18N.p('Komponen', 'Components')}</small><b>${comps.length}</b></div>
+        <div class="stat"><small>${I18N.p('Rata-rata kelas', 'Class average')}</small><b>${studs.length ? Math.round(sum(studs, (n) => this.avg(b, n) || 0) / studs.length) : '—'}</b></div>
+        <div class="stat"><small>${I18N.p('Kehadiran kelas', 'Class attendance')}</small><b>${att && att.att != null ? Math.round(att.att) + '%' : '—'}</b><span class="sub">${att ? att.meetings + ' ' + I18N.p('pertemuan', 'meetings') : I18N.p('belum ada catatan', 'no records yet')}</span></div>
+      </div>
+      <div class="toolbar">
+        <button class="btn sm" data-act="rapBookEdit" data-id="${b.id}">${ic('edit')}${I18N.p('Ubah nama / kelas', 'Edit name / class')}</button>
+        <button class="btn sm" data-act="rapAddStudent" data-id="${b.id}">${ic('plus')}${I18N.p('Tambah siswa', 'Add student')}</button>
+        <button class="btn sm" data-act="rapExport" data-id="${b.id}">${ic('download')}${I18N.p('Ekspor', 'Export')}</button>
+        <span class="mini muted">KKM ${b.kkm || 75} — ${I18N.p('ketik nilai lalu klik Simpan nilai.', 'type the scores then press Save scores.')}</span>
+      </div>
+      <div class="table-wrap" style="max-height:60vh;overflow:auto"><table class="tbl"><thead><tr>
+        <th>#</th><th>${I18N.p('Siswa', 'Student')}</th>
+        ${comps.map((c) => `<th class="r">${esc(c)}<div class="s">
+          <select class="select xs rap-tp" data-comp="${esc(c)}" style="height:26px;font-size:11px">
+            <option value="">${I18N.p('tanpa TP', 'no objective')}</option>
+            ${tps.map((t) => `<option value="${esc(t.code)}" ${((this.grades(b.id).find((g) => g.component === c) || {}).tpCode) === String(t.code) ? 'selected' : ''}>${esc(t.code)}</option>`).join('')}
+          </select></div></th>`).join('')}
+        <th class="r">${I18N.p('Rata-rata', 'Average')}</th></tr></thead>
+        <tbody>${studs.map((n, i) => `<tr><td class="mini muted">${i + 1}</td><td class="t">${esc(n)}</td>
+          ${comps.map((c) => { const g = this.scoreOf(b.id, n, c); return `<td class="r"><input class="input rap-in" data-name="${esc(n)}" data-comp="${esc(c)}" type="number" style="width:84px;text-align:right" value="${g && g.score !== '' ? esc(g.score) : ''}"></td>`; }).join('')}
+          <td class="r"><b>${this.avg(b, n) == null ? '—' : Math.round(this.avg(b, n))}</b></td></tr>`).join('')}
+        </tbody></table></div>`;
+    UI.modal({
+      title: `${esc(b.name)} — ${esc(b.className)}`, size: 'full', body,
+      foot: `<button class="btn" data-close>Tutup</button><button class="btn primary" data-act="rapSave" data-id="${b.id}">${ic('check')}${I18N.p('Simpan nilai', 'Save scores')}</button>`
+    });
+  },
+
+  async save(bookId) {
+    const b = Store.get('_DaftarNilai', bookId);
+    const tpMap = {};
+    $$('.rap-tp').forEach((s) => { tpMap[s.dataset.comp] = s.value; });
+    const ops = [];
+    $$('.rap-in').forEach((inp) => {
+      const name = inp.dataset.name, comp = inp.dataset.comp;
+      const val = inp.value === '' ? '' : Number(inp.value);
+      const old = this.scoreOf(bookId, name, comp);
+      if (val === '' && !old) return;
+      const row = { bookId, className: b.className, studentName: name, component: comp, tpCode: tpMap[comp] || '', score: val, maxScore: Number(b.maxScore) || 100, date: todayISO(), source: 'manual', note: '' };
+      if (old) { if (String(old.score) !== String(val) || old.tpCode !== row.tpCode) ops.push({ op: 'update', sheet: '_NilaiSiswa', id: old.id, row }); }
+      else if (val !== '') ops.push({ op: 'create', sheet: '_NilaiSiswa', row: Object.assign({ id: uid() }, row) });
+    });
+    if (!ops.length) return UI.toast(I18N.p('Tidak ada perubahan.', 'No changes.'), '', 2000);
+    await Store.commit(ops);
+    UI.closeAll();
+    App.refresh();
+    UI.toast(I18N.p(`${ops.length} nilai tersimpan`, `${ops.length} scores saved`), 'ok');
+  }
+};
+
+VIEWS.school.daftarnilai = {
+  actions: () => `<button class="btn" data-act="rapFromScore">${ic('download')}Salin dari Score List</button><button class="btn mod" data-act="rapNew">${ic('plus')}Daftar nilai baru</button>`,
+  after: () => { if (!Store.loaded['_NilaiSiswa'] && Store.isRemote()) Store.ensure('_NilaiSiswa').then(() => App.refresh()); },
+  render() {
+    const books = Rapor.books();
+    if (!books.length) {
+      return UI.empty(I18N.p('Belum ada daftar nilai', 'No gradebook yet'),
+        I18N.p('Buat daftar nilai baru, atau salin seluruh Score List ke database agar rekapnya menyatu dengan TP, kehadiran, dan tugas.', 'Create a gradebook, or copy the whole Score List into the database so the recap sits together with objectives, attendance, and assignments.'),
+        `<button class="btn sm mod" data-act="rapNew">${ic('plus')}${I18N.p('Daftar nilai baru', 'New gradebook')}</button> <button class="btn sm" data-act="rapFromScore">${ic('download')}${I18N.p('Salin dari Score List', 'Copy from Score List')}</button>`);
+    }
+    const tasks = Store.all('_Tugas');
+    return `<div class="grid g3">${books.map((b) => {
+      const studs = Rapor.students(b);
+      const comps = Rapor.comps(b);
+      const filled = Rapor.grades(b.id).length;
+      const avg = studs.length ? sum(studs, (n) => Rapor.avg(b, n) || 0) / studs.length : 0;
+      const linked = tasks.filter((t) => t.bookId === b.id).length;
+      return `<div class="card ocard"><h4>${esc(b.name)}</h4>
+        <div class="s muted">${esc(b.className)}${b.program ? ' — ' + esc(b.program) : ''}</div>
+        <div class="grid g2 mt"><div class="stat"><small>${I18N.p('Siswa', 'Students')}</small><b>${studs.length}</b></div>
+          <div class="stat"><small>${I18N.p('Rata-rata', 'Average')}</small><b class="${avg >= (Number(b.kkm) || 75) ? 'pos' : ''}">${filled ? Math.round(avg) : '—'}</b></div></div>
+        <p class="mini muted">${comps.length} ${I18N.p('komponen', 'components')} · ${filled} ${I18N.p('nilai', 'scores')}${linked ? ` · ${linked} ${I18N.p('tugas tertaut', 'linked tasks')}` : ''}</p>
+        <div class="btn-row"><button class="btn sm mod" data-act="rapOpen" data-id="${b.id}">${ic('edit')}${I18N.p('Isi nilai', 'Enter scores')}</button>
+          <button class="btn sm" data-act="rapBookEdit" data-id="${b.id}">${ic('settings')}</button></div></div>`;
+    }).join('')}</div>`;
+  }
+};
+
+Object.assign(ACT, {
+  rapNew: () => Rapor.form(),
+  rapBookEdit: (d) => Rapor.form(d.id),
+  rapOpen: (d) => Rapor.open(d.id),
+  rapSave: (d) => Rapor.save(d.id),
+  rapFromScore: async () => {
+    await Store.ensure('_Nilai');
+    const sheets = [...new Set(Store.all('_Nilai').map((r) => r.sheetName))];
+    if (!sheets.length) return UI.toast(I18N.p('Impor Score List dulu di tab Scores.', 'Import the Score List first in the Scores tab.'), 'err');
+    UI.modal({
+      title: I18N.p('Salin Score List ke database', 'Copy Score List into the database'), size: 'narrow',
+      body: `<p class="mini">${I18N.p('Setiap sheet menjadi satu daftar nilai di database, sehingga rekapnya menyatu dengan TP, kehadiran, dan tugas siswa.', 'Each sheet becomes a gradebook in the database so the recap sits together with objectives, attendance, and student tasks.')}</p>
+        <ul class="list">${sheets.map((s) => `<li><div class="grow"><div class="t">${esc(s)}</div><div class="s">${Store.all('_Nilai').filter((r) => r.sheetName === s).length} ${I18N.p('nilai', 'scores')}</div></div><button class="btn xs" data-act="rapCopyOne" data-sheet="${esc(s)}">${ic('download')}</button></li>`).join('')}</ul>`,
+      foot: `<button class="btn" data-close>Tutup</button><button class="btn primary" data-close data-act="rapCopyAll">${ic('download')}${I18N.p('Salin semua', 'Copy all')}</button>`
+    });
+  },
+  rapCopyOne: (d) => { UI.closeAll(); Rapor.copyFromScore(d.sheet); },
+  rapCopyAll: () => Rapor.copyFromScore(null),
+  rapAddStudent: (d) => {
+    const b = Store.get('_DaftarNilai', d.id);
+    UI.form({
+      title: I18N.p('Tambah siswa', 'Add student'), values: {},
+      fields: [{ k: 'names', l: I18N.p('Nama siswa (satu per baris)', 'Student names (one per line)'), t: 'textarea', rows: 6, req: 1, full: 1 }],
+      onSubmit: async (v) => {
+        const names = String(v.names).split(/\n+/).map((x) => x.trim()).filter(Boolean);
+        await Store.commit(names.map((n) => ({ op: 'create', sheet: '_Siswa', row: { id: uid(), className: b.className, name: n, gender: '', nis: '', note: '' } })));
+        UI.closeAll();
+        Rapor.open(b.id);
+      }
+    });
+  },
+  rapExport: (d) => {
+    const b = Store.get('_DaftarNilai', d.id);
+    const comps = Rapor.comps(b);
+    const rows = Rapor.students(b).map((n) => {
+      const o = { Nama: n };
+      comps.forEach((c) => { const g = Rapor.scoreOf(b.id, n, c); o[c] = g ? g.score : ''; });
+      o['Rata-rata'] = Rapor.avg(b, n) == null ? '' : Math.round(Rapor.avg(b, n));
+      return o;
+    });
+    const X = Excel.lib();
+    const wb = X.utils.book_new();
+    X.utils.book_append_sheet(wb, X.utils.json_to_sheet(rows), 'Nilai');
+    X.writeFile(wb, `${String(b.name).replace(/[^\w]+/g, '_')}.xlsx`);
+  }
+});
+
+/* ---------------------- 32.3 TUGAS SISWA (MINI LMS) ----------------- */
+const Tugas = {
+  tasks() { return Store.all('_Tugas').slice().sort((a, b) => String(b.dueDate).localeCompare(String(a.dueDate))); },
+  subs(taskId) { return Store.all('_Pengumpulan').filter((s) => s.taskId === taskId); },
+  studentUrl(cls) {
+    const base = Config.data.url || location.href.split('?')[0];
+    return `${base}?p=siswa${cls ? '&kelas=' + encodeURIComponent(cls) : ''}`;
+  },
+
+  form(id) {
+    const t = id ? Store.get('_Tugas', id) : null;
+    const books = Rapor.books();
+    const tps = Store.all('TP');
+    UI.form({
+      title: t ? I18N.p('Ubah tugas', 'Edit task') : I18N.p('Tugas baru untuk siswa', 'New student task'), size: 'wide',
+      values: t || { status: 'Terbuka', maxScore: 100, type: 'Tugas', assignDate: todayISO() },
+      note: I18N.p('Siswa membuka tautan khusus, memilih kelas, lalu mengumpulkan tugas. Nilai yang Ustadz isi bisa langsung disalin ke daftar nilai.', 'Students open a dedicated link, pick their class, and submit. The scores you enter can be pushed straight into the gradebook.'),
+      fields: [
+        { k: 'title', l: I18N.p('Judul tugas', 'Task title'), req: 1, full: 1 },
+        { k: 'className', l: I18N.p('Kelas', 'Class'), req: 1, list: () => School.classes() },
+        { k: 'subject', l: I18N.p('Mata pelajaran', 'Subject'), list: () => [...new Set(Store.all('Schedule').map((x) => x.subject).filter(Boolean))] },
+        { k: 'type', l: I18N.p('Jenis', 'Type'), t: 'select', o: ['Tugas', 'Proyek', 'Latihan', 'Ujian', 'Presentasi', 'Portofolio'] },
+        { k: 'assignDate', l: I18N.p('Tanggal diberikan', 'Assigned on'), t: 'date' },
+        { k: 'dueDate', l: I18N.p('Batas pengumpulan', 'Due date'), t: 'date', req: 1 },
+        { k: 'maxScore', l: I18N.p('Nilai maksimum', 'Maximum score'), t: 'number', min: 1 },
+        { k: 'status', l: 'Status', t: 'select', o: ['Terbuka', 'Tutup'] },
+        { k: 'instruction', l: I18N.p('Instruksi untuk siswa', 'Instructions for students'), t: 'textarea', rows: 3, full: 1 },
+        { k: 'link', l: I18N.p('Tautan bahan (opsional)', 'Material link (optional)'), t: 'url', full: 1 },
+        { t: 'section', l: I18N.p('Tautan ke daftar nilai', 'Link to gradebook') },
+        { k: 'bookId', l: I18N.p('Daftar nilai', 'Gradebook'), t: 'select', o: () => [['', I18N.p('— belum ditautkan —', '— not linked —')]].concat(books.map((b) => [b.id, `${b.name} (${b.className})`])) },
+        { k: 'component', l: I18N.p('Komponen / section tujuan', 'Target component / section'), hint: I18N.p('Nilai tugas akan masuk ke kolom ini.', 'Task scores land in this column.') },
+        { k: 'tpCode', l: I18N.p('Kode TP', 'Objective code'), t: 'select', o: () => [''].concat([...new Set(tps.map((x) => String(x.code).trim()).filter(Boolean))]) }
+      ],
+      extraFoot: t ? `<button class="btn danger left" data-act="delRow" data-sheet="_Tugas" data-id="${t.id}">${ic('trash')}Hapus</button>` : '',
+      onSubmit: (v) => t ? Store.update('_Tugas', t.id, v) : Store.create('_Tugas', v)
+    });
+  },
+
+  panel(id) {
+    const t = Store.get('_Tugas', id);
+    const subs = this.subs(id).sort((a, b) => String(a.studentName).localeCompare(String(b.studentName)));
+    const book = t.bookId ? Store.get('_DaftarNilai', t.bookId) : null;
+    UI.modal({
+      title: `${esc(t.title)} — ${esc(t.className)}`, size: 'full',
+      body: `<div class="grid g4 mb">
+          <div class="stat accent"><small>${I18N.p('Terkumpul', 'Submitted')}</small><b>${subs.length}</b></div>
+          <div class="stat"><small>${I18N.p('Sudah dinilai', 'Graded')}</small><b>${subs.filter((s) => s.score !== '' && s.score !== null).length}</b></div>
+          <div class="stat"><small>${I18N.p('Batas', 'Due')}</small><b>${fmtDate(t.dueDate)}</b><span class="sub">${t.status}</span></div>
+          <div class="stat"><small>${I18N.p('Masuk ke', 'Lands in')}</small><b style="font-size:15px">${book ? esc(book.name) : '—'}</b><span class="sub">${esc(t.component || '')}${t.tpCode ? ' · TP ' + esc(t.tpCode) : ''}</span></div>
+        </div>
+        <div class="toolbar"><button class="btn sm" data-act="taskCopyLink" data-cls="${esc(t.className)}">${ic('link')}${I18N.p('Salin tautan siswa', 'Copy student link')}</button>
+          <button class="btn sm" data-act="taskEdit" data-id="${t.id}">${ic('edit')}${I18N.p('Ubah tugas', 'Edit task')}</button>
+          <span class="mini muted">${I18N.p('Isi nilai lalu tekan "Simpan & kirim ke daftar nilai".', 'Fill in the scores then press “Save & push to gradebook”.')}</span></div>
+        ${subs.length ? `<div class="table-wrap" style="max-height:58vh;overflow:auto"><table class="tbl"><thead><tr><th>#</th><th>${I18N.p('Siswa', 'Student')}</th><th>${I18N.p('Jawaban', 'Answer')}</th><th>${I18N.p('Waktu', 'Time')}</th><th class="r">${I18N.p('Nilai', 'Score')}</th><th>${I18N.p('Catatan guru', 'Teacher note')}</th></tr></thead>
+          <tbody>${subs.map((s, i) => `<tr><td class="mini muted">${i + 1}</td><td class="t">${esc(s.studentName)}</td>
+            <td><div class="s" style="max-width:360px;white-space:pre-wrap">${esc(String(s.content || '').slice(0, 400))}</div>${s.link ? `<a class="btn xs mt" href="${esc(s.link)}" target="_blank" rel="noopener">${ic('link')}${I18N.p('Buka berkas', 'Open file')}</a>` : ''}</td>
+            <td class="mini">${String(s.submittedAt || '').replace('T', ' ').slice(0, 16)}</td>
+            <td class="r"><input class="input sub-score" data-id="${s.id}" type="number" max="${esc(t.maxScore || 100)}" style="width:86px;text-align:right" value="${s.score === '' || s.score == null ? '' : esc(s.score)}"></td>
+            <td><input class="input sub-fb" data-id="${s.id}" style="min-width:160px" value="${esc(s.feedback || '')}"></td></tr>`).join('')}</tbody></table></div>`
+          : UI.empty(I18N.p('Belum ada pengumpulan', 'No submissions yet'), I18N.p('Bagikan tautan siswa agar mereka bisa mengumpulkan tugas.', 'Share the student link so they can submit.'))}`,
+      foot: `<button class="btn" data-close>Tutup</button><button class="btn primary" data-act="taskSaveScores" data-id="${t.id}">${ic('check')}${I18N.p('Simpan & kirim ke daftar nilai', 'Save & push to gradebook')}</button>`
+    });
+  },
+
+  async saveScores(taskId) {
+    const t = Store.get('_Tugas', taskId);
+    const ops = [];
+    $$('.sub-score').forEach((inp) => {
+      const s = Store.get('_Pengumpulan', inp.dataset.id);
+      if (!s) return;
+      const fb = ($$('.sub-fb').find((x) => x.dataset.id === inp.dataset.id) || {}).value || '';
+      const score = inp.value === '' ? '' : Number(inp.value);
+      if (String(s.score) === String(score) && String(s.feedback || '') === String(fb)) return;
+      ops.push({ op: 'update', sheet: '_Pengumpulan', id: s.id, row: { score, feedback: fb, status: score === '' ? 'Terkumpul' : 'Dinilai' } });
+    });
+    if (ops.length) await Store.commit(ops);
+    if (t.bookId) {
+      try {
+        const j = await Api.call('taskGrade', { taskId });
+        await Store.ensure('_NilaiSiswa', true);
+        UI.toast(I18N.p(`${ops.length} nilai disimpan, ${j.saved} masuk ke daftar nilai (${j.component})`, `${ops.length} scores saved, ${j.saved} pushed to the gradebook (${j.component})`), 'ok', 7000);
+      } catch (e) { UI.toast(e.message, 'err', 7000); }
+    } else {
+      UI.toast(I18N.p(`${ops.length} nilai disimpan. Tautkan tugas ke daftar nilai agar otomatis masuk rekap.`, `${ops.length} scores saved. Link this task to a gradebook so they flow into the recap.`), 'ok', 7000);
+    }
+    UI.closeAll();
+    App.refresh();
+  }
+};
+
+VIEWS.school.tugassiswa = {
+  actions: () => `<button class="btn" data-act="taskCopyLink">${ic('link')}Tautan siswa</button><button class="btn mod" data-act="taskNew">${ic('plus')}Tugas baru</button>`,
+  after: () => { if (!Store.loaded['_Pengumpulan'] && Store.isRemote()) Store.ensure('_Pengumpulan').then(() => App.refresh()); },
+  render() {
+    const list = Tugas.tasks();
+    const open = list.filter((t) => t.status !== 'Tutup');
+    const allSubs = Store.all('_Pengumpulan');
+    const graded = allSubs.filter((s) => s.score !== '' && s.score != null).length;
+    return `
+      <div class="grid g4 mb">
+        <div class="stat accent"><small>${I18N.p('Tugas terbuka', 'Open tasks')}</small><b>${open.length}</b><span class="sub">${list.length} ${I18N.p('total', 'total')}</span></div>
+        <div class="stat"><small>${I18N.p('Pengumpulan', 'Submissions')}</small><b>${allSubs.length}</b></div>
+        <div class="stat"><small>${I18N.p('Sudah dinilai', 'Graded')}</small><b class="pos">${graded}</b></div>
+        <div class="stat"><small>${I18N.p('Belum dinilai', 'Awaiting grading')}</small><b class="${allSubs.length - graded ? 'warn' : ''}">${allSubs.length - graded}</b></div>
+      </div>
+      <div class="note mb">${I18N.p('Tautan untuk siswa: <b>' + esc(Tugas.studentUrl('')) + '</b> — bagikan ke kelas, siswa cukup memilih kelas dan mengisi nama.', 'Student link: <b>' + esc(Tugas.studentUrl('')) + '</b> — share it with the class; students just pick their class and type their name.')}</div>
+      ${UI.table([
+        { h: I18N.p('Tugas', 'Task'), f: (t) => `<div class="t">${esc(t.title)}</div><div class="s">${esc([t.subject, t.type].filter(Boolean).join(' — '))}</div>` },
+        { h: I18N.p('Kelas', 'Class'), f: (t) => UI.badge(t.className, 'sky') },
+        { h: I18N.p('Batas', 'Due'), f: (t) => `<span class="nowrap">${fmtDate(t.dueDate)}</span><div class="s">${UI.dueBadge(t.dueDate)}</div>` },
+        { h: I18N.p('Terkumpul', 'Submitted'), cls: 'r', f: (t) => { const s = Tugas.subs(t.id); const g = s.filter((x) => x.score !== '' && x.score != null).length; return `<b>${s.length}</b><div class="s">${g} ${I18N.p('dinilai', 'graded')}</div>`; } },
+        { h: I18N.p('Daftar nilai', 'Gradebook'), f: (t) => t.bookId ? `${esc((Store.get('_DaftarNilai', t.bookId) || {}).name || '')}<div class="s">${esc(t.component || '')}${t.tpCode ? ' · TP ' + esc(t.tpCode) : ''}</div>` : `<span class="muted mini">${I18N.p('belum ditautkan', 'not linked')}</span>` },
+        { h: 'Status', f: (t) => UI.badge(t.status || 'Terbuka', t.status === 'Tutup' ? '' : 'jade') },
+        { h: '', cls: 'act', f: (t) => `<button class="btn xs mod" data-act="taskOpen" data-id="${t.id}">${ic('eye')}${I18N.p('Nilai', 'Grade')}</button> <button class="btn xs" data-act="taskEdit" data-id="${t.id}">${ic('edit')}</button>` }
+      ], list, { emptyMsg: I18N.p('Belum ada tugas. Buat tugas baru lalu bagikan tautan siswa.', 'No tasks yet. Create one, then share the student link.') })}`;
+  }
+};
+
+Object.assign(ACT, {
+  taskNew: () => Tugas.form(),
+  taskEdit: (d) => { UI.closeAll(); Tugas.form(d.id); },
+  taskOpen: (d) => Tugas.panel(d.id),
+  taskSaveScores: (d) => Tugas.saveScores(d.id),
+  taskCopyLink: async (d) => {
+    const url = Tugas.studentUrl(d.cls || '');
+    try { await navigator.clipboard.writeText(url); UI.toast(I18N.p('Tautan siswa disalin', 'Student link copied'), 'ok'); }
+    catch (e) { UI.modal({ title: I18N.p('Tautan siswa', 'Student link'), size: 'narrow', body: `<p class="mini">${I18N.p('Salin tautan ini dan bagikan ke siswa:', 'Copy this link and share it with students:')}</p><input class="input" value="${esc(url)}" onclick="this.select()">` }); }
+  }
+});
+
+/* --------------------- 32.4 HALAMAN SISWA (PORTAL) ------------------ */
+const Siswa = {
+  async render(cls) {
+    document.body.classList.add('student-mode');
+    const root = $('#app') || document.body;
+    if (!$('#toast-root')) document.body.insertAdjacentHTML('beforeend', '<div id="toast-root"></div><div id="modal-root"></div>');
+    bindGlobalEvents();                                  // agar tombol Kumpulkan berfungsi
+    root.innerHTML = `<div class="student-wrap"><div class="student-head">${logoSVG(42, 'stu')}<div><h1>Pengumpulan Tugas</h1><p class="mini muted">SMAIT Al-Ittihad — kumpulkan tugasmu di sini</p></div></div><div id="stu-body">${UI.empty('Memuat…')}</div></div>`;
+    let classes = [];
+    try { classes = (await Api.call('studentClasses')).classes || []; } catch (e) { $('#stu-body').innerHTML = UI.empty('Gagal memuat', e.message); return; }
+    const pick = cls || (classes[0] || {}).className || '';
+    this.classes = classes;
+    this.show(pick);
+  },
+
+  async show(cls) {
+    const box = $('#stu-body');
+    box.innerHTML = UI.empty('Memuat tugas…');
+    let tasks = [];
+    try { tasks = (await Api.call('studentOpenTasks', { className: cls })).tasks || []; } catch (e) { box.innerHTML = UI.empty('Gagal memuat', e.message); return; }
+    box.innerHTML = `
+      <div class="toolbar"><select class="select" id="stu-cls">${this.classes.map((c) => `<option ${c.className === cls ? 'selected' : ''}>${esc(c.className)}</option>`).join('')}</select>
+        <span class="mini muted">${tasks.length} tugas terbuka</span></div>
+      ${tasks.length ? tasks.map((t) => `<div class="card mb"><h3>${esc(t.title)}</h3>
+          <div class="s muted">${esc([t.subject, t.type].filter(Boolean).join(' — '))} · batas ${fmtDate(t.dueDate)} ${UI.dueBadge(t.dueDate)}</div>
+          ${t.instruction ? `<p style="white-space:pre-wrap">${esc(t.instruction)}</p>` : ''}
+          ${t.link ? `<a class="btn sm" href="${esc(t.link)}" target="_blank" rel="noopener">${ic('link')}Bahan tugas</a>` : ''}
+          <div class="form mt">
+            <div class="field"><label>Nama lengkap</label><input class="input stu-name" data-task="${t.id}" placeholder="Nama sesuai absen"></div>
+            <div class="field"><label>Tautan pekerjaan (Drive/Docs)</label><input class="input stu-link" data-task="${t.id}" placeholder="https://…"></div>
+            <div class="field full"><label>Jawaban / catatan</label><textarea class="input stu-content" data-task="${t.id}" rows="3" placeholder="Tulis jawaban atau keterangan singkat"></textarea></div>
+          </div>
+          <button class="btn primary" data-act="stuSubmit" data-task="${t.id}">${ic('check')}Kumpulkan</button>
+          <p class="mini muted">Sudah dikumpulkan: ${t.submissions} siswa. Mengirim ulang akan menimpa jawaban sebelumnya.</p></div>`).join('')
+        : UI.empty('Belum ada tugas terbuka', 'Tugas yang diberikan guru akan muncul di sini.')}`;
+    $('#stu-cls').addEventListener('change', (e) => this.show(e.target.value));
+  },
+
+  async submit(taskId) {
+    const name = ($$('.stu-name').find((x) => x.dataset.task === taskId) || {}).value || '';
+    const link = ($$('.stu-link').find((x) => x.dataset.task === taskId) || {}).value || '';
+    const content = ($$('.stu-content').find((x) => x.dataset.task === taskId) || {}).value || '';
+    if (!name.trim()) return UI.toast('Isi nama lengkap dulu ya.', 'err');
+    if (!link.trim() && !content.trim()) return UI.toast('Isi tautan pekerjaan atau jawabannya.', 'err');
+    try {
+      const j = await Api.call('studentSubmit', { taskId, studentName: name.trim(), link: link.trim(), content: content.trim() });
+      UI.toast(j.replaced ? 'Jawaban diperbarui. Terima kasih!' : 'Tugas terkumpul. Terima kasih!', 'ok', 6000);
+      this.show($('#stu-cls').value);
+    } catch (e) { UI.toast(e.message, 'err', 7000); }
+  }
+};
+ACT.stuSubmit = (d) => Siswa.submit(d.task);
+
+/* ------------------------ 32.5 PUSTAKA (LINK & FILE) ---------------- */
+const Pustaka = {
+  cats() {
+    const fromCat = Store.where('Categories', (c) => c.type === 'link' && c.active !== false).map((c) => c.name);
+    const fromLinks = Store.all('Links').map((l) => l.division).filter(Boolean);
+    return [...new Set([...fromCat, ...fromLinks])].sort();
+  },
+  addCat() {
+    UI.form({
+      title: I18N.p('Kategori baru', 'New category'), values: {},
+      fields: [{ k: 'name', l: I18N.p('Nama kategori', 'Category name'), req: 1, full: 1, ph: 'Kurikulum / Pramuka / PTLN' }],
+      onSubmit: (v) => Store.create('Categories', { type: 'link', name: v.name.trim(), active: true })
+    });
+  }
+};
+
+VIEWS.pustaka = {
+  tautan: {
+    actions: () => `<button class="btn" data-act="pusCat">${ic('plus')}Kategori</button><button class="btn mod" data-act="linkAdd">${ic('link')}Tautan baru</button>`,
+    render() {
+      const s = App.s('pustaka');
+      const all = Store.all('Links').filter((l) => l.title || l.label);
+      const q = (s.q || '').toLowerCase();
+      let list = all.filter((l) => s.showArchived || l.status !== 'Archived');
+      if (s.cat) list = list.filter((l) => (l.division || 'Lainnya') === s.cat);
+      if (q) list = list.filter((l) => `${l.title} ${l.label} ${l.division} ${l.url}`.toLowerCase().includes(q));
+      const cats = Pustaka.cats();
+      const byCat = groupBy(list, (l) => l.division || 'Lainnya');
+      return `
+        <div class="grid g4 mb">
+          <div class="stat accent"><small>${I18N.p('Tautan tersimpan', 'Saved links')}</small><b>${all.length}</b></div>
+          <div class="stat"><small>${I18N.p('Kategori', 'Categories')}</small><b>${cats.length}</b></div>
+          <div class="stat"><small>${I18N.p('Aktif', 'Active')}</small><b class="pos">${all.filter((l) => l.status !== 'Archived').length}</b></div>
+          <div class="stat"><small>${I18N.p('Berkas tersimpan', 'Stored files')}</small><b>${Store.all('Files').length}</b></div>
+        </div>
+        <div class="toolbar">
+          <input class="input search" placeholder="${I18N.p('Cari tautan…', 'Search links…')}" data-chg="pusQ" data-live data-fk="pusQ" value="${esc(s.q || '')}">
+          <select class="select" data-chg="pusCatPick"><option value="">${I18N.p('Semua kategori', 'All categories')}</option>${cats.map((c) => `<option ${c === s.cat ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+          <label class="checkline mini"><input type="checkbox" class="check" data-chg="pusArch" ${s.showArchived ? 'checked' : ''}> ${I18N.p('Tampilkan arsip', 'Show archived')}</label>
+        </div>
+        ${Object.keys(byCat).sort().map((c) => `<div class="card mb"><h3>${ic('link')}${esc(c)} <span class="badge">${byCat[c].length}</span></h3>
+          <ul class="list">${byCat[c].map((x) => `<li>${ic('file')}<div class="grow"><div class="t">${esc(x.title)}</div><div class="s">${esc(x.label || '')}${x.status === 'Archived' ? ' — arsip' : ''}</div></div>
+            ${x.url ? `<a class="btn xs" href="${esc(x.url)}" target="_blank" rel="noopener">${ic('eye')}${I18N.p('Buka', 'Open')}</a>` : ''}
+            <button class="btn xs" data-act="linkEdit" data-id="${x.id}">${ic('edit')}</button></li>`).join('')}</ul></div>`).join('')
+          || UI.empty(I18N.p('Belum ada tautan pada filter ini', 'No links for this filter'), '', `<button class="btn sm" data-act="linkAdd">${ic('plus')}${I18N.p('Tautan baru', 'New link')}</button>`)}`;
+    }
+  },
+  file: {
+    actions: () => `<button class="btn mod" data-act="filePick" data-mod="umum">${ic('upload')}Upload file</button>`,
+    render: () => Files.panel('all')
+  }
+};
+
+Object.assign(ACT, { pusCat: () => Pustaka.addCat() });
+Object.assign(CHG, {
+  pusQ: (v) => { App.s('pustaka').q = v; App.refresh(); },
+  pusCatPick: (v) => { App.s('pustaka').cat = v; App.refresh(); },
+  pusArch: (v) => { App.s('pustaka').showArchived = v; App.refresh(); }
+});
+
+/* ---------------------- 32.6 MARKETING (LEADS + WA) ----------------- */
+const STAGES = [
+  ['fresh', 'Fresh Data', 'Fresh data', 'slate'],
+  ['contacted', 'Sudah Dihubungi', 'Contacted', 'sky'],
+  ['pitching', 'Pitching', 'Pitching', 'violet'],
+  ['nego', 'Negosiasi', 'Negotiation', 'amber'],
+  ['closing', 'Closing', 'Closing', 'jade'],
+  ['lost', 'Tidak Lanjut', 'Lost', 'coral']
+];
+
+const WA_TEMPLATES = [
+  ['Perkenalan (fresh data)', 'Assalamu\'alaikum {nama}, perkenalkan saya {saya} dari {bisnis}. Kami membantu penyusunan {program} dengan pendampingan sampai sidang. Boleh saya kirimkan rincian paket dan harganya?'],
+  ['Pitching paket', 'Halo {nama}, berikut ringkasan layanan {program} dari {bisnis}: pendampingan penuh dari judul sampai sidang, revisi dosen pembimbing tanpa batas pra-sidang, cek Turnitin, dan simulasi sidang. Apakah ingin saya kirimkan contoh hasil pengerjaan?'],
+  ['Follow up 1 (belum balas)', 'Halo {nama}, menyusul pesan saya sebelumnya tentang {program}. Apakah ada yang ingin ditanyakan dulu? Saya siap bantu jelaskan tanpa biaya.'],
+  ['Follow up 2 (pertimbangan)', 'Halo {nama}, bagaimana hasil pertimbangannya untuk {program}? Kalau butuh penyesuaian paket atau skema pembayaran bertahap, bisa kita bicarakan.'],
+  ['Penawaran harga', 'Halo {nama}, untuk {program} biayanya {nilai}, bisa dibayar bertahap 30% di awal, 35% saat draft seminar, dan 35% pelunasan sebelum sidang. Saya kirimkan draf perjanjiannya ya?'],
+  ['Konfirmasi deal', 'Alhamdulillah, terima kasih {nama}. Saya kirimkan surat perjanjian kerja sama dan rincian termin pembayaran. Pengerjaan dimulai setelah DP masuk.']
+];
+
+const Lead = {
+  all() { return Store.all('_Leads'); },
+  stageLabel(k) { const s = STAGES.find((x) => x[0] === k); return s ? I18N.p(s[1], s[2]) : k; },
+  stageColor(k) { const s = STAGES.find((x) => x[0] === k); return s ? s[3] : ''; },
+  waNumber(wa) { return String(wa || '').replace(/[^0-9]/g, '').replace(/^0/, '62'); },
+
+  form(id) {
+    const l = id ? Store.get('_Leads', id) : null;
+    UI.form({
+      title: l ? I18N.p('Ubah prospek', 'Edit lead') : I18N.p('Prospek baru', 'New lead'), size: 'wide',
+      values: l || { stage: 'fresh', source: 'WhatsApp' },
+      fields: [
+        { k: 'name', l: I18N.p('Nama prospek', 'Lead name'), req: 1 },
+        { k: 'wa', l: 'Nomor WhatsApp', ph: '0822xxxxxxx' },
+        { k: 'email', l: 'Email', t: 'email' },
+        { k: 'program', l: I18N.p('Kebutuhan / paket', 'Need / package'), list: () => Object.keys(PL()).concat(['Skripsi', 'Tesis', 'Disertasi', 'Tugas kuliah', 'Les privat']) },
+        { k: 'source', l: I18N.p('Sumber data', 'Lead source'), list: ['WhatsApp', 'Instagram', 'Facebook', 'Referensi teman', 'Kampus', 'Alumni', 'Grup WA', 'Iklan', 'Lainnya'] },
+        { k: 'stage', l: I18N.p('Tahap', 'Stage'), t: 'select', o: () => STAGES.map((s) => [s[0], I18N.p(s[1], s[2])]) },
+        { k: 'value', l: I18N.p('Perkiraan nilai (Rp)', 'Estimated value (IDR)'), t: 'money' },
+        { k: 'nextFollowUp', l: I18N.p('Follow up berikutnya', 'Next follow-up'), t: 'date' },
+        { k: 'note', l: I18N.p('Catatan', 'Notes'), t: 'textarea', rows: 3, full: 1 }
+      ],
+      extraFoot: l ? `<button class="btn danger left" data-act="delRow" data-sheet="_Leads" data-id="${l.id}">${ic('trash')}Hapus</button>` : '',
+      onSubmit: (v) => l ? Store.update('_Leads', l.id, v) : Store.create('_Leads', v)
+    });
+  },
+
+  /** Menyiapkan pesan WhatsApp dari template, lalu membuka WhatsApp. */
+  chat(id) {
+    const l = Store.get('_Leads', id);
+    const st = Store.settings();
+    const fill = (tpl) => tpl
+      .replace(/{nama}/g, l.name || '')
+      .replace(/{saya}/g, st.ownerName || '')
+      .replace(/{bisnis}/g, st.businessName || st.ownerName || '')
+      .replace(/{program}/g, l.program || 'layanan kami')
+      .replace(/{nilai}/g, idr(l.value || 0));
+    let text = fill(WA_TEMPLATES[0][1]);
+    UI.modal({
+      title: `WhatsApp — ${esc(l.name)}`, size: 'wide',
+      body: `<div class="form">
+          <div class="field full"><label>${I18N.p('Template pesan', 'Message template')}</label>
+            <select class="select" id="wa-tpl">${WA_TEMPLATES.map((t, i) => `<option value="${i}">${esc(t[0])}</option>`).join('')}</select></div>
+          <div class="field full"><label>${I18N.p('Nomor WhatsApp', 'WhatsApp number')}</label><input class="input" id="wa-num" value="${esc(l.wa || '')}"></div>
+          <div class="field full"><label>${I18N.p('Isi pesan (boleh diubah)', 'Message (editable)')}</label><textarea class="input" id="wa-text" rows="7">${esc(text)}</textarea></div>
+          <div class="field"><label>${I18N.p('Tahap setelah dikirim', 'Stage after sending')}</label>
+            <select class="select" id="wa-stage">${STAGES.map((s) => `<option value="${s[0]}" ${s[0] === l.stage ? 'selected' : ''}>${esc(I18N.p(s[1], s[2]))}</option>`).join('')}</select></div>
+          <div class="field"><label>${I18N.p('Follow up berikutnya', 'Next follow-up')}</label><input class="input" id="wa-next" type="date" value="${esc(l.nextFollowUp || addDays(todayISO(), 3))}"></div>
+        </div>
+        <p class="mini muted">${I18N.p('Pesan dibuka di WhatsApp Web/aplikasi dengan isi yang sudah terisi — tinggal tekan kirim. Riwayatnya dicatat otomatis di sini.', 'The message opens in WhatsApp Web/app pre-filled — just press send. The log is recorded here automatically.')}</p>`,
+      foot: `<button class="btn" data-close>Batal</button><button class="btn" id="wa-copy">${ic('copy')}${I18N.p('Salin pesan', 'Copy message')}</button><button class="btn primary" id="wa-send">${ic('wa')}${I18N.p('Buka WhatsApp', 'Open WhatsApp')}</button>`,
+      onMount: (box, m) => {
+        box.querySelector('#wa-tpl').addEventListener('change', (e) => { box.querySelector('#wa-text').value = fill(WA_TEMPLATES[Number(e.target.value)][1]); });
+        const record = async (channel) => {
+          const stage = box.querySelector('#wa-stage').value;
+          const next = box.querySelector('#wa-next').value;
+          await Store.commit([
+            { op: 'update', sheet: '_Leads', id: l.id, row: { stage, nextFollowUp: next, lastContact: todayISO(), wa: box.querySelector('#wa-num').value } },
+            { op: 'create', sheet: '_LeadLog', row: { id: uid(), leadId: l.id, at: new Date().toISOString().slice(0, 19), channel, action: WA_TEMPLATES[Number(box.querySelector('#wa-tpl').value)][0], note: box.querySelector('#wa-text').value.slice(0, 500) } }
+          ]);
+          App.refresh();
+        };
+        box.querySelector('#wa-copy').addEventListener('click', async () => {
+          try { await navigator.clipboard.writeText(box.querySelector('#wa-text').value); UI.toast(I18N.p('Pesan disalin', 'Message copied'), 'ok'); } catch (e) { }
+          await record('salin');
+        });
+        box.querySelector('#wa-send').addEventListener('click', async () => {
+          const num = this.waNumber(box.querySelector('#wa-num').value);
+          const txt = encodeURIComponent(box.querySelector('#wa-text').value);
+          if (!num) return UI.toast(I18N.p('Nomor WhatsApp belum diisi.', 'WhatsApp number is empty.'), 'err');
+          window.open(`https://wa.me/${num}?text=${txt}`, '_blank');
+          await record('whatsapp');
+          m.close();
+          UI.toast(I18N.p('WhatsApp dibuka & riwayat dicatat', 'WhatsApp opened and the log recorded'), 'ok');
+        });
+      }
+    });
+  },
+
+  /** Ubah prospek yang deal menjadi project. */
+  toProject(id) {
+    const l = Store.get('_Leads', id);
+    Project.form(null, { clientName: l.name, clientWa: l.wa, clientEmail: l.email, service: l.program, dpAmount: '', note: l.note });
+    UI.toast(I18N.p('Lengkapi data project, lalu simpan.', 'Complete the project details, then save.'), '', 5000);
+  }
+};
+
+VIEWS.project.marketing = {
+  actions: () => `<button class="btn" data-act="leadImport">${ic('upload')}Impor fresh data</button><button class="btn mod" data-act="leadNew">${ic('plus')}Prospek baru</button>`,
+  render() {
+    const s = App.s('project');
+    const all = Lead.all();
+    const t = todayISO();
+    const due = all.filter((l) => l.nextFollowUp && l.nextFollowUp <= t && !['closing', 'lost'].includes(l.stage));
+    const q = (s.lq || '').toLowerCase();
+    let list = all;
+    if (s.lstage) list = list.filter((l) => l.stage === s.lstage);
+    if (q) list = list.filter((l) => `${l.name} ${l.program} ${l.source} ${l.note}`.toLowerCase().includes(q));
+    const byStage = groupBy(all, (l) => l.stage || 'fresh');
+    const pipeline = sum(all.filter((l) => !['lost'].includes(l.stage)), (l) => Number(l.value) || 0);
+    return `
+      <div class="grid g5 mb">
+        <div class="stat accent"><small>${I18N.p('Total prospek', 'Total leads')}</small><b>${all.length}</b></div>
+        <div class="stat"><small>${I18N.p('Perlu follow up', 'Follow-up due')}</small><b class="${due.length ? 'neg' : 'pos'}">${due.length}</b></div>
+        <div class="stat"><small>${I18N.p('Nilai pipeline', 'Pipeline value')}</small><b>${idrShort(pipeline)}</b></div>
+        <div class="stat"><small>Closing</small><b class="pos">${(byStage.closing || []).length}</b></div>
+        <div class="stat"><small>${I18N.p('Konversi', 'Conversion')}</small><b>${all.length ? Math.round((byStage.closing || []).length / all.length * 100) : 0}%</b></div>
+      </div>
+      ${due.length ? `<div class="card mb"><h3>${ic('alert')}${I18N.p('Follow up hari ini', 'Follow up today')}</h3>
+        <ul class="list">${due.slice(0, 8).map((l) => `<li><span class="dotc" style="background:var(--${Lead.stageColor(l.stage)})"></span>
+          <div class="grow"><div class="t">${esc(l.name)}</div><div class="s">${esc(l.program || '')} — ${I18N.p('dijadwalkan', 'scheduled')} ${fmtDate(l.nextFollowUp)}</div></div>
+          <button class="btn xs mod" data-act="leadChat" data-id="${l.id}">${ic('wa')}WhatsApp</button></li>`).join('')}</ul></div>` : ''}
+      <div class="toolbar">
+        <input class="input search" placeholder="${I18N.p('Cari prospek…', 'Search leads…')}" data-chg="leadQ" data-live data-fk="leadQ" value="${esc(s.lq || '')}">
+        <select class="select" data-chg="leadStage"><option value="">${I18N.p('Semua tahap', 'All stages')}</option>${STAGES.map((x) => `<option value="${x[0]}" ${x[0] === s.lstage ? 'selected' : ''}>${esc(I18N.p(x[1], x[2]))} (${(byStage[x[0]] || []).length})</option>`).join('')}</select>
+      </div>
+      <div class="pipe mb">${STAGES.map((x) => `<div class="pipe-col"><h4>${esc(I18N.p(x[1], x[2]))} <span class="badge b-${x[3]}">${(byStage[x[0]] || []).length}</span></h4>
+        ${(byStage[x[0]] || []).slice(0, 6).map((l) => `<div class="pipe-card" data-act="leadEdit" data-id="${l.id}">
+          <div class="t">${esc(l.name)}</div><div class="s">${esc(l.program || '')}${l.value ? ' · ' + idrShort(l.value) : ''}</div>
+          <div class="pipe-act"><button class="btn xs" data-act="leadChat" data-id="${l.id}" title="WhatsApp">${ic('wa')}</button>
+            ${x[0] === 'closing' ? `<button class="btn xs" data-act="leadToProject" data-id="${l.id}" title="${I18N.p('Jadikan project', 'Convert to project')}">${ic('project')}</button>` : ''}</div></div>`).join('')
+        || `<p class="mini muted">${I18N.p('kosong', 'empty')}</p>`}</div>`).join('')}</div>
+      ${UI.table([
+        { h: I18N.p('Prospek', 'Lead'), f: (l) => `<div class="t">${esc(l.name)}</div><div class="s">${esc([l.program, l.source].filter(Boolean).join(' — '))}</div>` },
+        { h: I18N.p('Tahap', 'Stage'), f: (l) => UI.badge(Lead.stageLabel(l.stage), Lead.stageColor(l.stage)) },
+        { h: I18N.p('Nilai', 'Value'), cls: 'r', f: (l) => l.value ? idr(l.value) : '—' },
+        { h: I18N.p('Kontak terakhir', 'Last contact'), f: (l) => l.lastContact ? fmtDate(l.lastContact) : '<span class="muted mini">—</span>' },
+        { h: I18N.p('Follow up', 'Follow-up'), f: (l) => l.nextFollowUp ? `${fmtDate(l.nextFollowUp)} ${UI.dueBadge(l.nextFollowUp)}` : '<span class="muted mini">—</span>' },
+        { h: '', cls: 'act', f: (l) => `<button class="btn xs mod" data-act="leadChat" data-id="${l.id}">${ic('wa')}</button> <button class="btn xs" data-act="leadLog" data-id="${l.id}">${ic('journal')}</button> <button class="btn xs" data-act="leadEdit" data-id="${l.id}">${ic('edit')}</button>` }
+      ], list, { emptyMsg: I18N.p('Belum ada prospek. Tambah manual atau impor fresh data.', 'No leads yet. Add one or import fresh data.') })}`;
+  }
+};
+
+Object.assign(ACT, {
+  leadNew: () => Lead.form(),
+  leadEdit: (d) => Lead.form(d.id),
+  leadChat: (d, el, e) => { if (e) e.stopPropagation(); Lead.chat(d.id); },
+  leadToProject: (d, el, e) => { if (e) e.stopPropagation(); Lead.toProject(d.id); },
+  leadLog: (d) => {
+    const logs = Store.all('_LeadLog').filter((x) => x.leadId === d.id).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    const l = Store.get('_Leads', d.id);
+    UI.modal({
+      title: `${I18N.p('Riwayat kontak', 'Contact log')} — ${esc(l.name)}`, size: 'wide',
+      body: logs.length ? UI.table([
+        { h: I18N.p('Waktu', 'Time'), f: (x) => String(x.at).replace('T', ' ').slice(0, 16) },
+        { h: I18N.p('Saluran', 'Channel'), f: (x) => UI.badge(x.channel, 'jade') },
+        { h: I18N.p('Template', 'Template'), f: (x) => esc(x.action || '') },
+        { h: I18N.p('Isi pesan', 'Message'), f: (x) => `<div class="s" style="max-width:420px;white-space:pre-wrap">${esc(String(x.note || '').slice(0, 300))}</div>` }
+      ], logs) : UI.empty(I18N.p('Belum ada riwayat', 'No log yet'))
+    });
+  },
+  leadImport: () => {
+    UI.form({
+      title: I18N.p('Impor fresh data', 'Import fresh data'), size: 'wide',
+      values: { stage: 'fresh', source: 'WhatsApp' },
+      note: I18N.p('Tempel daftar prospek, satu baris per orang: Nama, Nomor WA, Kebutuhan. Pemisah boleh koma atau tab.', 'Paste the lead list, one person per line: Name, WhatsApp number, Need. Separate with commas or tabs.'),
+      fields: [
+        { k: 'source', l: I18N.p('Sumber data', 'Source'), list: ['WhatsApp', 'Instagram', 'Facebook', 'Referensi teman', 'Kampus', 'Grup WA', 'Iklan'] },
+        { k: 'rows', l: I18N.p('Daftar prospek', 'Lead list'), t: 'textarea', rows: 9, req: 1, full: 1, ph: 'Budi Santoso, 08221234567, Skripsi\nSiti Aminah\t081298765432\tTesis' }
+      ],
+      onSubmit: async (v) => {
+        const rows = String(v.rows).split(/\n+/).map((x) => x.trim()).filter(Boolean).map((line) => {
+          const p = line.split(/[\t,;]+/).map((x) => x.trim());
+          return { id: uid(), name: p[0] || '', wa: p[1] || '', program: p[2] || '', source: v.source, stage: 'fresh', value: '', nextFollowUp: addDays(todayISO(), 1), note: '' };
+        }).filter((r) => r.name);
+        if (!rows.length) { UI.toast(I18N.p('Tidak ada baris yang terbaca.', 'No rows parsed.'), 'err'); return false; }
+        await Store.commit(rows.map((r) => ({ op: 'create', sheet: '_Leads', row: r })));
+        UI.toast(I18N.p(`${rows.length} prospek masuk ke Fresh Data`, `${rows.length} leads added to Fresh data`), 'ok', 6000);
+      }
+    });
+  }
+});
+Object.assign(CHG, {
+  leadQ: (v) => { App.s('project').lq = v; App.refresh(); },
+  leadStage: (v) => { App.s('project').lstage = v; App.refresh(); }
+});
+
+/* Mulai aplikasi */
 boot();
 
-  </script>
+</script>
 </body>
 </html>
