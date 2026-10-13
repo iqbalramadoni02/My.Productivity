@@ -865,6 +865,138 @@ h1, .hello h1 { font-weight: 800; letter-spacing: -.035em; }
 .cell-in { height: 32px; line-height: 20px; }
 .tbl.grid tbody tr:hover td { background: color-mix(in srgb, var(--brand) 6%, transparent); }
 
+/* =====================================================================
+   v7 — Papan Catatan (Note) & pengukur beban jobdesc
+   =================================================================== */
+
+/* --- kotak tambah cepat --- */
+.nk-quick-wrap { display: flex; gap: 10px; align-items: flex-start; }
+.nk-quick-wrap textarea { resize: none; overflow: hidden; min-height: 42px; line-height: 1.5; }
+.nk-quick-wrap .btn-row { flex: 0 0 auto; }
+
+/* --- filter label --- */
+.nk-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.nk-chip {
+  font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--surface-2); color: var(--ink-2); transition: .15s;
+}
+.nk-chip:hover { border-color: var(--brand); color: var(--brand); }
+.nk-chip.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+.nk-chip.on .muted { color: rgba(255, 255, 255, .75); }
+
+/* --- papan sticky note (masonry via kolom CSS) --- */
+.nk-sec { margin-bottom: 18px; }
+.nk-sec > h4 { display: flex; align-items: center; gap: 7px; margin: 0 0 10px; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.nk-sec > h4 .i { width: 15px; height: 15px; }
+.nk-grid { columns: 4 250px; column-gap: 14px; }
+@media (max-width: 900px) { .nk-grid { columns: 2 200px; } }
+@media (max-width: 560px) { .nk-grid { columns: 1; } }
+
+.nk-card {
+  break-inside: avoid; display: block; width: 100%; margin: 0 0 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  padding: 13px 14px 9px; box-shadow: 0 1px 2px rgba(10, 20, 40, .04);
+  transition: box-shadow .18s, transform .18s, border-color .18s;
+}
+.nk-card:hover { box-shadow: 0 10px 26px rgba(10, 20, 40, .12); transform: translateY(-2px); }
+.nk-card.pin { border-color: var(--amber); }
+.nk-card > header { display: flex; align-items: flex-start; gap: 8px; }
+.nk-card > header h4 { margin: 0; flex: 1; font-size: 14.5px; line-height: 1.35; word-break: break-word; }
+.nk-body { margin: 7px 0 0; font-size: 13px; line-height: 1.55; color: var(--ink-2); word-break: break-word; white-space: normal; }
+
+.nk-items { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 5px; }
+.nk-items li { display: flex; align-items: flex-start; gap: 7px; font-size: 13px; line-height: 1.45; }
+.nk-items li.done > span { text-decoration: line-through; color: var(--muted); }
+.nk-items li > span { word-break: break-word; }
+
+.nk-tick {
+  flex: 0 0 auto; width: 17px; height: 17px; margin-top: 1px; padding: 0; cursor: pointer;
+  border: 1.6px solid var(--line); border-radius: 5px; background: var(--surface);
+  display: grid; place-items: center; color: #fff; transition: .15s;
+}
+.nk-tick:hover:not(:disabled) { border-color: var(--brand); }
+.nk-tick:disabled { cursor: default; }
+.nk-tick .i { width: 12px; height: 12px; stroke-width: 3.2; }
+.nk-tick.on { background: var(--jade); border-color: var(--jade); }
+
+.nk-meter { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 11.5px; color: var(--muted); }
+.nk-meter .progress { flex: 1; }
+.nk-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 9px; }
+.nk-tags .badge { border: 0; cursor: pointer; font: inherit; font-size: 11px; font-weight: 600; }
+
+.nk-foot { display: flex; align-items: center; gap: 8px; margin-top: 9px; padding-top: 7px; border-top: 1px solid var(--line); }
+.nk-foot .mini { flex: 1; }
+.nk-acts { display: flex; gap: 2px; opacity: .55; transition: opacity .15s; }
+.nk-card:hover .nk-acts { opacity: 1; }
+.nk-ic {
+  width: 27px; height: 27px; display: grid; place-items: center; cursor: pointer;
+  border: 0; border-radius: 8px; background: transparent; color: var(--muted); transition: .15s;
+}
+.nk-ic:hover { background: var(--surface-2); color: var(--ink); }
+.nk-ic.on { color: var(--amber); }
+.nk-ic.danger:hover { background: var(--coral-soft); color: var(--coral); }
+.nk-ic .i { width: 15px; height: 15px; }
+
+/* --- warna catatan --- */
+.nk-c-none { }
+.nk-c-amber { background: var(--amber-soft); border-color: color-mix(in srgb, var(--amber) 30%, transparent); }
+.nk-c-jade { background: var(--jade-soft); border-color: color-mix(in srgb, var(--jade) 30%, transparent); }
+.nk-c-sky { background: var(--sky-soft); border-color: color-mix(in srgb, var(--sky) 30%, transparent); }
+.nk-c-violet { background: var(--violet-soft); border-color: color-mix(in srgb, var(--violet) 30%, transparent); }
+.nk-c-rose { background: var(--rose-soft); border-color: color-mix(in srgb, var(--rose) 30%, transparent); }
+.nk-c-coral { background: var(--coral-soft); border-color: color-mix(in srgb, var(--coral) 30%, transparent); }
+.nk-c-slate { background: var(--slate-soft); border-color: color-mix(in srgb, var(--slate) 30%, transparent); }
+
+/* --- editor catatan --- */
+.nk-edit { border-radius: 14px; padding: 12px; border: 1px solid var(--line); display: grid; gap: 10px; }
+.nk-edit .nk-title { font-size: 15px; font-weight: 700; background: transparent; }
+.nk-edit .nk-body { resize: vertical; line-height: 1.6; background: transparent; }
+.nk-item { display: grid; grid-template-columns: auto 1fr auto; gap: 7px; align-items: center; margin-bottom: 5px; }
+.nk-txt { background: transparent; }
+.nk-txt.done { text-decoration: line-through; color: var(--muted); }
+.nk-list-foot { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.nk-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 4px; }
+.nk-colors { display: flex; gap: 6px; flex-wrap: wrap; }
+.nk-dot {
+  width: 24px; height: 24px; border-radius: 50%; cursor: pointer; padding: 0;
+  border: 1.6px solid var(--line); transition: .15s;
+}
+.nk-dot:hover { transform: scale(1.12); }
+.nk-dot.on { box-shadow: 0 0 0 2.5px var(--brand); }
+/* Titik pemilih memakai warna pekat agar jelas dibedakan di tema terang maupun gelap. */
+.nk-dot.nk-c-none { background: var(--surface); border-color: var(--muted); }
+.nk-dot.nk-c-amber { background: var(--amber); border-color: var(--amber); }
+.nk-dot.nk-c-jade { background: var(--jade); border-color: var(--jade); }
+.nk-dot.nk-c-sky { background: var(--sky); border-color: var(--sky); }
+.nk-dot.nk-c-violet { background: var(--violet); border-color: var(--violet); }
+.nk-dot.nk-c-rose { background: var(--rose); border-color: var(--rose); }
+.nk-dot.nk-c-coral { background: var(--coral); border-color: var(--coral); }
+.nk-dot.nk-c-slate { background: var(--slate); border-color: var(--slate); }
+.icon-btn.xs { width: 26px; height: 26px; }
+.icon-btn.xs .i { width: 14px; height: 14px; }
+
+/* --- pengukur beban jobdesc --- */
+.jl-wrap { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.jl-gauge { position: relative; flex: 0 0 170px; }
+.jl-gauge svg { width: 170px; height: 100px; display: block; }
+.jl-val { position: absolute; left: 0; right: 0; bottom: 2px; text-align: center; line-height: 1.15; }
+.jl-val b { display: block; font-size: 25px; font-weight: 800; letter-spacing: -.02em; }
+.jl-val small { font-size: 10.5px; color: var(--muted); }
+.jl-main { flex: 1; min-width: 230px; }
+.jl-head { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.jl-head b { font-size: 21px; font-weight: 800; }
+.jl-note { margin: 6px 0 10px; }
+.jl-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 9px; }
+.jl-stats > div { background: var(--surface-2); border-radius: 10px; padding: 7px 9px; }
+.jl-stats small { display: block; font-size: 10.5px; color: var(--muted); line-height: 1.3; }
+.jl-stats b { font-size: 16px; font-weight: 700; }
+.jl-bars { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+
+/* Tabel rumus beban: izinkan geser mendatar di layar sempit. */
+.modal.full .tbl th, .modal.full .tbl td { white-space: normal; }
+.jl-bars .bar-row span .s { line-height: 1.3; }
+
 </style>
 </head>
 <body>
@@ -904,7 +1036,7 @@ h1, .hello h1 { font-weight: 800; letter-spacing: -.035em; }
 const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbzWcLKC82ZjHoOFPJSVZ-kAOA4Ry_0A7yyEk6ANBMg-Cn96__N2mwu5d1fMmLtdPHc1/exec';
 const DEFAULT_API_KEY = 'mph_86556476be2b4bdcbc46ae435d41f2cc';
 
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 
 /* Deteksi: dibuka langsung dari URL Apps Script (HtmlService) atau dari hosting statis. */
 const BOOT = (() => {
@@ -949,6 +1081,7 @@ const SCHEMA = {
   Deadlines: ['id', 'title', 'deadline', 'type', 'status', 'left', 'urgency', 'gcalId'],
   Jobdesc: ['id', 'no', 'field', 'activity', 'position', 'weight', 'jp', 'discipline', 'linearity', 'period', 'startDate', 'endDate', 'status', 'target', 'progress', 'prediction', 'risk', 'note'],
   Links: ['id', 'title', 'label', 'url', 'status', 'division'],
+  _Catatan: ['id', 'title', 'body', 'items', 'color', 'label', 'pinned', 'status', 'refKind', 'refId', 'remindDate', 'createdAt', 'updatedAt'],
   Pricelist: ['id', 'no', 'category', 'name', 'normalMin', 'normalMax', 'expressMin', 'expressMax', 'daysNormal', 'daysExpress', 'active', 'note', 'createdAt', 'updatedAt'],
   Categories: ['id', 'type', 'name', 'active', 'createdAt', 'updatedAt']
 };
@@ -958,7 +1091,7 @@ const NUMERIC = new Set(['amount', 'price', 'discount', 'progress', 'principal',
   'principalPart', 'interestPart', 'rate', 'durationMin', 'totalSessions', 'participants', 'present', 'total',
   'score', 'mood', 'no', 'day', 'size', 'dayOfMonth', 'normalMin', 'normalMax', 'expressMin', 'expressMax', 'daysNormal', 'daysExpress', 'target', 'weight', 'jp',
   'boysPresent', 'boysTotal', 'girlsPresent', 'girlsTotal', 'boysAchieved', 'girlsAchieved', 'score', 'maxScore']);
-const BOOLEAN = new Set(['paid', 'done', 'active', 'disbursed']);
+const BOOLEAN = new Set(['paid', 'done', 'active', 'disbursed', 'pinned']);
 
 const DEFAULT_SETTINGS = {
   ownerName: 'Iqbal Ramadoni, S.Pd., Gr.',
@@ -976,7 +1109,8 @@ const DEFAULT_SETTINGS = {
   inviteClients: 'on',
   autoSendReceipt: 'off',
   digestHour: '6',
-  kkm: '75'
+  kkm: '75',
+  jobCap: '24'
 };
 
 /* ---------------------------------------------------------------------
@@ -2117,6 +2251,9 @@ const Palette = {
       ['Tambah tugas / ujian', 'plus', () => { App.open('school', 'tugas'); School.assignForm(); }],
       ['Tambah agenda', 'plus', () => { App.open('school', 'jadwal'); School.agendaForm(); }],
       ['Tulis jurnal hari ini', 'journal', () => { App.open('journal', 'jurnal'); Journal.newEntry(); }],
+      ['Catatan baru (Note)', 'plus', () => { App.open('notes', 'papan'); Notes.form(); }],
+      ['Daftar centang baru', 'check', () => { App.open('notes', 'papan'); Notes.form(null, { items: '[{"t":"","d":false}]' }); }],
+      ['Beban jobdesc tambahan (level)', 'alert', () => JobLoad.explain()],
       ['Upload file', 'upload', () => { App.open('files'); Files.pick('umum'); }],
       ['Catat kehadiran & ketercapaian TP', 'plus', () => { App.open('school', 'kehadiran'); Hadir.form(); }],
       ['Kunci aplikasi (lock screen)', 'lock', () => Lock.lock()],
@@ -2146,6 +2283,7 @@ const Palette = {
       add('Tujuan pembelajaran', 'check', Store.all('TP'), (t) => `${t.code} ${String(t.objective).slice(0, 60)}`, (t) => `${t.program} — ${t.status}`, () => App.open('school', 'kehadiran'), (t) => [t.code, t.objective, t.program, t.unit]);
       add('Kehadiran', 'school', Store.all('_Kehadiran'), (r) => `${r.className} — ${fmtDate(r.date)}`, (r) => r.topic || '', (r) => { App.open('school', 'kehadiran'); Hadir.form(r.id); }, (r) => [r.className, r.topic, r.tpCodes, r.program]);
       add('File', 'file', Store.all('Files'), (f) => f.name, (f) => `${f.module} — ${fmtSize(f.size)}`, (f) => Files.openFile(f.id), (f) => [f.name, f.module, f.note]);
+      add('Catatan', 'journal', Store.all('_Catatan').filter((n) => (n.status || 'aktif') !== 'sampah'), (n) => n.title || String(n.body || '').slice(0, 50) || 'Tanpa judul', (n) => [n.label, (n.status || 'aktif') === 'arsip' ? 'arsip' : ''].filter(Boolean).join(' — '), (n) => { App.open('notes', (n.status || 'aktif') === 'arsip' ? 'arsip' : 'papan'); Notes.form(n.id); }, (n) => [n.title, n.body, n.label, (typeof Notes !== 'undefined' ? Notes.items(n).map((x) => x.t).join(' ') : '')]);
       add('Jurnal', 'journal', Store.all('Journal'), (j) => j.title || fmtDate(j.date), (j) => fmtDate(j.date), (j) => { App.s('journal').current = j.id; App.open('journal', 'jurnal'); }, (j) => [j.title, j.tags, stripHTML(j.content)]);
     }
     return out.slice(0, 40);
@@ -2189,6 +2327,7 @@ const Settings = {
           ${UI.fieldHTML({ k: 'semesterEnd', l: 'Akhir semester', t: 'date' }, st.semesterEnd)}
           ${UI.fieldHTML({ k: 'jpTarget', l: 'Target JP per minggu', t: 'number' }, st.jpTarget)}
           ${UI.fieldHTML({ k: 'kkm', l: 'KKM / batas ketercapaian TP (%)', t: 'number', min: 0, max: 100 }, st.kkm)}
+          ${UI.fieldHTML({ k: 'jobCap', l: 'Kapasitas tugas tambahan (JP / minggu)', t: 'number', min: 2, hint: 'Batas beban jobdesc tambahan yang dianggap penuh (100%). Dipakai untuk level Easy → Dying di Dashboard.' }, st.jobCap)}
           ${UI.fieldHTML({ k: 'scoreSheetUrl', l: 'URL Google Sheet Score List', t: 'url', full: 1, hint: 'Sumber nilai untuk modul Nilai & Score List.' }, st.scoreSheetUrl)}
           ${UI.fieldHTML({ k: 'address', l: 'Alamat (untuk kontrak & invoice)' }, st.address)}
         </div>
@@ -2281,7 +2420,7 @@ const Settings = {
         break;
       }
       case 'saveProfile': {
-        const v = this.read(box, ['ownerName', 'ownerEmail', 'ownerWa', 'businessName', 'bankInfo', 'invoiceNote', 'schoolName', 'jpMinutes', 'semesterStart', 'semesterEnd', 'jpTarget', 'kkm', 'scoreSheetUrl', 'address']);
+        const v = this.read(box, ['ownerName', 'ownerEmail', 'ownerWa', 'businessName', 'bankInfo', 'invoiceNote', 'schoolName', 'jpMinutes', 'semesterStart', 'semesterEnd', 'jpTarget', 'kkm', 'jobCap', 'scoreSheetUrl', 'address']);
         if (v.ownerEmail && !validEmail(v.ownerEmail)) throw new Error('Format email tidak valid.');
         await Store.saveSettings(v);
         UI.toast('Profil disimpan', 'ok');
@@ -2565,6 +2704,7 @@ const Home = {
     const todaySched = Store.where('Schedule', (s) => Number(s.day) === dow && !School.isDuty(s)).length;
     const activeTasks = Store.where('Assignments', (a) => !['Selesai', 'Dinilai'].includes(a.status)).length;
     const openDl = Store.where('Deadlines', (d) => d.status !== 'Done').length;
+    const jl = typeof JobLoad !== 'undefined' ? JobLoad.calc() : null;
 
     // Project
     const activeP = Store.where('Projects', (p) => !['Selesai', 'Batal'].includes(p.status));
@@ -2591,6 +2731,11 @@ const Home = {
     // Files
     const files = Store.all('Files');
 
+    // Catatan
+    const nkActive = typeof Notes !== 'undefined' ? Store.where('_Catatan', (n) => (n.status || 'aktif') === 'aktif') : [];
+    const nkOpen = typeof Notes !== 'undefined' ? sum(nkActive, (n) => Notes.items(n).filter((x) => !x.d).length) : 0;
+    const nkDone = typeof Notes !== 'undefined' ? sum(nkActive, (n) => Notes.items(n).filter((x) => x.d).length) : 0;
+
     const alerts = Alerts.compute();
     const upcoming = collectEvents(t, addDays(t, 7));
 
@@ -2609,15 +2754,17 @@ const Home = {
           <div class="hc-note">${nextInst ? `${I18N.p('Cicilan terdekat', 'Next instalment')}: <b>${esc(loanOf ? loanOf.creditor : '')}</b> ${idr(nextInst.amount)} — ${fmtDate(nextInst.dueDate)} ${UI.dueBadge(nextInst.dueDate)}` : I18N.p('Tidak ada tagihan cicilan.', 'No instalments due.')}</div>`, 'wide finance')}
         ${card('planner', `<div class="hc-stats">${stat(I18N.p('Aktivitas 7 hari', 'Next 7 days'), (typeof Planner !== 'undefined' ? Planner.items(t, addDays(t, 7)).filter((x) => !x.done && x.kind !== 'mengajar').length : 0))}${stat(I18N.p('Terlambat', 'Overdue'), (typeof Planner !== 'undefined' ? Planner.items('2000-01-01', addDays(t, -1)).filter((x) => !x.done && !x.cancelled && x.kind !== 'mengajar').length : 0), 'neg')}</div><div class="hc-note">${I18N.p('Agenda, tugas, deadline, sesi, dan cicilan dalam satu kalender.', 'Agenda, tasks, deadlines, sessions, and instalments in one calendar.')}</div>`)}
         ${card('project', `<div class="hc-stats">${stat('Project aktif', activeP.length)}${stat('Piutang', idrShort(piutang), piutang ? 'warn' : '')}</div><div class="hc-note">${nextP ? `${I18N.p('Deadline terdekat', 'Next deadline')}: ${esc(nextP.clientName)} ${UI.dueBadge(nextP.deadline)}` : I18N.p('Belum ada deadline aktif.', 'No active deadline.')}</div>`)}
-        ${card('school', `<div class="hc-stats">${stat('Beban mengajar', `${jp} JP<span class="muted mini"> / ${esc(st.jpTarget)}</span>`)}${stat('Tugas aktif', activeTasks)}</div><div class="hc-note">${todaySched ? I18N.p(`${todaySched} jam pelajaran hari ini`, `${todaySched} teaching slots today`) : I18N.p('Tidak ada jadwal hari ini', 'No classes today')}${openDl ? I18N.p(` — ${openDl} deadline dinas terbuka`, ` — ${openDl} open official deadlines`) : ''}.</div>`)}
+        ${card('school', `<div class="hc-stats" style="grid-template-columns:repeat(3,1fr)">${stat('Beban mengajar', `${jp} JP<span class="muted mini"> / ${esc(st.jpTarget)}</span>`)}${stat('Tugas aktif', activeTasks)}${typeof JobLoad !== 'undefined' ? stat(I18N.p('Beban tambahan', 'Extra duty load'), `${jl.active.length} <span class="badge b-${jl.lv.color}">${esc(I18N.p(jl.lv.id.split(' —')[0], jl.lv.en))}</span>`) : ''}</div><div class="hc-note">${todaySched ? I18N.p(`${todaySched} jam pelajaran hari ini`, `${todaySched} teaching slots today`) : I18N.p('Tidak ada jadwal hari ini', 'No classes today')}${openDl ? I18N.p(` — ${openDl} deadline dinas terbuka`, ` — ${openDl} open official deadlines`) : ''}.</div>`)}
         ${card('tutor', `<div class="hc-stats">${stat('Kelas aktif', activeC.length)}${stat('Sesi hari ini', todaySess)}</div><div class="hc-note">${I18N.p('Honor belum dibayar', 'Unpaid fees')}: <b>${idr(tutorDue)}</b></div>`)}
         ${card('journal', `<div class="hc-stats">${stat('Habit hari ini', `${doneToday}/${habits.length}`)}${stat('To-do terbuka', todos.length)}</div><div class="hc-note">${journaled ? I18N.p('Jurnal hari ini sudah ditulis.', "Today's journal is written.") : I18N.p('Jurnal hari ini belum ditulis.', "Today's journal is empty.")}</div>`)}
+        ${typeof Notes !== 'undefined' ? card('notes', `<div class="hc-stats">${stat(I18N.p('Catatan aktif', 'Active notes'), nkActive.length)}${stat(I18N.p('Butir terbuka', 'Open items'), nkOpen, nkOpen ? 'warn' : '')}</div><div class="hc-note">${nkDone ? I18N.p(`${nkDone} butir selesai dan siap dihapus.`, `${nkDone} items done and ready to erase.`) : I18N.p('Catatan cepat, daftar centang, lalu alirkan ke workflow.', 'Quick notes, checklists, then send them into the workflow.')}</div>`) : ''}
         ${card('files', `<div class="hc-stats">${stat('Dokumen', files.length)}${stat('Ukuran', fmtSize(sum(files, (f) => f.size)))}</div><div class="hc-note">${files.length ? `${I18N.p('Terakhir', 'Latest')}: ${esc(files.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0].name)}` : I18N.p('Belum ada file.', 'No files yet.')}</div>`)}
       </div>
       <div class="panels">
         <div class="card"><h3>${ic('alert')}Perlu perhatian</h3>${alerts.length ? `<ul class="list">${alerts.slice(0, 8).map((a) => `<li class="link" data-act="open" data-mod="${a.mod}" data-sub="${a.subTab}"><span class="dotc" style="background:var(--${a.level === 'danger' ? 'coral' : a.level === 'warn' ? 'amber' : 'sky'})"></span><div class="grow"><div class="t">${esc(a.text)}</div><div class="s">${esc(a.sub || '')}</div></div></li>`).join('')}</ul>` : UI.empty('Semua aman', 'Tidak ada deadline atau tagihan mendesak.')}</div>
         <div class="card"><h3>${ic('calendar')}7 hari ke depan</h3>${upcoming.length ? `<ul class="list">${upcoming.slice(0, 9).map((e) => `<li class="link" data-act="open" data-mod="${e.mod}" data-sub="${e.sub}"><span class="dotc" style="background:var(--${e.color})"></span><div class="grow"><div class="t">${esc(e.title)}</div><div class="s">${fmtDate(e.date, true)}${e.time ? ' — ' + esc(e.time) : ''}</div></div><span class="badge">${esc(e.kind)}</span></li>`).join('')}</ul>` : UI.empty('Minggu yang lapang', 'Belum ada agenda, sesi, deadline, atau cicilan.')}</div>
         <div class="card"><h3>${ic('clock')}Jadwal hari ini</h3>${this.todayPanel(dow, jpMin)}</div>
+        <div class="card span2"><h3>${ic('alert')}${I18N.p('Beban jobdesc tambahan', 'Additional duty load')}</h3>${typeof JobLoad !== 'undefined' ? JobLoad.panel() : ''}</div>
         <div class="card span2"><h3>${ic('check')}Kehadiran & ketercapaian TP</h3>${this.tpPanel()}</div>
         <div class="card"><h3>${ic('cloud')}Google Workspace</h3>${this.syncPanel()}</div>
       </div>
@@ -8259,6 +8406,642 @@ Object.assign(CHG, {
   tCls: (v) => { App.s('school').tCls = v; App.refresh(); },
   tStatus: (v) => { App.s('school').tStatus = v; App.refresh(); }
 });
+
+/* =====================================================================
+ * v7 — (A) NOTE: papan catatan gaya Google Keep, bisa dihapus (erase)
+ *               dan dialirkan ke workflow (tugas / agenda / deadline / to-do)
+ *      (B) BEBAN JOBDESC TAMBAHAN di Dashboard, terkalkulasi, dengan
+ *               level Easy → Steady → Busy → Heavy → Exhausted → Dying
+ * =================================================================== */
+
+const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+
+/* ------------------------------ (A) NOTE ---------------------------- */
+
+const NOTE_COLORS = ['none', 'amber', 'jade', 'sky', 'violet', 'rose', 'coral', 'slate'];
+const NOTE_COLOR_LABEL = {
+  none: ['Putih', 'White'], amber: ['Kuning', 'Amber'], jade: ['Hijau', 'Green'], sky: ['Biru langit', 'Sky'],
+  violet: ['Ungu', 'Violet'], rose: ['Merah muda', 'Rose'], coral: ['Merah', 'Coral'], slate: ['Kelabu', 'Slate']
+};
+/* Tujuan alir kerja: catatan bisa "dikeluarkan" menjadi baris kerja nyata. */
+const NOTE_FLOW = [
+  ['tugas', 'Tugas & Ujian', 'Teaching task'],
+  ['kegiatan', 'Kegiatan / Appointment', 'Activity / appointment'],
+  ['deadline', 'Deadline dinas', 'Official deadline'],
+  ['todo', 'To-do pribadi', 'Personal to-do']
+];
+
+const Notes = {
+  /* --- baca & tulis daftar centang (disimpan sebagai JSON di kolom items) --- */
+  items(n) {
+    try { const a = JSON.parse(n.items || '[]'); return Array.isArray(a) ? a.filter((x) => x && typeof x.t === 'string') : []; }
+    catch (e) { return []; }
+  },
+  pack(items) { return JSON.stringify((items || []).filter((x) => String(x.t || '').trim()).map((x) => ({ t: String(x.t).trim(), d: !!x.d }))); },
+  isList(n) { return this.items(n).length > 0; },
+
+  labels() {
+    const out = {};
+    Store.all('_Catatan').forEach((n) => String(n.label || '').split(',').forEach((l) => { const k = l.trim(); if (k) out[k] = (out[k] || 0) + 1; }));
+    return Object.keys(out).sort((a, b) => a.localeCompare(b)).map((k) => [k, out[k]]);
+  },
+
+  /** Catatan yang tampil di papan (aktif), sudah difilter & diurutkan. */
+  board() {
+    const s = App.s('notes');
+    const q = String(s.q || '').trim().toLowerCase();
+    const lab = s.label || '';
+    let list = Store.where('_Catatan', (n) => (n.status || 'aktif') === 'aktif');
+    if (lab) list = list.filter((n) => String(n.label || '').split(',').map((x) => x.trim()).includes(lab));
+    if (q) list = list.filter((n) => `${n.title} ${n.body} ${n.label} ${this.items(n).map((i) => i.t).join(' ')}`.toLowerCase().includes(q));
+    const key = (n) => String(n.updatedAt || n.createdAt || '');
+    return list.sort((a, b) => (b.pinned === true || b.pinned === 'true' ? 1 : 0) - (a.pinned === true || a.pinned === 'true' ? 1 : 0) || key(b).localeCompare(key(a)));
+  },
+  pinned(n) { return n.pinned === true || n.pinned === 'true'; },
+
+  bin(status) {
+    return Store.where('_Catatan', (n) => (n.status || 'aktif') === status)
+      .sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+  },
+
+  /* ------------------------------ editor ------------------------------ */
+  form(id, preset) {
+    const r = id ? Store.get('_Catatan', id) : null;
+    const init = r || Object.assign({ title: '', body: '', items: '', color: 'none', label: '', pinned: false, status: 'aktif' }, preset || {});
+    const startList = r ? this.isList(r) : !!(preset && preset.items);
+    let items = this.items(init);
+    let mode = startList ? 'list' : 'text';
+    let color = init.color || 'none';
+    const self = this;
+
+    const rowHTML = (it, i) => `<div class="nk-item" data-i="${i}">
+      <button type="button" class="nk-tick ${it.d ? 'on' : ''}" data-nk="tick" data-i="${i}" aria-label="${I18N.p('Tandai selesai', 'Mark done')}">${it.d ? ic('check') : ''}</button>
+      <input class="input nk-txt ${it.d ? 'done' : ''}" data-nk-i="${i}" value="${esc(it.t)}" placeholder="${I18N.p('Butir daftar…', 'List item…')}">
+      <button type="button" class="icon-btn xs" data-nk="del" data-i="${i}" aria-label="${I18N.p('Hapus butir', 'Erase item')}">${ic('x')}</button>
+    </div>`;
+
+    const body = `
+      <div class="nk-edit nk-c-${color}" id="nk-edit">
+        <input class="input nk-title" id="nk-title" value="${esc(init.title || '')}" placeholder="${I18N.p('Judul catatan', 'Note title')}">
+        <div id="nk-text" ${mode === 'list' ? 'hidden' : ''}>
+          <textarea class="input nk-body" id="nk-body" rows="7" placeholder="${I18N.p('Tulis catatan…', 'Write a note…')}">${esc(init.body || '')}</textarea>
+        </div>
+        <div id="nk-list" ${mode === 'text' ? 'hidden' : ''}>
+          <div id="nk-rows">${items.map(rowHTML).join('')}</div>
+          <button type="button" class="btn xs ghost" data-nk="add">${ic('plus')}${I18N.p('Butir baru', 'New item')}</button>
+          <div class="nk-list-foot"><button type="button" class="btn xs" data-nk="eraseDone">${ic('trash')}${I18N.p('Hapus butir yang selesai', 'Erase completed items')}</button></div>
+        </div>
+        <div class="nk-tools">
+          <div class="nk-colors" role="group" aria-label="${I18N.p('Warna catatan', 'Note colour')}">
+            ${NOTE_COLORS.map((c) => `<button type="button" class="nk-dot nk-c-${c} ${c === color ? 'on' : ''}" data-nk="color" data-c="${c}" title="${I18N.p(NOTE_COLOR_LABEL[c][0], NOTE_COLOR_LABEL[c][1])}"></button>`).join('')}
+          </div>
+          <button type="button" class="btn xs" data-nk="mode">${ic('check')}<span id="nk-mode-lbl">${mode === 'list' ? I18N.p('Jadikan teks', 'Make it text') : I18N.p('Jadikan daftar centang', 'Make it a checklist')}</span></button>
+        </div>
+        <div class="form" style="grid-template-columns:1fr 1fr">
+          <div class="field"><label for="nk-label">${I18N.p('Label (pisahkan dengan koma)', 'Labels (comma separated)')}</label>
+            <input class="input" id="nk-label" value="${esc(init.label || '')}" placeholder="${I18N.p('mis. LLC, Pramuka, SAC', 'e.g. LLC, Scouts, SAC')}" list="nk-label-opts">
+            <datalist id="nk-label-opts">${this.labels().map(([l]) => `<option value="${esc(l)}">`).join('')}</datalist></div>
+          <div class="field"><label for="nk-remind">${I18N.p('Pengingat (opsional)', 'Reminder (optional)')}</label>
+            <input class="input" type="date" id="nk-remind" value="${esc(init.remindDate || '')}"></div>
+        </div>
+        <label class="checkline"><input type="checkbox" class="check" id="nk-pin" ${this.pinned(init) ? 'checked' : ''}><span>${I18N.p('Sematkan di atas', 'Pin to top')}</span></label>
+      </div>`;
+
+    UI.modal({
+      title: r ? I18N.p('Ubah catatan', 'Edit note') : I18N.p('Catatan baru', 'New note'),
+      body, size: 'md',
+      foot: `${r ? `<button class="btn danger left" data-nk="erase">${ic('trash')}${I18N.p('Hapus', 'Erase')}</button>` : ''}
+        <button class="btn" data-close>${I18N.p('Batal', 'Cancel')}</button>
+        <button class="btn primary" data-nk="save">${ic('check')}${I18N.p('Simpan catatan', 'Save note')}</button>`,
+      onMount: (box, m) => {
+        const paint = () => {
+          const rows = box.querySelector('#nk-rows');
+          rows.innerHTML = items.map(rowHTML).join('');
+        };
+        const readRows = () => {
+          $$('[data-nk-i]', box).forEach((el) => { const i = +el.dataset.nkI; if (items[i]) items[i].t = el.value; });
+        };
+        const setColor = (c) => {
+          color = c;
+          box.querySelector('#nk-edit').className = 'nk-edit nk-c-' + c;
+          $$('.nk-dot', box).forEach((d) => d.classList.toggle('on', d.dataset.c === c));
+        };
+        const save = async () => {
+          readRows();
+          const row = {
+            title: box.querySelector('#nk-title').value.trim(),
+            body: mode === 'list' ? '' : box.querySelector('#nk-body').value,
+            items: mode === 'list' ? self.pack(items) : '',
+            color, label: box.querySelector('#nk-label').value.trim(),
+            remindDate: box.querySelector('#nk-remind').value || '',
+            pinned: box.querySelector('#nk-pin').checked,
+            status: 'aktif'
+          };
+          if (!row.title && !String(row.body).trim() && !self.items(row).length) {
+            UI.toast(I18N.p('Catatan masih kosong.', 'The note is still empty.'), 'err');
+            return;
+          }
+          if (r) await Store.update('_Catatan', r.id, row); else await Store.create('_Catatan', row);
+          UI.toast(I18N.p('Catatan disimpan', 'Note saved'), 'ok');
+          m.close();
+          App.refresh();
+        };
+
+        box.addEventListener('click', async (e) => {
+          const b = e.target.closest('[data-nk]');
+          if (!b) return;
+          const k = b.dataset.nk;
+          if (k === 'color') return setColor(b.dataset.c);
+          if (k === 'add') { readRows(); items.push({ t: '', d: false }); paint(); const last = $$('[data-nk-i]', box).pop(); if (last) last.focus(); return; }
+          if (k === 'del') { readRows(); items.splice(+b.dataset.i, 1); paint(); return; }
+          if (k === 'tick') { readRows(); const i = +b.dataset.i; if (items[i]) items[i].d = !items[i].d; paint(); return; }
+          if (k === 'eraseDone') {
+            readRows();
+            const n = items.filter((x) => x.d).length;
+            if (!n) return UI.toast(I18N.p('Tidak ada butir yang selesai.', 'No completed items.'));
+            items = items.filter((x) => !x.d); paint();
+            UI.toast(I18N.p(`${n} butir dihapus`, `${n} items erased`), 'ok');
+            return;
+          }
+          if (k === 'mode') {
+            readRows();
+            if (mode === 'text') {
+              const lines = String(box.querySelector('#nk-body').value).split(/\n+/).map((x) => x.replace(/^\s*[-*•\[\]x\s]+/i, '').trim()).filter(Boolean);
+              if (lines.length) items = lines.map((t) => ({ t, d: false }));
+              if (!items.length) items = [{ t: '', d: false }];
+              mode = 'list';
+            } else {
+              box.querySelector('#nk-body').value = items.map((x) => (x.d ? '✓ ' : '• ') + x.t).join('\n');
+              mode = 'text';
+            }
+            box.querySelector('#nk-text').hidden = mode === 'list';
+            box.querySelector('#nk-list').hidden = mode === 'text';
+            box.querySelector('#nk-mode-lbl').textContent = mode === 'list' ? I18N.p('Jadikan teks', 'Make it text') : I18N.p('Jadikan daftar centang', 'Make it a checklist');
+            paint();
+            return;
+          }
+          if (k === 'save') return save();
+          if (k === 'erase') { m.close(); return Notes.erase(r.id); }
+        });
+        box.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && e.target.matches('[data-nk-i]')) {
+            e.preventDefault();
+            $$('[data-nk-i]', box).forEach((el) => { const i = +el.dataset.nkI; if (items[i]) items[i].t = el.value; });
+            items.splice(+e.target.dataset.nkI + 1, 0, { t: '', d: false });
+            box.querySelector('#nk-rows').innerHTML = items.map(rowHTML).join('');
+            const next = box.querySelector(`[data-nk-i="${+e.target.dataset.nkI + 1}"]`);
+            if (next) next.focus();
+          }
+          if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); box.querySelector('[data-nk="save"]').click(); }
+        });
+        const f = box.querySelector('#nk-title'); if (f) f.focus();
+      }
+    });
+  },
+
+  /** Tambah cepat dari satu kotak di papan. */
+  async quick() {
+    const el = $('#nk-quick');
+    if (!el) return;
+    const txt = el.value.trim();
+    if (!txt) return this.form();
+    const lines = txt.split(/\n+/).filter(Boolean);
+    await Store.create('_Catatan', {
+      title: lines.length > 1 ? lines[0] : '', body: lines.length > 1 ? lines.slice(1).join('\n') : txt,
+      items: '', color: 'none', label: App.s('notes').label || '', pinned: false, status: 'aktif'
+    });
+    el.value = '';
+    UI.toast(I18N.p('Catatan ditambahkan', 'Note added'), 'ok');
+    App.refresh();
+  },
+
+  /* --------------------------- aksi per catatan ------------------------ */
+  async tick(id, i) {
+    const n = Store.get('_Catatan', id);
+    if (!n) return;
+    const items = this.items(n);
+    if (!items[i]) return;
+    items[i].d = !items[i].d;
+    await Store.update('_Catatan', id, { items: this.pack(items) });
+    App.refresh();
+  },
+  /** Hapus semua butir yang sudah dicentang — "erase" untuk alur kerja. */
+  async eraseDone(id) {
+    const n = Store.get('_Catatan', id);
+    if (!n) return;
+    const items = this.items(n);
+    const left = items.filter((x) => !x.d);
+    const gone = items.length - left.length;
+    if (!gone) return UI.toast(I18N.p('Tidak ada butir yang selesai.', 'No completed items.'));
+    await Store.update('_Catatan', id, { items: this.pack(left) });
+    UI.toast(I18N.p(`${gone} butir dihapus`, `${gone} items erased`), 'ok');
+    App.refresh();
+  },
+  async pin(id) {
+    const n = Store.get('_Catatan', id);
+    if (!n) return;
+    await Store.update('_Catatan', id, { pinned: !this.pinned(n) });
+    App.refresh();
+  },
+  async color(id, c) {
+    await Store.update('_Catatan', id, { color: c });
+    App.refresh();
+  },
+  async move(id, status) {
+    const n = Store.get('_Catatan', id);
+    if (!n) return;
+    await Store.update('_Catatan', id, { status });
+    const msg = { aktif: I18N.p('Dikembalikan ke papan', 'Restored to the board'), arsip: I18N.p('Diarsipkan', 'Archived'), sampah: I18N.p('Dipindah ke sampah', 'Moved to the bin') }[status];
+    UI.toast(msg, 'ok');
+    App.refresh();
+  },
+  /** "Erase": catatan masuk sampah dulu, jadi tidak ada yang hilang karena salah klik. */
+  erase(id) { return this.move(id, 'sampah'); },
+  async purge(id) {
+    const n = Store.get('_Catatan', id);
+    if (!n) return;
+    if (!(await UI.confirm(I18N.p(`Hapus permanen catatan "${n.title || (n.body || '').slice(0, 30)}"?`, `Permanently delete the note "${n.title || (n.body || '').slice(0, 30)}"?`), { ok: I18N.p('Hapus permanen', 'Delete for good'), danger: 1 }))) return;
+    await Store.remove('_Catatan', id);
+    UI.toast(I18N.p('Catatan dihapus permanen', 'Note deleted for good'), 'ok');
+    App.refresh();
+  },
+  async emptyBin() {
+    const list = this.bin('sampah');
+    if (!list.length) return UI.toast(I18N.p('Sampah sudah kosong.', 'The bin is already empty.'));
+    if (!(await UI.confirm(I18N.p(`Kosongkan sampah (${list.length} catatan)? Tindakan ini tidak bisa dibatalkan.`, `Empty the bin (${list.length} notes)? This cannot be undone.`), { ok: I18N.p('Kosongkan', 'Empty it'), danger: 1 }))) return;
+    for (const n of list) await Store.remove('_Catatan', n.id);
+    UI.toast(I18N.p(`${list.length} catatan dihapus permanen`, `${list.length} notes deleted for good`), 'ok');
+    App.refresh();
+  },
+  async duplicate(id) {
+    const n = Store.get('_Catatan', id);
+    if (!n) return;
+    const c = {};
+    ['title', 'body', 'items', 'color', 'label', 'remindDate'].forEach((k) => c[k] = n[k]);
+    c.title = (c.title || I18N.p('Catatan', 'Note')) + ' — ' + I18N.p('salinan', 'copy');
+    c.pinned = false; c.status = 'aktif';
+    await Store.create('_Catatan', c);
+    UI.toast(I18N.p('Catatan disalin', 'Note duplicated'), 'ok');
+    App.refresh();
+  },
+
+  /* --------------------------- alir ke workflow ------------------------ */
+  plainText(n) {
+    const it = this.items(n);
+    return it.length ? it.map((x) => (x.d ? '[v] ' : '[ ] ') + x.t).join('\n') : String(n.body || '');
+  },
+  flow(id) {
+    const n = Store.get('_Catatan', id);
+    if (!n) return;
+    const items = this.items(n);
+    const open = items.filter((x) => !x.d);
+    const t = todayISO();
+    UI.form({
+      title: I18N.p('Alirkan catatan ke workflow', 'Send note into the workflow'),
+      note: I18N.p('Catatan ini dijadikan baris kerja nyata yang ikut terhitung di kalender dan rekap. Catatan aslinya bisa langsung diarsipkan.',
+        'The note becomes a real work item that counts in the calendar and recaps. The original note can be archived right away.'),
+      values: { target: 'kegiatan', title: n.title || (open[0] ? open[0].t : String(n.body || '').split('\n')[0] || ''), date: t, each: open.length > 1, archive: true },
+      fields: [
+        { k: 'target', l: I18N.p('Jadikan', 'Turn into'), t: 'select', o: NOTE_FLOW.map(([v, idl, en]) => [v, I18N.p(idl, en)]), full: 1 },
+        { k: 'title', l: I18N.p('Judul', 'Title'), req: 1, full: 1 },
+        { k: 'date', l: I18N.p('Tanggal / tenggat', 'Date / due date'), t: 'date' },
+        { k: 'each', l: I18N.p(`Pecah per butir yang belum selesai (${open.length})`, `One item per unfinished entry (${open.length})`), t: 'checkbox', hide: open.length < 2 },
+        { k: 'archive', l: I18N.p('Arsipkan catatan setelah dialirkan', 'Archive the note afterwards'), t: 'checkbox' }
+      ].filter((f) => !f.hide),
+      submit: I18N.p('Alirkan', 'Send it'),
+      onSubmit: async (v) => {
+        const date = v.date || t;
+        const titles = (v.each && open.length > 1) ? open.map((x) => x.t) : [v.title];
+        const note = this.plainText(n).slice(0, 900);
+        for (const title of titles) {
+          if (!String(title).trim()) continue;
+          if (v.target === 'tugas') await Store.create('Assignments', { title, type: 'Tugas', subject: '', className: '', given: t, deadline: date, status: 'Diberikan', link: '', note });
+          else if (v.target === 'kegiatan') await Store.create('Agenda', { date, endDate: '', start: '', end: '', title, type: 'Kegiatan', status: 'Terjadwal', repeat: '', repeatUntil: '', location: '', note });
+          else if (v.target === 'deadline') await Store.create('Deadlines', { title, deadline: date, type: 'Dinas', status: 'On Process' });
+          else await Store.create('Todos', { text: title, date, priority: 'Sedang', done: false });
+        }
+        await Store.update('_Catatan', n.id, { refKind: v.target, refId: '', status: v.archive ? 'arsip' : 'aktif' });
+        UI.toast(I18N.p(`${titles.length} baris kerja dibuat`, `${titles.length} work items created`), 'ok');
+        App.refresh();
+      }
+    });
+  },
+
+  /* ------------------------------ kartu -------------------------------- */
+  card(n, place) {
+    const items = this.items(n);
+    const done = items.filter((x) => x.d).length;
+    const body = String(n.body || '');
+    const labels = String(n.label || '').split(',').map((x) => x.trim()).filter(Boolean);
+    const live = place === 'board';
+    const flowLbl = n.refKind ? (NOTE_FLOW.find((f) => f[0] === n.refKind) || [, n.refKind, n.refKind]) : null;
+    return `<article class="nk-card nk-c-${n.color || 'none'} ${this.pinned(n) ? 'pin' : ''}">
+      <header>
+        <h4>${n.title ? esc(n.title) : `<span class="muted">${I18N.p('Tanpa judul', 'Untitled')}</span>`}</h4>
+        ${live ? `<button class="nk-ic ${this.pinned(n) ? 'on' : ''}" data-act="nkPin" data-id="${n.id}" title="${I18N.p('Sematkan', 'Pin')}" aria-label="${I18N.p('Sematkan', 'Pin')}">${ic('flame')}</button>` : ''}
+      </header>
+      ${items.length ? `<ul class="nk-items">${items.slice(0, 12).map((x, i) => `<li class="${x.d ? 'done' : ''}">
+          <button class="nk-tick ${x.d ? 'on' : ''}" ${live ? `data-act="nkTick" data-id="${n.id}" data-i="${i}"` : 'disabled'} aria-label="${esc(x.t)}">${x.d ? ic('check') : ''}</button>
+          <span>${esc(x.t)}</span></li>`).join('')}${items.length > 12 ? `<li class="muted mini">+${items.length - 12} ${I18N.p('butir lain', 'more items')}</li>` : ''}</ul>
+        <div class="nk-meter"><span>${done}/${items.length} ${I18N.p('selesai', 'done')}</span>${UI.progress(items.length ? done / items.length * 100 : 0)}</div>` : ''}
+      ${body ? `<p class="nk-body">${esc(body).replace(/\n/g, '<br>')}</p>` : ''}
+      ${labels.length || n.remindDate || flowLbl ? `<div class="nk-tags">
+        ${labels.map((l) => `<button class="badge b-brand" data-act="nkLabel" data-l="${esc(l)}">${esc(l)}</button>`).join('')}
+        ${n.remindDate ? UI.dueBadge(n.remindDate) : ''}
+        ${flowLbl ? UI.badge(I18N.p('→ ' + flowLbl[1], '→ ' + flowLbl[2]), 'violet') : ''}</div>` : ''}
+      <footer class="nk-foot">
+        <span class="mini muted">${fmtDateShort(String(n.updatedAt || n.createdAt || '').slice(0, 10))}</span>
+        <div class="nk-acts">
+          ${live ? `
+            ${items.length && done ? `<button class="nk-ic" data-act="nkEraseDone" data-id="${n.id}" title="${I18N.p('Hapus butir yang selesai', 'Erase completed items')}">${ic('check')}</button>` : ''}
+            <button class="nk-ic" data-act="nkFlow" data-id="${n.id}" title="${I18N.p('Alirkan ke workflow', 'Send into the workflow')}">${ic('arrowUp')}</button>
+            <button class="nk-ic" data-act="nkEdit" data-id="${n.id}" title="${I18N.p('Ubah', 'Edit')}">${ic('edit')}</button>
+            <button class="nk-ic" data-act="nkArchive" data-id="${n.id}" title="${I18N.p('Arsipkan', 'Archive')}">${ic('download')}</button>
+            <button class="nk-ic danger" data-act="nkErase" data-id="${n.id}" title="${I18N.p('Hapus', 'Erase')}">${ic('trash')}</button>`
+        : `<button class="nk-ic" data-act="nkRestore" data-id="${n.id}" title="${I18N.p('Kembalikan', 'Restore')}">${ic('refresh')}</button>
+            <button class="nk-ic danger" data-act="nkPurge" data-id="${n.id}" title="${I18N.p('Hapus permanen', 'Delete for good')}">${ic('trash')}</button>`}
+        </div>
+      </footer>
+    </article>`;
+  }
+};
+
+MODULES.notes = {
+  nav: 'Catatan', title: 'Papan Catatan', short: 'Catatan', icon: 'journal', desc: 'Catatan cepat, daftar centang, alir ke workflow',
+  subs: [['papan', 'Papan Catatan'], ['arsip', 'Arsip & Sampah']]
+};
+
+VIEWS.notes = {
+  papan: {
+    actions: () => `<button class="btn mod" data-act="nkAdd">${ic('plus')}${I18N.p('Catatan', 'Note')}</button><button class="btn" data-act="nkAddList">${ic('check')}${I18N.p('Daftar centang', 'Checklist')}</button>`,
+    render() {
+      const s = App.s('notes');
+      const list = Notes.board();
+      const pin = list.filter((n) => Notes.pinned(n));
+      const rest = list.filter((n) => !Notes.pinned(n));
+      const labels = Notes.labels();
+      const all = Store.where('_Catatan', (n) => (n.status || 'aktif') === 'aktif');
+      const openItems = sum(all, (n) => Notes.items(n).filter((x) => !x.d).length);
+      const doneItems = sum(all, (n) => Notes.items(n).filter((x) => x.d).length);
+      const flowed = Store.where('_Catatan', (n) => n.refKind).length;
+
+      const grid = (arr, place) => `<div class="nk-grid">${arr.map((n) => Notes.card(n, place)).join('')}</div>`;
+
+      return `
+        <div class="nk-quick-wrap card mb">
+          <textarea class="input" id="nk-quick" rows="1" placeholder="${I18N.p('Tulis catatan cepat… (Enter untuk simpan, Shift+Enter baris baru)', 'Jot a quick note… (Enter to save, Shift+Enter for a new line)')}"></textarea>
+          <div class="btn-row">
+            <button class="btn sm primary" data-act="nkQuick">${ic('plus')}${I18N.p('Simpan', 'Save')}</button>
+            <button class="btn sm" data-act="nkAddList">${ic('check')}${I18N.p('Daftar centang', 'Checklist')}</button>
+          </div>
+        </div>
+        <div class="grid g4 mb">
+          <div class="stat accent"><small>${I18N.p('Catatan aktif', 'Active notes')}</small><b>${all.length}</b><span class="sub">${pin.length} ${I18N.p('disematkan', 'pinned')}</span></div>
+          <div class="stat"><small>${I18N.p('Butir belum selesai', 'Open checklist items')}</small><b class="${openItems ? 'warn' : 'pos'}">${openItems}</b><span class="sub">${doneItems} ${I18N.p('siap dihapus', 'ready to erase')}</span></div>
+          <div class="stat"><small>${I18N.p('Sudah dialirkan ke workflow', 'Sent into the workflow')}</small><b>${flowed}</b></div>
+          <div class="stat"><small>${I18N.p('Arsip / sampah', 'Archive / bin')}</small><b>${Notes.bin('arsip').length} / ${Notes.bin('sampah').length}</b></div>
+        </div>
+        <div class="toolbar mb">
+          <input class="input grow" placeholder="${I18N.p('Cari catatan…', 'Search notes…')}" data-chg="nkQ" data-live data-fk="nkQ" value="${esc(s.q || '')}">
+          <div class="nk-chips">
+            <button class="nk-chip ${!s.label ? 'on' : ''}" data-act="nkLabel" data-l="">${I18N.p('Semua label', 'All labels')}</button>
+            ${labels.map(([l, c]) => `<button class="nk-chip ${s.label === l ? 'on' : ''}" data-act="nkLabel" data-l="${esc(l)}">${esc(l)} <span class="muted">${c}</span></button>`).join('')}
+          </div>
+        </div>
+        ${list.length ? `${pin.length ? `<div class="nk-sec"><h4>${ic('flame')}${I18N.p('Disematkan', 'Pinned')}</h4>${grid(pin, 'board')}</div>` : ''}
+          ${rest.length ? `<div class="nk-sec">${pin.length ? `<h4>${I18N.p('Lainnya', 'Others')}</h4>` : ''}${grid(rest, 'board')}</div>` : ''}`
+        : UI.empty(I18N.p('Papan masih kosong', 'The board is empty'),
+          I18N.p('Tulis catatan cepat di kotak atas, atau buat daftar centang yang butirnya bisa dihapus setelah selesai.', 'Jot a quick note in the box above, or make a checklist whose items you erase once they are done.'),
+          `<button class="btn sm" data-act="nkAdd">${ic('plus')}${I18N.p('Catatan baru', 'New note')}</button>`)}`;
+    },
+    after() {
+      const q = $('#nk-quick');
+      if (!q) return;
+      const grow = () => { q.style.height = 'auto'; q.style.height = Math.min(220, q.scrollHeight) + 'px'; };
+      q.addEventListener('input', grow);
+      q.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); Notes.quick(); } });
+      grow();
+    }
+  },
+
+  arsip: {
+    actions: () => `<button class="btn danger" data-act="nkEmptyBin">${ic('trash')}${I18N.p('Kosongkan sampah', 'Empty the bin')}</button>`,
+    render() {
+      const ar = Notes.bin('arsip');
+      const tr = Notes.bin('sampah');
+      const grid = (arr) => `<div class="nk-grid">${arr.map((n) => Notes.card(n, 'bin')).join('')}</div>`;
+      return `
+        <div class="card mb"><h4>${ic('download')}${I18N.p('Arsip', 'Archive')} <span class="muted mini">(${ar.length})</span></h4>
+          ${ar.length ? grid(ar) : UI.empty(I18N.p('Arsip kosong', 'Archive is empty'), I18N.p('Catatan yang sudah tuntas bisa diarsipkan agar papan tetap rapi.', 'Finished notes can be archived to keep the board tidy.'))}</div>
+        <div class="card"><h4>${ic('trash')}${I18N.p('Sampah', 'Bin')} <span class="muted mini">(${tr.length})</span></h4>
+          <p class="mini muted" style="margin-top:0">${I18N.p('Catatan yang dihapus dari papan berhenti di sini dulu, jadi masih bisa dikembalikan.', 'Notes erased from the board stop here first, so they can still be restored.')}</p>
+          ${tr.length ? grid(tr) : UI.empty(I18N.p('Sampah kosong', 'Bin is empty'), '')}</div>`;
+    }
+  }
+};
+
+Object.assign(ACT, {
+  nkAdd: () => Notes.form(),
+  nkAddList: () => Notes.form(null, { items: '[{"t":"","d":false}]' }),
+  nkQuick: () => Notes.quick(),
+  nkEdit: (d) => Notes.form(d.id),
+  nkPin: (d) => Notes.pin(d.id),
+  nkTick: (d) => Notes.tick(d.id, +d.i),
+  nkEraseDone: (d) => Notes.eraseDone(d.id),
+  nkFlow: (d) => Notes.flow(d.id),
+  nkErase: (d) => Notes.erase(d.id),
+  nkArchive: (d) => Notes.move(d.id, 'arsip'),
+  nkRestore: (d) => Notes.move(d.id, 'aktif'),
+  nkPurge: (d) => Notes.purge(d.id),
+  nkEmptyBin: () => Notes.emptyBin(),
+  nkDup: (d) => Notes.duplicate(d.id),
+  nkLabel: (d) => { App.s('notes').label = d.l || ''; App.open('notes', 'papan'); }
+});
+Object.assign(CHG, { nkQ: (v) => { App.s('notes').q = v; App.refresh(); } });
+
+/* --------------------- (B) BEBAN JOBDESC TAMBAHAN -------------------- */
+/*  Level mengikuti permintaan: Easy → … → Exhausted → Dying.
+ *  Satuannya JP-setara per minggu, supaya sebanding dengan beban mengajar.  */
+
+const JOB_LEVELS = [
+  { k: 'easy', max: 35, id: 'Easy — santai', en: 'Easy', color: 'jade', note: ['Masih ringan. Ruang untuk menerima satu amanah lagi.', 'Still light. There is room for one more duty.'] },
+  { k: 'steady', max: 60, id: 'Steady — terkendali', en: 'Steady', color: 'sky', note: ['Terkendali. Pertahankan ritme dan jangan tambah tugas tanpa menyelesaikan yang ada.', 'Under control. Hold the rhythm and do not add duties before finishing current ones.'] },
+  { k: 'busy', max: 85, id: 'Busy — sibuk', en: 'Busy', color: 'brand', note: ['Sibuk. Mulai delegasikan bagian teknis dan kunci jadwal mingguan.', 'Busy. Start delegating the technical parts and lock the weekly schedule.'] },
+  { k: 'heavy', max: 110, id: 'Heavy — berat', en: 'Heavy', color: 'amber', note: ['Berat. Tunda amanah baru, dan dorong jobdesc berisiko tinggi agar tuntas.', 'Heavy. Postpone new duties and push the high-risk items to completion.'] },
+  { k: 'exhausted', max: 150, id: 'Exhausted — kelelahan', en: 'Exhausted', color: 'coral', note: ['Kelelahan. Beban melebihi kapasitas sehat; perlu dilepas atau dijadwalkan ulang sebagian.', 'Exhausted. The load exceeds a healthy capacity; some of it needs to be handed over or rescheduled.'] },
+  { k: 'dying', max: Infinity, id: 'Dying — sekarat', en: 'Dying', color: 'coral', note: ['Sekarat. Beban ini tidak mungkin dipenuhi sendirian — bicarakan pelepasan tugas dengan pimpinan.', 'Dying. This load cannot be met alone — talk to leadership about handing duties over.'] }
+];
+
+const JobLoad = {
+  /** Kapasitas tugas tambahan yang dianggap "penuh", dalam JP-setara per minggu. */
+  cap() { return Math.max(2, Number(Store.settings().jobCap) || 24); },
+
+  posWeight(p) {
+    const s = String(p || '').toLowerCase();
+    if (/ketua|koordinator|kepala|penanggung|ka\.|pj\b|manager|manajer|pembina/.test(s)) return 1.35;
+    if (/wakil|sekretaris|bendahara|wakoor|sekben/.test(s)) return 1.2;
+    return 1;
+  },
+  riskWeight(r) {
+    const s = String(r || '').toLowerCase();
+    if (/tinggi|high/.test(s)) return 1.2;
+    if (/sedang|medium/.test(s)) return 1.1;
+    return 1;
+  },
+  /** Jangka waktu kerja menentukan seberapa padat beban itu menimpa minggu ini:
+   *  amanah tahunan tersebar, amanah beberapa bulan menumpuk sekarang. */
+  spanWeight(period) {
+    const s = String(period || '').toLowerCase();
+    if (!s) return 0.85;
+    if (/harian|mingguan|per minggu|weekly|daily/.test(s)) return 1;
+    if (/beberapa bulan|bulanan|per bulan|monthly|triwulan|kegiatan|event|insidental/.test(s)) return 1;
+    if (/semester|6 bulan|enam bulan/.test(s)) return 0.75;
+    if (/tahun|annual|yearly/.test(s)) return 0.5;
+    return 0.85;
+  },
+  spanLabel(period) {
+    const w = this.spanWeight(period);
+    return w >= 1 ? ['padat', 'concentrated'] : w >= 0.85 ? ['sedang', 'moderate'] : w >= 0.75 ? ['tersebar 1 semester', 'spread over a semester'] : ['tersebar 1 tahun', 'spread over a year'];
+  },
+
+  /** Rincian beban satu jobdesc. */
+  one(j) {
+    const t = todayISO();
+    const st = String(j.status || '');
+    const prog = clamp(Number(j.progress) || 0, 0, 100);
+    const finished = /sudah selesai|^selesai|done|tuntas/i.test(st) || prog >= 100;
+    const notStarted = /belum (ber)?jalan|belum mulai|not started|rencana/i.test(st);
+    // Skor "Setara JP / Minggu" dari sheet; bila kosong diturunkan dari Bobot (Skor).
+    // Dibatasi 10 agar satu amanah tidak mendominasi seluruh rekap.
+    let base = Math.min(10, Number(j.jp) || 0);
+    if (!base) base = Math.min(10, Math.max(1, (Number(j.weight) || 1) * 2));
+    const pos = this.posWeight(j.position);
+    const risk = this.riskWeight(j.risk);
+    const span = this.spanWeight(j.period);
+    const remain = Math.max(0.15, (100 - prog) / 100);
+    // Fase kerja: belum berjalan menekan lebih ringan, lewat tenggat tetap menekan.
+    let phase = 1, phaseLbl = ['berjalan', 'running'];
+    const late = !!(j.endDate && j.endDate < t && !finished);
+    if (notStarted || (j.startDate && j.startDate > t)) { phase = 0.45; phaseLbl = ['belum berjalan', 'not started']; }
+    else if (late) { phase = 0.7; phaseLbl = ['lewat tenggat', 'overdue']; }
+    const load = finished ? 0 : base * pos * risk * span * remain * phase;
+    // Beban stres tambahan untuk amanah yang lewat tenggat dan belum tuntas.
+    const penalty = late ? 1.5 : 0;
+    return {
+      j, base, pos, risk, span, spanLbl: this.spanLabel(j.period), remain, phase, phaseLbl, late, finished, notStarted,
+      prog, load: round2(load), penalty, total: round2(load + penalty)
+    };
+  },
+
+  /** Rekap seluruh jobdesc tambahan. */
+  calc() {
+    const rows = Store.all('Jobdesc').filter((j) => j.activity).map((j) => this.one(j));
+    const active = rows.filter((r) => !r.finished);
+    const total = round2(sum(active, (r) => r.total));
+    const cap = this.cap();
+    const pct = Math.round(total / cap * 100);
+    const lv = JOB_LEVELS.find((l) => pct <= l.max) || JOB_LEVELS[JOB_LEVELS.length - 1];
+    return {
+      rows: rows.sort((a, b) => b.total - a.total), active, total, cap, pct, lv,
+      done: rows.filter((r) => r.finished).length,
+      late: active.filter((r) => r.late).length,
+      risky: active.filter((r) => r.risk >= 1.2).length,
+      penalty: round2(sum(active, (r) => r.penalty)),
+      avgProg: active.length ? Math.round(sum(active, (r) => r.prog) / active.length) : 0
+    };
+  },
+
+  levelBadge(lv) { return `<span class="badge b-${lv.color}">${esc(I18N.p(lv.id, lv.en))}</span>`; },
+
+  /** Pengukur setengah lingkaran: 0 → 180% kapasitas. */
+  gauge(pct, lv) {
+    const p = clamp(pct / 180, 0, 1);
+    const R = 54, C = Math.PI * R;
+    const seg = [['jade', 35], ['sky', 60], ['brand', 85], ['amber', 110], ['coral', 150], ['coral', 180]];
+    let prev = 0;
+    const bands = seg.map(([c, to]) => {
+      const a = prev / 180, b = Math.min(to, 180) / 180;
+      prev = to;
+      return `<path d="M 6 60 A ${R} ${R} 0 0 1 114 60" fill="none" stroke="var(--${c})" stroke-width="9" stroke-linecap="butt" opacity=".22"
+        stroke-dasharray="${((b - a) * C).toFixed(1)} ${C.toFixed(1)}" stroke-dashoffset="${(-a * C).toFixed(1)}"/>`;
+    }).join('');
+    return `<div class="jl-gauge">
+      <svg viewBox="0 0 120 70" aria-hidden="true">
+        ${bands}
+        <path d="M 6 60 A ${R} ${R} 0 0 1 114 60" fill="none" stroke="var(--${lv.color})" stroke-width="9" stroke-linecap="round"
+          stroke-dasharray="${(p * C).toFixed(1)} ${C.toFixed(1)}"/>
+      </svg>
+      <div class="jl-val"><b>${pct}%</b><small>${I18N.p('dari kapasitas', 'of capacity')}</small></div>
+    </div>`;
+  },
+
+  /** Kartu untuk Dashboard. */
+  panel() {
+    const c = this.calc();
+    if (!c.rows.length) {
+      return UI.empty(I18N.p('Belum ada jobdesc tambahan', 'No additional duties yet'),
+        I18N.p('Isi sheet Jobdesc atau tambahkan dari modul Sekolah agar beban tugas tambahan ikut terhitung di sini.', 'Fill the Jobdesc sheet or add one from the School module so the extra workload is counted here.'),
+        `<button class="btn sm" data-act="jobAdd">${ic('plus')}Jobdesc</button>`);
+    }
+    const top = c.rows.filter((r) => !r.finished).slice(0, 5);
+    return `<div class="jl-wrap">
+      ${this.gauge(c.pct, c.lv)}
+      <div class="jl-main">
+        <div class="jl-head">${this.levelBadge(c.lv)}<b>${c.total} JP</b><span class="muted mini">/ ${c.cap} JP ${I18N.p('kapasitas per minggu', 'capacity per week')}</span></div>
+        <p class="mini muted jl-note">${esc(I18N.p(c.lv.note[0], c.lv.note[1]))}</p>
+        <div class="jl-stats">
+          <div><small>${I18N.p('Tugas tambahan aktif', 'Active extra duties')}</small><b>${c.active.length}</b></div>
+          <div><small>${I18N.p('Lewat tenggat', 'Overdue')}</small><b class="${c.late ? 'neg' : 'pos'}">${c.late}</b></div>
+          <div><small>${I18N.p('Risiko tinggi', 'High risk')}</small><b class="${c.risky ? 'warn' : 'pos'}">${c.risky}</b></div>
+          <div><small>${I18N.p('Rata-rata progres', 'Average progress')}</small><b>${c.avgProg}%</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="bars jl-bars">${top.map((r) => `<div class="bar-row" style="grid-template-columns:1fr 90px auto">
+        <span>${esc(r.j.activity)}<div class="s muted mini">${esc(r.j.field || '')}${r.j.position ? ' — ' + esc(r.j.position) : ''}</div></span>
+        <div class="progress" style="--mc:var(--${r.late ? 'coral' : 'brand'})"><i style="width:${clamp(r.total / Math.max(1, c.total) * 100, 3, 100)}%"></i></div>
+        <span class="mini nowrap"><b>${r.total}</b> JP${r.late ? ` · <span class="neg">${I18N.p('telat', 'late')}</span>` : ''}</span></div>`).join('')}</div>
+    <div class="btn-row mt"><button class="btn sm" data-act="open" data-mod="school" data-sub="jobdesc">${ic('school')}${I18N.p('Buka Jobdesc', 'Open Jobdesc')}</button>
+      <button class="btn sm ghost" data-act="jlExplain">${ic('alert')}${I18N.p('Cara hitungnya', 'How it is calculated')}</button></div>`;
+  },
+
+  explain() {
+    const c = this.calc();
+    UI.modal({
+      title: I18N.p('Cara beban jobdesc dihitung', 'How the duty load is calculated'), size: 'full',
+      body: `<p class="mini muted" style="margin-top:0">${I18N.p('Semua angka di bawah diambil langsung dari sheet <b>Jobdesc</b>. Satuannya JP-setara per minggu agar sebanding dengan beban mengajar.', 'Every figure below comes straight from the <b>Jobdesc</b> sheet. The unit is JP-equivalent per week so it is comparable with the teaching load.')}</p>
+        <div class="note mb"><b>${I18N.p('Rumus per jobdesc', 'Formula per duty')}:</b><br>
+          <code>Setara JP × bobot jabatan × bobot risiko × kepadatan jangka waktu × sisa pekerjaan × fase kerja (+1,5 bila lewat tenggat)</code><br>
+          <span class="mini muted">${I18N.p('Setara JP diambil dari kolom “Setara JP / Minggu” (dibatasi 10 agar satu amanah tidak mendominasi); bila kosong, dipakai Bobot × 2. Bobot jabatan: ketua/koordinator/pembina 1,35 · wakil/sekretaris/bendahara 1,20 · anggota 1,00. Bobot risiko: tinggi 1,20 · sedang 1,10 · rendah 1,00. Kepadatan jangka waktu: beberapa bulan/mingguan 1,00 · semester 0,75 · tahunan 0,50 — amanah tahunan tersebar sehingga tekanannya per minggu lebih ringan. Sisa pekerjaan = (100 − progres)%, minimal 15%. Fase kerja: berjalan 1,00 · belum berjalan 0,45 · lewat tenggat 0,70. Jobdesc yang sudah selesai tidak dihitung.',
+        'The JP figure comes from the “Setara JP / Minggu” column (capped at 10 so one duty cannot dominate); if empty, Weight × 2 is used. Position weight: chair/coordinator/supervisor 1.35 · deputy/secretary/treasurer 1.20 · member 1.00. Risk weight: high 1.20 · medium 1.10 · low 1.00. Span density: a few months/weekly 1.00 · semester 0.75 · annual 0.50 — an annual duty is spread out, so its weekly pressure is lighter. Work left = (100 − progress)%, floored at 15%. Phase: running 1.00 · not started 0.45 · overdue 0.70. Finished duties are not counted.')}</span></div>
+        <div class="note mb"><b>${I18N.p('Level', 'Levels')}:</b> ${JOB_LEVELS.map((l) => `<span class="badge b-${l.color}">${esc(I18N.p(l.id, l.en))} ${l.max === Infinity ? '>150%' : '≤' + l.max + '%'}</span>`).join(' ')}
+          <br><span class="mini muted">${I18N.p(`Persentase = total beban ÷ kapasitas tugas tambahan (${c.cap} JP/minggu). Kapasitas bisa diubah di Pengaturan → Sekolah.`, `Percentage = total load ÷ extra-duty capacity (${c.cap} JP/week). The capacity can be changed in Settings → School.`)}</span></div>
+        ${UI.table([
+        { h: I18N.p('Kegiatan', 'Activity'), f: (r) => `<div class="t">${esc(r.j.activity)}</div><div class="s">${esc(r.j.field || '')}${r.j.position ? ' — ' + esc(r.j.position) : ''}</div>` },
+        { h: 'JP', cls: 'r', f: (r) => r.base },
+        { h: I18N.p('Jabatan', 'Position'), cls: 'r', f: (r) => '×' + r.pos.toFixed(2) },
+        { h: I18N.p('Risiko', 'Risk'), cls: 'r', f: (r) => '×' + r.risk.toFixed(2) },
+        { h: I18N.p('Jangka waktu', 'Span'), f: (r) => `${esc(r.j.period || '—')}<div class="s">${I18N.p(r.spanLbl[0], r.spanLbl[1])} ×${r.span.toFixed(2)}</div>` },
+        { h: I18N.p('Sisa', 'Left'), cls: 'r', f: (r) => Math.round(r.remain * 100) + '%' },
+        { h: I18N.p('Fase', 'Phase'), f: (r) => UI.badge(I18N.p(r.phaseLbl[0], r.phaseLbl[1]), r.late ? 'coral' : r.phase < 1 ? 'slate' : 'sky') + ' ×' + r.phase.toFixed(2) },
+        { h: I18N.p('Telat', 'Late'), cls: 'r', f: (r) => r.penalty ? '+' + r.penalty.toFixed(1) : '—' },
+        { h: I18N.p('Beban', 'Load'), cls: 'r', f: (r) => r.finished ? `<span class="muted">${I18N.p('selesai', 'done')}</span>` : `<b>${r.total}</b>` }
+      ], c.rows, { emptyMsg: I18N.p('Belum ada jobdesc.', 'No duties yet.'), foot: `<tr><th colspan="8">${I18N.p('Total beban aktif', 'Total active load')}</th><th class="r">${c.total} JP</th></tr>` })}`,
+      foot: `<button class="btn" data-close>${I18N.p('Tutup', 'Close')}</button>`
+    });
+  }
+};
+ACT.jlExplain = () => JobLoad.explain();
+
+/* Ringkasan beban juga tampil di tab Sekolah → Jobdesc, tempat datanya dikelola. */
+(function () {
+  const base = VIEWS.school.jobdesc.render;
+  VIEWS.school.jobdesc.render = function () {
+    const c = JobLoad.calc();
+    const head = c.rows.length ? `<div class="card mb"><h3>${ic('alert')}${I18N.p('Beban tugas tambahan', 'Additional duty load')}</h3>${JobLoad.panel()}</div>` : '';
+    return head + base.call(this);
+  };
+})();
 
 /* Mulai aplikasi */
 boot();
