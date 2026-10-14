@@ -27,36 +27,65 @@
    ========================================================= */
 :root {
   --font: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
-  --bg: #eef1f6;
-  --surface: #ffffff;
-  --surface-2: #f5f7fb;
-  --surface-3: #e9edf5;
-  --ink: #172036;
-  --ink-2: #33405e;
-  --muted: #5e6a85;
-  --line: #dce2ee;
-  --brand: #2f45c5;
-  --brand-soft: #e5e9ff;
-  --jade: #13886a;
-  --jade-soft: #dcf3ea;
-  --coral: #d64545;
-  --coral-soft: #fbe3e3;
-  --amber: #b87a05;
-  --amber-soft: #fbefd3;
-  --violet: #7446c0;
-  --violet-soft: #eee6fb;
-  --sky: #1580ab;
-  --sky-soft: #dcf0f8;
-  --rose: #c23d74;
-  --rose-soft: #f9e1ec;
-  --slate: #4b5a78;
-  --slate-soft: #e6eaf2;
-  --glass: rgba(255, 255, 255, .72);
-  --glow: 0 0 0 1px rgba(47, 69, 197, .16), 0 10px 30px -12px rgba(47, 69, 197, .45);
-  --grad-1: linear-gradient(135deg, #2f45c5, #1580ab 55%, #13886a);
-  --grad-2: linear-gradient(135deg, #7446c0, #c23d74);
-  --shadow-lg: 0 18px 48px -18px rgba(23, 32, 54, .35);
-  --shadow-sm: 0 1px 2px rgba(23, 32, 54, .06), 0 2px 8px -4px rgba(23, 32, 54, .12);
+
+  /* ---------------------------------------------------------------
+     TIGA TONE: indigo (utama) · teal (kedua) · emas (sorotan).
+     Tiap tone punya versi pucat untuk badge dan bidang.
+     Merah/kuning/hijau TETAP ADA, tetapi hanya untuk status
+     (telat, peringatan, lunas) — bukan sebagai warna hias.
+     Setiap warna yang membawa teks sudah diuji kontras >= 4,5:1
+     di atas putih, latar halaman, dan bidang pucatnya sendiri.
+     --------------------------------------------------------------- */
+  --t1: #4A57B8;          /* tone 1 — indigo  */
+  --t1-soft: #E9EBF8;
+  --t1-air: #8E9AE4;
+  --t2: #46756A;          /* tone 2 — teal    */
+  --t2-soft: #E4F1EE;
+  --t2-air: #7FB7A8;
+  --t3: #836A19;          /* tone 3 — emas    */
+  --t3-soft: #F7F0DC;
+  --t3-air: #D9BC63;
+
+  --bg: #F7F8FC;
+  --surface: #FFFFFF;
+  --surface-2: #F3F5FB;
+  --surface-3: #EAEDF6;
+  --ink: #272C45;
+  --ink-2: #434A69;
+  --muted: #5C6482;
+  --line: #E3E6F1;
+
+  /* nama lama dipetakan ke tiga tone agar seluruh modul ikut berubah */
+  --brand: var(--t1);        --brand-soft: var(--t1-soft);
+  --violet: var(--t1);       --violet-soft: var(--t1-soft);
+  --sky: var(--t2);          --sky-soft: var(--t2-soft);
+  --rose: var(--t3);         --rose-soft: var(--t3-soft);
+  --slate: #636B85;          --slate-soft: #EDEEF5;
+
+  /* status — satu-satunya tempat warna di luar tiga tone */
+  --danger: #BB4047;         --danger-soft: #FBE9EA;
+  --warn: #926523;           --warn-soft: #F9F0DF;
+  --ok: #37785F;             --ok-soft: #E4F2EC;
+  --coral: var(--danger);    --coral-soft: var(--danger-soft);
+  --jade: var(--ok);         --jade-soft: var(--ok-soft);
+  --amber: var(--warn);      --amber-soft: var(--warn-soft);
+
+  --air-1: var(--t1-air);
+  --air-2: var(--t2-air);
+  --air-3: var(--t3-air);
+  --air-4: #CFD4EE;
+
+  --glass: rgba(255, 255, 255, .74);
+  --glow: 0 0 0 1px rgba(74, 87, 184, .18), 0 10px 30px -14px rgba(74, 87, 184, .40);
+  --grad-1: linear-gradient(135deg, var(--t1) 0%, #6E78CC 55%, var(--t1-air) 100%);
+  --grad-2: linear-gradient(135deg, var(--t2) 0%, var(--t2-air) 100%);
+  --grad-3: linear-gradient(135deg, var(--t3) 0%, var(--t3-air) 100%);
+  --grad-soft: linear-gradient(160deg, #FFFFFF 0%, #FCFCFE 46%, #F5F6FC 100%);
+  --grad-page: radial-gradient(58% 44% at 10% -4%, rgba(74, 87, 184, .16), transparent 68%),
+               radial-gradient(50% 40% at 90% 2%, rgba(127, 183, 168, .18), transparent 70%),
+               radial-gradient(42% 36% at 54% -6%, rgba(217, 188, 99, .14), transparent 72%);
+  --shadow-lg: 0 18px 48px -20px rgba(39, 44, 69, .26);
+  --shadow-sm: 0 1px 2px rgba(39, 44, 69, .05), 0 2px 10px -6px rgba(39, 44, 69, .12);
   --r-lg: 18px;
   --r-md: 12px;
   --r-sm: 8px;
@@ -66,36 +95,48 @@
 }
 
 :root[data-theme="dark"] {
-  --bg: #070b16;
-  --surface: #0f1626;
-  --surface-2: #151e33;
-  --surface-3: #1d2944;
-  --ink: #eef2ff;
-  --ink-2: #c9d2ec;
-  --muted: #8794b5;
-  --line: #22304d;
-  --brand: #7c8cff;
-  --brand-soft: #1c2450;
-  --jade: #2fe0ad;
-  --jade-soft: #123a31;
-  --coral: #ff7a72;
-  --coral-soft: #43201f;
-  --amber: #f0b94a;
-  --amber-soft: #3f3016;
-  --violet: #b596ff;
-  --violet-soft: #2e2450;
-  --sky: #4fd1ff;
-  --sky-soft: #0e3147;
-  --rose: #ff7fb0;
-  --rose-soft: #43203a;
-  --slate: #a9b6d3;
-  --slate-soft: #232d44;
-  --glass: rgba(16, 22, 38, .68);
-  --glow: 0 0 0 1px rgba(129, 147, 255, .25), 0 12px 40px -14px rgba(92, 196, 236, .5);
-  --grad-1: linear-gradient(135deg, #5766ff, #35b6e8 55%, #29d8a1);
-  --grad-2: linear-gradient(135deg, #b596ff, #ff7fb0);
-  --shadow-lg: 0 18px 48px -18px rgba(0, 0, 0, .7);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .3);
+  --t1: #8E9AEA;          --t1-soft: #222845;   --t1-air: #AAB3F0;
+  --t2: #7FC9B8;          --t2-soft: #15322C;   --t2-air: #A3DBCE;
+  --t3: #E0BE6A;          --t3-soft: #38301A;   --t3-air: #EBD296;
+
+  --bg: #0D101C;
+  --surface: #161A2A;
+  --surface-2: #1D2234;
+  --surface-3: #262C41;
+  --ink: #E6E9F7;
+  --ink-2: #C0C5DC;
+  --muted: #98A0BC;
+  --line: #29304A;
+
+  --brand: var(--t1);        --brand-soft: var(--t1-soft);
+  --violet: var(--t1);       --violet-soft: var(--t1-soft);
+  --sky: var(--t2);          --sky-soft: var(--t2-soft);
+  --rose: var(--t3);         --rose-soft: var(--t3-soft);
+  --slate: #A3AAC6;          --slate-soft: #242A3C;
+
+  --danger: #EE9398;         --danger-soft: #431F22;
+  --warn: #E3B573;           --warn-soft: #3A2D17;
+  --ok: #74CFAE;             --ok-soft: #14352C;
+  --coral: var(--danger);    --coral-soft: var(--danger-soft);
+  --jade: var(--ok);         --jade-soft: var(--ok-soft);
+  --amber: var(--warn);      --amber-soft: var(--warn-soft);
+
+  --air-1: var(--t1-air);
+  --air-2: var(--t2-air);
+  --air-3: var(--t3-air);
+  --air-4: #3A4166;
+
+  --glass: rgba(22, 26, 42, .72);
+  --glow: 0 0 0 1px rgba(142, 154, 234, .24), 0 12px 40px -16px rgba(142, 154, 234, .42);
+  --grad-1: linear-gradient(135deg, #6E7AD8 0%, var(--t1) 55%, var(--t1-air) 100%);
+  --grad-2: linear-gradient(135deg, var(--t2) 0%, var(--t2-air) 100%);
+  --grad-3: linear-gradient(135deg, var(--t3) 0%, var(--t3-air) 100%);
+  --grad-soft: linear-gradient(160deg, #1A1F31 0%, #161A2A 52%, #131725 100%);
+  --grad-page: radial-gradient(58% 44% at 10% -4%, rgba(110, 122, 216, .20), transparent 68%),
+               radial-gradient(50% 40% at 90% 2%, rgba(127, 201, 184, .14), transparent 70%),
+               radial-gradient(42% 36% at 54% -6%, rgba(224, 190, 106, .12), transparent 72%);
+  --shadow-lg: 0 18px 48px -20px rgba(0, 0, 0, .66);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .28);
   color-scheme: dark;
 }
 
@@ -103,14 +144,11 @@
 [hidden] { display: none !important; }
 html, body { height: 100%; }
 body::before {
-  content: ""; position: fixed; inset: -20% -10% auto -10%; height: 70vh; z-index: -1; pointer-events: none;
-  background:
-    radial-gradient(45% 55% at 12% 0%, color-mix(in srgb, var(--brand) 26%, transparent), transparent 70%),
-    radial-gradient(40% 50% at 88% 6%, color-mix(in srgb, var(--jade) 22%, transparent), transparent 70%),
-    radial-gradient(35% 45% at 55% 0%, color-mix(in srgb, var(--violet) 18%, transparent), transparent 72%);
-  filter: blur(10px); opacity: .55;
+  content: ""; position: fixed; inset: -22% -10% auto -10%; height: 74vh; z-index: -1; pointer-events: none;
+  background: var(--grad-page);
+  filter: blur(14px); opacity: .9;
 }
-:root[data-theme="dark"] body::before { opacity: .42; }
+:root[data-theme="dark"] body::before { opacity: .72; }
 body {
   margin: 0;
   font-family: var(--font);
@@ -221,14 +259,24 @@ kbd { font-family: var(--font); font-size: 11.5px; border: 1px solid var(--line)
 .subtab.on { color: var(--mc, var(--brand)); border-color: var(--mc, var(--brand)); }
 .win-body { padding: 20px 22px 26px; }
 
-/* module colors */
-.m-planner { --mc: var(--brand); --mcs: var(--brand-soft); }
-.m-school { --mc: var(--sky); --mcs: var(--sky-soft); }
-.m-project { --mc: var(--violet); --mcs: var(--violet-soft); }
-.m-tutor { --mc: var(--amber); --mcs: var(--amber-soft); }
-.m-finance { --mc: var(--jade); --mcs: var(--jade-soft); }
-.m-journal { --mc: var(--rose); --mcs: var(--rose-soft); }
+/* module colors — dibagi rata ke tiga tone */
+.m-planner { --mc: var(--t1); --mcs: var(--t1-soft); }
+.m-school { --mc: var(--t1); --mcs: var(--t1-soft); }
+.m-notes { --mc: var(--t1); --mcs: var(--t1-soft); }
+.m-finance { --mc: var(--t2); --mcs: var(--t2-soft); }
+.m-tutor { --mc: var(--t2); --mcs: var(--t2-soft); }
+.m-pustaka { --mc: var(--t2); --mcs: var(--t2-soft); }
+.m-project { --mc: var(--t3); --mcs: var(--t3-soft); }
+.m-journal { --mc: var(--t3); --mcs: var(--t3-soft); }
 .m-files { --mc: var(--slate); --mcs: var(--slate-soft); }
+
+/* status tetap berwarna, hanya untuk makna — bukan hiasan */
+.b-coral, .b-danger { background: var(--danger-soft); color: var(--danger); }
+.b-amber-status, .b-warn { background: var(--warn-soft); color: var(--warn); }
+.b-ok { background: var(--ok-soft); color: var(--ok); }
+.neg { color: var(--danger) !important; }
+.pos { color: var(--ok) !important; }
+.warn { color: var(--warn) !important; }
 
 /* ---------- buttons ---------- */
 .btn {
@@ -705,44 +753,24 @@ body::after {   /* kisi halus agar latar tidak datar */
 
 
 /* =========================================================
-   v4 — skin "kekinian": warna berani, sudut membulat besar,
-   tombol pil, kartu bento, dan blob gradien di latar.
+   v4 — bentuk "kekinian": sudut membulat besar, tombol pil,
+   kartu bento. Warnanya mengikuti palet soft indigo di atas.
    ========================================================= */
 :root {
-  --violet: #7c5cff; --violet-soft: #ece7ff;
-  --rose: #ff4d97; --rose-soft: #ffe3ef;
-  --jade: #12b981; --jade-soft: #d7f7ec;
-  --sky: #0ea5e9; --sky-soft: #ddf1fd;
-  --amber: #f59e0b; --amber-soft: #fdf0d5;
-  --brand: #6d4bff; --brand-soft: #e9e4ff;
-  --coral: #ff4d4d; --coral-soft: #ffe2e2;
-  --grad-1: linear-gradient(135deg, #6d4bff 0%, #b14bff 45%, #ff4d97 100%);
-  --grad-2: linear-gradient(135deg, #0ea5e9 0%, #12b981 100%);
-  --grad-3: linear-gradient(135deg, #ff9f43 0%, #ff4d97 100%);
   --r-lg: 26px; --r-md: 20px; --r-sm: 14px;
-}
-:root[data-theme="dark"] {
-  --violet: #a78bff; --violet-soft: #2a2250;
-  --rose: #ff6fae; --rose-soft: #3f1a30;
-  --jade: #2fe0ad; --jade-soft: #0e3a2e;
-  --sky: #38bdf8; --sky-soft: #0c2f45;
-  --amber: #fbbf24; --amber-soft: #3a2c0f;
-  --brand: #8b6bff; --brand-soft: #241f55;
-  --coral: #ff6b6b; --coral-soft: #3d1d1d;
-  --grad-1: linear-gradient(135deg, #7c5cff 0%, #b14bff 45%, #ff5db1 100%);
-  --grad-2: linear-gradient(135deg, #38bdf8 0%, #2fe0ad 100%);
-  --grad-3: linear-gradient(135deg, #ffa94d 0%, #ff5db1 100%);
+  --grad-3: linear-gradient(135deg, var(--air-2) 0%, var(--air-4) 100%);
 }
 
-/* blob gradien yang bergerak pelan */
+/* blob gradien yang bergerak pelan — lembut, satu keluarga warna */
 body::before {
-  inset: -25% -15% auto -15%; height: 80vh; filter: blur(18px); opacity: .5;
+  inset: -25% -15% auto -15%; height: 80vh; filter: blur(22px); opacity: .85;
   background:
-    radial-gradient(38% 46% at 14% 2%, color-mix(in srgb, var(--brand) 55%, transparent), transparent 68%),
-    radial-gradient(34% 42% at 86% 0%, color-mix(in srgb, var(--rose) 45%, transparent), transparent 70%),
-    radial-gradient(32% 40% at 52% 8%, color-mix(in srgb, var(--sky) 42%, transparent), transparent 72%);
+    radial-gradient(38% 46% at 14% 2%, color-mix(in srgb, var(--air-1) 34%, transparent), transparent 68%),
+    radial-gradient(34% 42% at 86% 0%, color-mix(in srgb, var(--air-4) 46%, transparent), transparent 70%),
+    radial-gradient(32% 40% at 52% 8%, color-mix(in srgb, var(--air-2) 26%, transparent), transparent 72%);
   animation: floatBlob 18s ease-in-out infinite alternate;
 }
+:root[data-theme="dark"] body::before { opacity: .5; }
 @keyframes floatBlob { to { transform: translate3d(0, 3%, 0) scale(1.06); } }
 @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
 
@@ -938,15 +966,11 @@ h1, .hello h1 { font-weight: 800; letter-spacing: -.035em; }
 .nk-ic.danger:hover { background: var(--coral-soft); color: var(--coral); }
 .nk-ic .i { width: 15px; height: 15px; }
 
-/* --- warna catatan --- */
+/* --- warna catatan: netral + tiga tone --- */
 .nk-c-none { }
-.nk-c-amber { background: var(--amber-soft); border-color: color-mix(in srgb, var(--amber) 30%, transparent); }
-.nk-c-jade { background: var(--jade-soft); border-color: color-mix(in srgb, var(--jade) 30%, transparent); }
-.nk-c-sky { background: var(--sky-soft); border-color: color-mix(in srgb, var(--sky) 30%, transparent); }
-.nk-c-violet { background: var(--violet-soft); border-color: color-mix(in srgb, var(--violet) 30%, transparent); }
-.nk-c-rose { background: var(--rose-soft); border-color: color-mix(in srgb, var(--rose) 30%, transparent); }
-.nk-c-coral { background: var(--coral-soft); border-color: color-mix(in srgb, var(--coral) 30%, transparent); }
-.nk-c-slate { background: var(--slate-soft); border-color: color-mix(in srgb, var(--slate) 30%, transparent); }
+.nk-c-t1 { background: var(--t1-soft); border-color: color-mix(in srgb, var(--t1) 32%, transparent); }
+.nk-c-t2 { background: var(--t2-soft); border-color: color-mix(in srgb, var(--t2) 32%, transparent); }
+.nk-c-t3 { background: var(--t3-soft); border-color: color-mix(in srgb, var(--t3) 32%, transparent); }
 
 /* --- editor catatan --- */
 .nk-edit { border-radius: 14px; padding: 12px; border: 1px solid var(--line); display: grid; gap: 10px; }
@@ -966,13 +990,9 @@ h1, .hello h1 { font-weight: 800; letter-spacing: -.035em; }
 .nk-dot.on { box-shadow: 0 0 0 2.5px var(--brand); }
 /* Titik pemilih memakai warna pekat agar jelas dibedakan di tema terang maupun gelap. */
 .nk-dot.nk-c-none { background: var(--surface); border-color: var(--muted); }
-.nk-dot.nk-c-amber { background: var(--amber); border-color: var(--amber); }
-.nk-dot.nk-c-jade { background: var(--jade); border-color: var(--jade); }
-.nk-dot.nk-c-sky { background: var(--sky); border-color: var(--sky); }
-.nk-dot.nk-c-violet { background: var(--violet); border-color: var(--violet); }
-.nk-dot.nk-c-rose { background: var(--rose); border-color: var(--rose); }
-.nk-dot.nk-c-coral { background: var(--coral); border-color: var(--coral); }
-.nk-dot.nk-c-slate { background: var(--slate); border-color: var(--slate); }
+.nk-dot.nk-c-t1 { background: var(--t1); border-color: var(--t1); }
+.nk-dot.nk-c-t2 { background: var(--t2); border-color: var(--t2); }
+.nk-dot.nk-c-t3 { background: var(--t3); border-color: var(--t3); }
 .icon-btn.xs { width: 26px; height: 26px; }
 .icon-btn.xs .i { width: 14px; height: 14px; }
 
@@ -996,6 +1016,98 @@ h1, .hello h1 { font-weight: 800; letter-spacing: -.035em; }
 /* Tabel rumus beban: izinkan geser mendatar di layar sempit. */
 .modal.full .tbl th, .modal.full .tbl td { white-space: normal; }
 .jl-bars .bar-row span .s { line-height: 1.3; }
+
+/* =====================================================================
+   v8 — Lapisan gradien lembut
+   Tiap bidang mendapat gradien sangat tipis agar permukaan tidak rata,
+   tanpa menurunkan kontras teks di atasnya.
+   =================================================================== */
+
+.card, .stat, .modal, .hub-card, .win, .sidebar, .topbar {
+  background-image: var(--grad-soft);
+}
+.card, .stat { background-color: var(--surface); }
+
+/* kartu: garis tepi atas berwarna tipis sebagai aksen */
+.card { position: relative; overflow: hidden; }
+.card::after {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 2px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--mc, var(--brand)) 42%, transparent) 22%, color-mix(in srgb, var(--air-3) 55%, transparent) 70%, transparent);
+  opacity: .7; pointer-events: none;
+}
+
+.stat {
+  background-image: linear-gradient(150deg,
+    color-mix(in srgb, var(--mc, var(--brand)) 7%, var(--surface)) 0%,
+    var(--surface) 58%,
+    color-mix(in srgb, var(--air-4) 26%, var(--surface)) 100%);
+}
+.stat.accent {
+  background-image: linear-gradient(150deg,
+    color-mix(in srgb, var(--mc, var(--brand)) 16%, var(--surface)) 0%,
+    color-mix(in srgb, var(--air-4) 20%, var(--surface)) 72%,
+    var(--surface) 100%);
+}
+
+.hub-card {
+  background-image: linear-gradient(155deg,
+    color-mix(in srgb, var(--mc, var(--brand)) 11%, var(--surface)) 0%,
+    var(--surface) 52%,
+    color-mix(in srgb, var(--air-4) 30%, var(--surface)) 100%);
+}
+
+/* bidang pucat ikut bergradien, warnanya tetap dari token "-soft" */
+.badge { background-image: linear-gradient(140deg, rgba(255, 255, 255, .34), transparent 72%); }
+.empty { background-image: linear-gradient(160deg, color-mix(in srgb, var(--air-4) 16%, transparent), transparent 62%); }
+.note { background-image: linear-gradient(150deg, color-mix(in srgb, var(--air-4) 22%, transparent), transparent 70%); }
+.tbl th { background-image: linear-gradient(180deg, color-mix(in srgb, var(--air-4) 20%, transparent), transparent); }
+.tbl tbody tr:hover > td { background: color-mix(in srgb, var(--air-4) 15%, transparent); }
+
+.progress > i { background-image: var(--grad-1); }
+.progress { background-image: linear-gradient(90deg, color-mix(in srgb, var(--air-4) 42%, transparent), color-mix(in srgb, var(--air-3) 22%, transparent)); }
+
+.brand, .modal-head, .win-head { background-image: linear-gradient(120deg, color-mix(in srgb, var(--air-4) 26%, transparent), transparent 64%); }
+
+/* sticky note: gradien halus pada tiap warna */
+.nk-card, .nk-edit { background-image: linear-gradient(155deg, rgba(255, 255, 255, .42), transparent 62%); }
+:root[data-theme="dark"] .nk-card, :root[data-theme="dark"] .nk-edit { background-image: linear-gradient(155deg, rgba(255, 255, 255, .06), transparent 62%); }
+
+/* beban kerja terpadu: persamaan JP mengajar + JP jobdesc = total */
+.wl-wrap { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.wl-main { flex: 1; min-width: 260px; }
+.wl-eq { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 12px 0 14px; }
+.wl-term {
+  display: flex; flex-direction: column; align-items: center; min-width: 92px;
+  padding: 9px 14px; border-radius: 14px; border: 1px solid var(--line);
+  background-image: linear-gradient(150deg, color-mix(in srgb, var(--air-4) 34%, var(--surface)), var(--surface));
+}
+.wl-term b { font-size: 22px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.wl-term small { font-size: 10.5px; color: var(--muted); text-align: center; line-height: 1.25; margin-top: 2px; }
+.wl-term.teach b { color: var(--sky); }
+.wl-term.duty b { color: var(--violet); }
+.wl-term.all {
+  border-color: color-mix(in srgb, var(--brand) 42%, transparent);
+  background-image: linear-gradient(150deg, color-mix(in srgb, var(--brand) 14%, var(--surface)), color-mix(in srgb, var(--air-4) 26%, var(--surface)));
+}
+.wl-term.all b { color: var(--brand); }
+.wl-op { font-size: 19px; font-weight: 700; color: var(--muted); }
+.wl-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.wl-split > div { display: grid; gap: 4px; }
+.wl-split span { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.wl-split b { font-size: 15px; }
+.wl-split small { font-size: 10.5px; color: var(--muted); }
+.wl-stats { margin-top: 14px; }
+@media (max-width: 560px) {
+  .wl-eq { gap: 6px; }
+  .wl-term { min-width: 76px; padding: 7px 10px; }
+  .wl-term b { font-size: 18px; }
+}
+
+/* Dua batang pembanding pada beban terpadu memakai warnanya sendiri,
+   bukan gradien umum, agar mengajar dan jobdesc mudah dibedakan. */
+.wl-split .progress > i, .jl-bars .progress > i {
+  background-image: linear-gradient(90deg, var(--mc), color-mix(in srgb, var(--mc) 55%, var(--air-4)));
+}
 
 </style>
 </head>
@@ -1036,7 +1148,7 @@ h1, .hello h1 { font-weight: 800; letter-spacing: -.035em; }
 const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbzWcLKC82ZjHoOFPJSVZ-kAOA4Ry_0A7yyEk6ANBMg-Cn96__N2mwu5d1fMmLtdPHc1/exec';
 const DEFAULT_API_KEY = 'mph_86556476be2b4bdcbc46ae435d41f2cc';
 
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.6.0';
 
 /* Deteksi: dibuka langsung dari URL Apps Script (HtmlService) atau dari hosting statis. */
 const BOOT = (() => {
@@ -1342,7 +1454,7 @@ function logoSVG(size = 36, id = 'lg') {
   return `<svg class="logo" width="${size}" height="${size}" viewBox="0 0 64 64" fill="none" aria-hidden="true">
     <defs>
       <linearGradient id="${u}" x1="4" y1="4" x2="60" y2="60" gradientUnits="userSpaceOnUse">
-        <stop stop-color="#6d4bff"/><stop offset=".5" stop-color="#b14bff"/><stop offset="1" stop-color="#ff4d97"/>
+        <stop stop-color="#4A57B8"/><stop offset=".5" stop-color="#46756A"/><stop offset="1" stop-color="#D9BC63"/>
       </linearGradient>
     </defs>
     <rect x="2" y="2" width="60" height="60" rx="18" fill="url(#${u})"/>
@@ -1684,7 +1796,9 @@ const Store = {
     this.pending++;
     this.status = 'busy'; UI.syncChip();
     const payload = ops.map((op) => ({ op: op.op, sheet: op.sheet, id: op.id, row: op.row, noCal: !!op.noCal }));
-    const p = this.queue.then(() => Api.call('batch', { ops: payload })).then((j) => {
+    const p = this.queue.then(() => sendOps(payload, (d, n) => {
+      UI.toast(I18N.p(`Menyimpan ${d} dari ${n} baris…`, `Saving ${d} of ${n} rows…`), '', 1500);
+    })).then((j) => {
       (j.patches || []).forEach((pt) => { const r = this.get(pt.sheet, pt.id); if (r) r.gcalId = pt.gcalId; });
       this.dataVersion = '';
       ops.forEach((op) => { if (LAZY.includes(op.sheet)) this.loadedAt[op.sheet] = Date.now(); });
@@ -1701,6 +1815,14 @@ const Store = {
         SyncQueue.add(payload);
         this.saveCache();
         UI.toast(I18N.t('Koneksi terganggu — perubahan disimpan dan dikirim ulang otomatis.'), '', 6000);
+        return { ok: false, queued: true, error: e.message };
+      }
+      if (e.rest && e.rest.length) {
+        // sebagian sudah tersimpan: jangan buang sisanya, antrekan untuk dikirim ulang
+        SyncQueue.add(e.rest);
+        this.saveCache();
+        UI.toast(I18N.p(`${e.done} baris tersimpan, ${e.rest.length} sisanya diantrekan untuk dikirim ulang. (${e.message})`,
+          `${e.done} rows saved, the remaining ${e.rest.length} are queued for resend. (${e.message})`), 'err', 9000);
         return { ok: false, queued: true, error: e.message };
       }
       UI.toast(I18N.t('Gagal menyimpan: ') + e.message, 'err', 8000);
@@ -2327,7 +2449,8 @@ const Settings = {
           ${UI.fieldHTML({ k: 'semesterEnd', l: 'Akhir semester', t: 'date' }, st.semesterEnd)}
           ${UI.fieldHTML({ k: 'jpTarget', l: 'Target JP per minggu', t: 'number' }, st.jpTarget)}
           ${UI.fieldHTML({ k: 'kkm', l: 'KKM / batas ketercapaian TP (%)', t: 'number', min: 0, max: 100 }, st.kkm)}
-          ${UI.fieldHTML({ k: 'jobCap', l: 'Kapasitas tugas tambahan (JP / minggu)', t: 'number', min: 2, hint: 'Batas beban jobdesc tambahan yang dianggap penuh (100%). Dipakai untuk level Easy → Dying di Dashboard.' }, st.jobCap)}
+          ${UI.fieldHTML({ k: 'jobCap', l: 'Kapasitas tugas tambahan (JP / minggu)', t: 'number', min: 2, hint: 'Batas beban jobdesc tambahan yang dianggap penuh. JP mengajar + JP jobdesc dibandingkan dengan jumlah kedua kapasitas ini.' }, st.jobCap)}
+          ${UI.fieldHTML({ k: '', t: 'html', full: 1, html: `<label>Faktor perhitungan beban</label><div class="btn-row"><button class="btn sm" data-act="wlTune">${ic('settings')}Atur faktor beban kerja</button><button class="btn sm ghost" data-act="jlExplain">${ic('alert')}Lihat cara hitungnya</button></div><div class="hint">Pengali jabatan, risiko, kepadatan jangka waktu, dan fase kerja semuanya bisa diubah sendiri.</div>` })}
           ${UI.fieldHTML({ k: 'scoreSheetUrl', l: 'URL Google Sheet Score List', t: 'url', full: 1, hint: 'Sumber nilai untuk modul Nilai & Score List.' }, st.scoreSheetUrl)}
           ${UI.fieldHTML({ k: 'address', l: 'Alamat (untuk kontrak & invoice)' }, st.address)}
         </div>
@@ -2349,7 +2472,7 @@ const Settings = {
           <div class="card soft"><h4>${ic('calendar')}Google Calendar</h4><p class="mini muted" style="margin-top:0">Event dibuat di kalender <b>${esc(svc.calendarName || 'My Productivity Hub')}</b> dengan pengingat H-3, H-1, dan 1 jam (cicilan: H-5, H-3, H-1).</p>
             <div class="btn-row"><button class="btn sm" data-s="resync" ${remote ? '' : 'disabled'}>Sinkronkan ulang semua</button></div></div>
         </div>
-        ${remote ? `<p class="mini muted mt">Akun Google: ${esc(svc.owner || '-')} — sisa kuota email hari ini: ${svc.mailQuota == null ? '-' : svc.mailQuota}</p>` : ''}
+        ${remote ? `<p class="mini muted mt">${I18N.p('Akun Google', 'Google account')}: ${esc(svc.owner || '-')} — ${I18N.p('sisa kuota email hari ini', 'email quota left today')}: ${svc.mailQuota == null ? '-' : svc.mailQuota}</p>` : ''}
       </div>
       <div data-spane="data" ${tab !== 'data' ? 'hidden' : ''}>
         <div class="grid g2">
@@ -2704,7 +2827,7 @@ const Home = {
     const todaySched = Store.where('Schedule', (s) => Number(s.day) === dow && !School.isDuty(s)).length;
     const activeTasks = Store.where('Assignments', (a) => !['Selesai', 'Dinilai'].includes(a.status)).length;
     const openDl = Store.where('Deadlines', (d) => d.status !== 'Done').length;
-    const jl = typeof JobLoad !== 'undefined' ? JobLoad.calc() : null;
+    const wl = typeof Workload !== 'undefined' ? Workload.calc() : null;
 
     // Project
     const activeP = Store.where('Projects', (p) => !['Selesai', 'Batal'].includes(p.status));
@@ -2754,7 +2877,7 @@ const Home = {
           <div class="hc-note">${nextInst ? `${I18N.p('Cicilan terdekat', 'Next instalment')}: <b>${esc(loanOf ? loanOf.creditor : '')}</b> ${idr(nextInst.amount)} — ${fmtDate(nextInst.dueDate)} ${UI.dueBadge(nextInst.dueDate)}` : I18N.p('Tidak ada tagihan cicilan.', 'No instalments due.')}</div>`, 'wide finance')}
         ${card('planner', `<div class="hc-stats">${stat(I18N.p('Aktivitas 7 hari', 'Next 7 days'), (typeof Planner !== 'undefined' ? Planner.items(t, addDays(t, 7)).filter((x) => !x.done && x.kind !== 'mengajar').length : 0))}${stat(I18N.p('Terlambat', 'Overdue'), (typeof Planner !== 'undefined' ? Planner.items('2000-01-01', addDays(t, -1)).filter((x) => !x.done && !x.cancelled && x.kind !== 'mengajar').length : 0), 'neg')}</div><div class="hc-note">${I18N.p('Agenda, tugas, deadline, sesi, dan cicilan dalam satu kalender.', 'Agenda, tasks, deadlines, sessions, and instalments in one calendar.')}</div>`)}
         ${card('project', `<div class="hc-stats">${stat('Project aktif', activeP.length)}${stat('Piutang', idrShort(piutang), piutang ? 'warn' : '')}</div><div class="hc-note">${nextP ? `${I18N.p('Deadline terdekat', 'Next deadline')}: ${esc(nextP.clientName)} ${UI.dueBadge(nextP.deadline)}` : I18N.p('Belum ada deadline aktif.', 'No active deadline.')}</div>`)}
-        ${card('school', `<div class="hc-stats" style="grid-template-columns:repeat(3,1fr)">${stat('Beban mengajar', `${jp} JP<span class="muted mini"> / ${esc(st.jpTarget)}</span>`)}${stat('Tugas aktif', activeTasks)}${typeof JobLoad !== 'undefined' ? stat(I18N.p('Beban tambahan', 'Extra duty load'), `${jl.active.length} <span class="badge b-${jl.lv.color}">${esc(I18N.p(jl.lv.id.split(' —')[0], jl.lv.en))}</span>`) : ''}</div><div class="hc-note">${todaySched ? I18N.p(`${todaySched} jam pelajaran hari ini`, `${todaySched} teaching slots today`) : I18N.p('Tidak ada jadwal hari ini', 'No classes today')}${openDl ? I18N.p(` — ${openDl} deadline dinas terbuka`, ` — ${openDl} open official deadlines`) : ''}.</div>`)}
+        ${card('school', `<div class="hc-stats" style="grid-template-columns:repeat(3,1fr)">${stat(I18N.p('Beban mengajar', 'Teaching load'), `${jp} JP<span class="muted mini"> / ${esc(st.jpTarget)}</span>`)}${stat('Tugas aktif', activeTasks)}${typeof Workload !== 'undefined' ? stat(I18N.p('Total JP / minggu', 'Total periods / week'), `${wl.total} <span class="badge b-${wl.lv.color}">${esc(I18N.p(wl.lv.id.split(' —')[0], wl.lv.en))}</span>`) : ''}</div><div class="hc-note">${todaySched ? I18N.p(`${todaySched} jam pelajaran hari ini`, `${todaySched} teaching slots today`) : I18N.p('Tidak ada jadwal hari ini', 'No classes today')}${openDl ? I18N.p(` — ${openDl} deadline dinas terbuka`, ` — ${openDl} open official deadlines`) : ''}.</div>`)}
         ${card('tutor', `<div class="hc-stats">${stat('Kelas aktif', activeC.length)}${stat('Sesi hari ini', todaySess)}</div><div class="hc-note">${I18N.p('Honor belum dibayar', 'Unpaid fees')}: <b>${idr(tutorDue)}</b></div>`)}
         ${card('journal', `<div class="hc-stats">${stat('Habit hari ini', `${doneToday}/${habits.length}`)}${stat('To-do terbuka', todos.length)}</div><div class="hc-note">${journaled ? I18N.p('Jurnal hari ini sudah ditulis.', "Today's journal is written.") : I18N.p('Jurnal hari ini belum ditulis.', "Today's journal is empty.")}</div>`)}
         ${typeof Notes !== 'undefined' ? card('notes', `<div class="hc-stats">${stat(I18N.p('Catatan aktif', 'Active notes'), nkActive.length)}${stat(I18N.p('Butir terbuka', 'Open items'), nkOpen, nkOpen ? 'warn' : '')}</div><div class="hc-note">${nkDone ? I18N.p(`${nkDone} butir selesai dan siap dihapus.`, `${nkDone} items done and ready to erase.`) : I18N.p('Catatan cepat, daftar centang, lalu alirkan ke workflow.', 'Quick notes, checklists, then send them into the workflow.')}</div>`) : ''}
@@ -2764,7 +2887,7 @@ const Home = {
         <div class="card"><h3>${ic('alert')}Perlu perhatian</h3>${alerts.length ? `<ul class="list">${alerts.slice(0, 8).map((a) => `<li class="link" data-act="open" data-mod="${a.mod}" data-sub="${a.subTab}"><span class="dotc" style="background:var(--${a.level === 'danger' ? 'coral' : a.level === 'warn' ? 'amber' : 'sky'})"></span><div class="grow"><div class="t">${esc(a.text)}</div><div class="s">${esc(a.sub || '')}</div></div></li>`).join('')}</ul>` : UI.empty('Semua aman', 'Tidak ada deadline atau tagihan mendesak.')}</div>
         <div class="card"><h3>${ic('calendar')}7 hari ke depan</h3>${upcoming.length ? `<ul class="list">${upcoming.slice(0, 9).map((e) => `<li class="link" data-act="open" data-mod="${e.mod}" data-sub="${e.sub}"><span class="dotc" style="background:var(--${e.color})"></span><div class="grow"><div class="t">${esc(e.title)}</div><div class="s">${fmtDate(e.date, true)}${e.time ? ' — ' + esc(e.time) : ''}</div></div><span class="badge">${esc(e.kind)}</span></li>`).join('')}</ul>` : UI.empty('Minggu yang lapang', 'Belum ada agenda, sesi, deadline, atau cicilan.')}</div>
         <div class="card"><h3>${ic('clock')}Jadwal hari ini</h3>${this.todayPanel(dow, jpMin)}</div>
-        <div class="card span2"><h3>${ic('alert')}${I18N.p('Beban jobdesc tambahan', 'Additional duty load')}</h3>${typeof JobLoad !== 'undefined' ? JobLoad.panel() : ''}</div>
+        <div class="card span2"><h3>${ic('alert')}${I18N.p('Beban kerja terpadu — JP mengajar + JP jobdesc', 'Combined workload — teaching + extra duties')}</h3>${typeof Workload !== 'undefined' ? Workload.panel() : ''}</div>
         <div class="card span2"><h3>${ic('check')}Kehadiran & ketercapaian TP</h3>${this.tpPanel()}</div>
         <div class="card"><h3>${ic('cloud')}Google Workspace</h3>${this.syncPanel()}</div>
       </div>
@@ -3073,7 +3196,7 @@ VIEWS.school = {
         <div class="grid g5 mb">
           <div class="stat accent"><small>Skor kinerja</small><b>${kpi == null ? '—' : kpi + '%'}</b><span class="sub">rata-rata indikator</span></div>
           <div class="stat"><small>Pertemuan tercatat</small><b>${logs.length}</b><span class="sub">${monthLabel(s.logMonth)}</span></div>
-          <div class="stat"><small>Kehadiran siswa</small><b>${att == null ? '—' : Math.round(att * 100) + '%'}</b><span class="sub">${sum(withAtt, (l) => l.present)} dari ${sum(withAtt, (l) => l.total)}</span></div>
+          <div class="stat"><small>Kehadiran siswa</small><b>${att == null ? '—' : Math.round(att * 100) + '%'}</b><span class="sub">${I18N.p(`${sum(withAtt, (l) => l.present)} dari ${sum(withAtt, (l) => l.total)}`, `${sum(withAtt, (l) => l.present)} of ${sum(withAtt, (l) => l.total)}`)}</span></div>
           <div class="stat"><small>Tugas tuntas</small><b>${asg.length ? Math.round(asgDone / asg.length * 100) + '%' : '—'}</b><span class="sub ${late ? 'neg' : ''}">${late} tugas lewat deadline</span></div>
           <div class="stat"><small>Progres TP</small><b>${tp.length ? Math.round(tpDone / tp.length * 100) + '%' : '—'}</b><span class="sub">${tpDone} / ${tp.length} TP</span></div>
         </div>
@@ -3163,7 +3286,7 @@ VIEWS.school = {
       return `
         <div class="note mb">Setiap entri di sini otomatis masuk ke Buku Kas di Personal Finance dengan sumber "Sekolah".</div>
         <div class="grid g3 mb">
-          <div class="stat accent"><small>Pemasukan sekolah ${monthLabel(mk)}</small><b class="pos">${idr(sum(m.filter((t) => t.type === 'income'), (t) => t.amount))}</b></div>
+          <div class="stat accent"><small>${I18N.p(`Pemasukan sekolah ${monthLabel(mk)}`, `School income ${monthLabel(mk)}`)}</small><b class="pos">${idr(sum(m.filter((t) => t.type === 'income'), (t) => t.amount))}</b></div>
           <div class="stat"><small>Biaya bahan ajar ${monthLabel(mk)}</small><b class="neg">${idr(sum(m.filter((t) => t.type === 'expense'), (t) => t.amount))}</b></div>
           <div class="stat"><small>Total pemasukan sekolah (semua)</small><b>${idr(sum(list.filter((t) => t.type === 'income'), (t) => t.amount))}</b></div>
         </div>
@@ -3382,7 +3505,7 @@ VIEWS.school.jobdesc = {
         { h: 'Kegiatan', f: (j) => `${esc(j.activity)}${j.note ? `<div class="s">${esc(j.note)}</div>` : ''}` },
         { h: 'Durasi', f: (j) => j.startDate ? `<span class="nowrap">${fmtDateShort(j.startDate)}${j.endDate ? ' – ' + fmtDateShort(j.endDate) : ''}</span><div class="s">${j.endDate ? (diffDays(j.startDate, j.endDate) + 1) + ' ' + I18N.p('hari', 'days') : I18N.p('tanpa tanggal selesai', 'no end date')}</div>` : '<span class="muted">—</span>' },
         { h: 'Bobot / JP', cls: 'r', f: (j) => `${j.weight || '—'} / ${j.jp || '—'}` },
-        { h: 'Progres', f: (j) => `<div style="min-width:110px">${UI.progress(Number(j.progress) || 0)}<div class="s">${Number(j.progress) || 0}% dari target ${j.target || '—'}%</div></div>` },
+        { h: 'Progres', f: (j) => `<div style="min-width:110px">${UI.progress(Number(j.progress) || 0)}<div class="s">${I18N.p(`${Number(j.progress) || 0}% dari target ${j.target || '—'}%`, `${Number(j.progress) || 0}% of a ${j.target || '—'}% target`)}</div></div>` },
         { h: 'Status', f: (j) => `<select class="inline" data-chg="jobStatus" data-id="${j.id}">${JOB_STATUS.map((o) => `<option ${o === j.status ? 'selected' : ''}>${o}</option>`).join('')}</select>` },
         { h: 'Prediksi', f: (j) => j.prediction ? UI.badge(j.prediction, /Terlambat|Meleset/.test(j.prediction) ? 'coral' : /Tercapai/.test(j.prediction) ? 'jade' : 'sky') : '—' },
         { h: 'Risiko', f: (j) => j.risk ? UI.badge(j.risk, j.risk === 'Tinggi' ? 'coral' : j.risk === 'Sedang' ? 'amber' : 'jade') : '—' },
@@ -3747,7 +3870,7 @@ VIEWS.project = {
       const owed = Store.all('Projects').filter((p) => Fin.projectRemaining(p) > 0).sort((a, b) => Fin.projectRemaining(b) - Fin.projectRemaining(a));
       return `<div class="grid g2" style="grid-template-columns:1fr 1.4fr">
         <div class="card"><h3>${ic('alert')}Piutang per project</h3>
-          ${owed.length ? `<ul class="list">${owed.map((p) => `<li><div class="grow"><div class="t">${esc(p.clientName)} — ${esc(p.code)}</div><div class="s">dibayar ${idr(Fin.projectPaid(p))} dari ${idr(Fin.projectTotal(p))}</div></div><b class="neg nowrap">${idr(Fin.projectRemaining(p))}</b><button class="btn xs" data-act="projPay" data-id="${p.id}">${ic('pay')}</button></li>`).join('')}</ul>
+          ${owed.length ? `<ul class="list">${owed.map((p) => `<li><div class="grow"><div class="t">${esc(p.clientName)} — ${esc(p.code)}</div><div class="s">${I18N.p(`dibayar ${idr(Fin.projectPaid(p))} dari ${idr(Fin.projectTotal(p))}`, `${idr(Fin.projectPaid(p))} paid of ${idr(Fin.projectTotal(p))}`)}</div></div><b class="neg nowrap">${idr(Fin.projectRemaining(p))}</b><button class="btn xs" data-act="projPay" data-id="${p.id}">${ic('pay')}</button></li>`).join('')}</ul>
           <div class="divider"></div><div class="flex between"><b>Total piutang</b><b class="neg">${idr(sum(owed, (p) => Fin.projectRemaining(p)))}</b></div>` : UI.empty('Tidak ada piutang', 'Semua project sudah lunas.')}</div>
         <div class="card"><h3>${ic('pay')}Pembayaran masuk</h3>
           ${UI.table([
@@ -4400,7 +4523,7 @@ const Finance = {
     add('tutor', 'Sisa honor sesi bimbel', tutor, 1, 'sesi belum dibayar s.d. akhir bulan');
     add('loanPlan', 'Rencana pencairan pinjaman', Number(s.loanPlan) || 0, 1, 'isi manual');
     const due = Store.where('LoanInstallments', (i) => i.status !== 'Lunas' && i.dueDate <= endOfMonth);
-    add('inst', `Cicilan jatuh tempo (${due.length})`, sum(due, (i) => i.amount), -1, 'termasuk yang terlambat');
+    add('inst', I18N.p(`Cicilan jatuh tempo (${due.length})`, `Instalments due (${due.length})`), sum(due, (i) => i.amount), -1, 'termasuk yang terlambat');
     Store.where('Recurring', (r) => r.active !== false && r.type === 'expense').forEach((r) => add('re_' + r.id, r.name, postedThisMonth(r) ? 0 : r.amount, -1, postedThisMonth(r) ? 'sudah tercatat bulan ini' : 'pengeluaran rutin'));
     add('other', 'Pengeluaran lain', Number(s.otherExp) || 0, -1, 'isi manual');
     const total = sum(lines.filter((l) => l.on), (l) => l.amount * l.sign);
@@ -4450,7 +4573,7 @@ VIEWS.finance = {
           <div class="card"><h4>Pengeluaran per kategori</h4><div class="chart-box"><canvas id="ch-donut"></canvas></div></div>
         </div>
         <div class="grid g2">
-          <div class="card"><h4>Sumber pemasukan ${monthLabel(s.month)}</h4>${Object.keys(src).length ? `<div class="bars">${Object.entries(src).map(([k, l]) => `<div class="bar-row"><span>${SOURCE_LABEL[k] || k}</span><div class="progress lg" style="--mc:var(--${SOURCE_COLOR[k] || 'slate'})"><i style="width:${sum(l, (t) => t.amount) / maxSrc * 100}%"></i></div><b class="nowrap">${idrShort(sum(l, (t) => t.amount))}</b></div>`).join('')}</div>` : UI.empty('Belum ada pemasukan')}
+          <div class="card"><h4>${I18N.p(`Sumber pemasukan ${monthLabel(s.month)}`, `Income sources ${monthLabel(s.month)}`)}</h4>${Object.keys(src).length ? `<div class="bars">${Object.entries(src).map(([k, l]) => `<div class="bar-row"><span>${SOURCE_LABEL[k] || k}</span><div class="progress lg" style="--mc:var(--${SOURCE_COLOR[k] || 'slate'})"><i style="width:${sum(l, (t) => t.amount) / maxSrc * 100}%"></i></div><b class="nowrap">${idrShort(sum(l, (t) => t.amount))}</b></div>`).join('')}</div>` : UI.empty('Belum ada pemasukan')}
             <p class="mini muted">Gaji dari modul Sekolah, fee dari Project, dan honor Tutor masuk otomatis ke sini.</p></div>
           <div class="card"><h4>Tagihan cicilan terdekat</h4>${upcoming.length ? `<ul class="list">${upcoming.map((i) => `<li><div class="grow"><div class="t">${esc((loans[i.loanId] || {}).creditor || '')} — ke-${i.no}</div><div class="s">${fmtDate(i.dueDate)}</div></div>${UI.dueBadge(i.dueDate)}<b class="nowrap">${idr(i.amount)}</b><button class="btn xs" data-act="instPay" data-id="${i.id}">Bayar</button></li>`).join('')}</ul>` : UI.empty('Tidak ada cicilan', 'Semua pinjaman lunas.')}</div>
         </div>`;
@@ -4516,7 +4639,7 @@ VIEWS.finance = {
       return `
         <div class="grid g4 mb">
           <div class="stat accent"><small>Sisa pokok utang</small><b class="neg">${idr(Fin.debtLeft())}</b><span class="sub">${loans.filter((l) => l.status !== 'Lunas').length} pinjaman aktif</span></div>
-          <div class="stat"><small>Cicilan ${monthLabel(mk)}</small><b>${idr(sum(dueM, (i) => i.amount))}</b><span class="sub">${dueM.filter((i) => i.status === 'Lunas').length}/${dueM.length} sudah dibayar</span></div>
+          <div class="stat"><small>${I18N.p(`Cicilan ${monthLabel(mk)}`, `Instalments ${monthLabel(mk)}`)}</small><b>${idr(sum(dueM, (i) => i.amount))}</b><span class="sub">${I18N.p(`${dueM.filter((i) => i.status === 'Lunas').length}/${dueM.length} sudah dibayar`, `${dueM.filter((i) => i.status === 'Lunas').length} of ${dueM.length} paid`)}</span></div>
           <div class="stat"><small>Rasio cicilan / pendapatan</small><b>${Math.round(dr.ratio * 100)}%</b><span class="badge b-${col}">${lbl}</span></div>
           <div class="stat"><small>Basis pendapatan</small><b>${idrShort(dr.base)}</b><span class="sub">maks(pemasukan bulan ini, pemasukan rutin)</span></div>
         </div>
@@ -4559,7 +4682,7 @@ VIEWS.finance = {
           <p class="mini muted">${I18N.p('Saldo akhir bulan berjalan otomatis menjadi saldo awal bulan berikutnya, jadi proyeksi bulan depan sudah memperhitungkan sisa bulan ini.', 'The current month’s closing balance automatically becomes next month’s opening balance, so next month’s projection already includes this month’s leftover.')}</p>
         </div>
         <div class="card"><h3>${ic('refresh')}Pemasukan & pengeluaran rutin</h3>
-          ${rec.length ? `<ul class="list">${rec.map((r) => `<li><span class="dotc" style="background:var(--${r.type === 'income' ? 'jade' : 'coral'})"></span><div class="grow"><div class="t" style="${r.active === false ? 'text-decoration:line-through' : ''}">${esc(r.name)}</div><div class="s">${esc(r.category || '')} — tgl ${r.dayOfMonth || '-'}</div></div><b class="${r.type === 'income' ? 'pos' : 'neg'} nowrap">${idr(r.amount)}</b><button class="btn xs" data-act="recPost" data-id="${r.id}" title="Catat ke Buku Kas bulan ini">${ic('check')}Catat</button><button class="btn xs" data-act="recEdit" data-id="${r.id}">${ic('edit')}</button></li>`).join('')}</ul>
+          ${rec.length ? `<ul class="list">${rec.map((r) => `<li><span class="dotc" style="background:var(--${r.type === 'income' ? 'jade' : 'coral'})"></span><div class="grow"><div class="t" style="${r.active === false ? 'text-decoration:line-through' : ''}">${esc(r.name)}</div><div class="s">${esc(r.category || '')} — ${I18N.p(`tgl ${r.dayOfMonth || '-'}`, `day ${r.dayOfMonth || '-'}`)}</div></div><b class="${r.type === 'income' ? 'pos' : 'neg'} nowrap">${idr(r.amount)}</b><button class="btn xs" data-act="recPost" data-id="${r.id}" title="Catat ke Buku Kas bulan ini">${ic('check')}Catat</button><button class="btn xs" data-act="recEdit" data-id="${r.id}">${ic('edit')}</button></li>`).join('')}</ul>
           <div class="divider"></div><div class="kv"><div><small>Total pemasukan rutin</small><b class="pos">${idr(Fin.recurringIncome())}</b></div><div><small>Total pengeluaran rutin</small><b class="neg">${idr(Fin.recurringExpense())}</b></div></div>`
           : UI.empty('Belum ada pos rutin', 'Contoh: gaji, WiFi + listrik, susu, kebutuhan keluarga.', `<button class="btn sm" data-act="recAdd">${ic('plus')}Tambah</button>`)}
         </div></div>`;
@@ -5946,7 +6069,7 @@ VIEWS.school.kehadiran = {
         <div class="stat accent"><small>Pertemuan tercatat</small><b>${list.length}</b><span class="sub">${mk ? monthLabel(mk) : 'semua periode'}</span></div>
         <div class="stat"><small>Kehadiran</small><b>${att == null ? '—' : Math.round(att) + '%'}</b><span class="sub">putra ${sum(list, (r) => r.boysPresent)}/${sum(list, (r) => r.boysTotal)} — putri ${sum(list, (r) => r.girlsPresent)}/${sum(list, (r) => r.girlsTotal)}</span></div>
         <div class="stat"><small>Ketercapaian TP rata-rata</small><b class="${ach != null && ach >= Hadir.kkm() ? 'pos' : ''}">${ach == null ? '—' : Math.round(ach) + '%'}</b><span class="sub">KKM ${Hadir.kkm()}%</span></div>
-        <div class="stat"><small>TP tercapai (${esc(prog || '-')})</small><b>${tpa.length ? Math.round(reached / tpa.length * 100) + '%' : '—'}</b><span class="sub">${reached} dari ${tpa.length} TP</span></div>
+        <div class="stat"><small>TP tercapai (${esc(prog || '-')})</small><b>${tpa.length ? Math.round(reached / tpa.length * 100) + '%' : '—'}</b><span class="sub">${I18N.p(`${reached} dari ${tpa.length} TP`, `${reached} of ${tpa.length} objectives`)}</span></div>
       </div>
       <div class="toolbar">
         <select class="select" data-chg="hMonth"><option value="">Semua bulan</option>${months.map((m) => `<option value="${m}" ${m === mk ? 'selected' : ''}>${monthLabel(m)}</option>`).join('')}</select>
@@ -5964,7 +6087,7 @@ VIEWS.school.kehadiran = {
         </div>
         <div class="card"><h4>Kehadiran vs ketercapaian per kelas</h4><div class="chart-box sm"><canvas id="ch-hadir"></canvas></div></div>
       </div>
-      <div class="card mb"><h3>${ic('check')}Ketercapaian tiap TP — ${esc(prog || '-')}</h3>
+      <div class="card mb"><h3>${ic('check')}${I18N.p('Ketercapaian tiap TP', 'Attainment per objective')} — ${esc(prog || '-')}</h3>
         ${UI.table([
           { h: 'Kode', f: (x) => `<b>${esc(x.tp.code)}</b><div class="s">${esc(x.tp.unit || '')}</div>` },
           { h: 'Tujuan pembelajaran', f: (x) => `<div class="tp-full" style="min-width:320px">${esc(x.tp.objective)}</div>${x.tp.detail ? `<div class="s tp-full">${esc(x.tp.detail)}</div>` : ''}` },
@@ -6136,7 +6259,184 @@ const I18N = {
     'Tersimpan': 'Saved', 'Data dasar': 'Master data', 'Perangkat terpercaya': 'Trusted devices', 'Riwayat perubahan': 'Change history',
     'Keamanan (PIN)': 'Security (PIN)', 'Backup Drive': 'Drive backup', 'Impor database lengkap': 'Import full database',
     'Koneksi': 'Connection', 'Profil & Invoice': 'Profile & Invoice', 'Data & Cadangan': 'Data & Backup',
-    'Cari': 'Search', 'Filter': 'Filter', 'Bulan ini': 'This month', 'Hari ini': 'Today', 'Besok (H-1)': 'Tomorrow (D-1)', 'Semua modul': 'All modules'
+    'Cari': 'Search', 'Filter': 'Filter', 'Bulan ini': 'This month', 'Hari ini': 'Today', 'Besok (H-1)': 'Tomorrow (D-1)', 'Semua modul': 'All modules',
+    /* v8 — sapuan antarmuka; nilai yang tersimpan di sheet sengaja tidak diterjemahkan */
+    "Semua kelas": "All classes", "Semua bidang": "All fields", "Semua jenis": "All types", "Semua bulan": "All months", "Semua sumber": "All sources", "Semua kategori": "All categories", "Semua modul": "All modules", "Semua": "All", "Belum selesai": "Not finished", "Belum": "Not yet", "Semua status": "All statuses", "Semua tahun": "All years", "Semua tipe": "All types",
+    "Catatan": "Notes",
+    "Papan Catatan": "Note Board",
+    "Arsip & Sampah": "Archive & Bin",
+    "Catatan cepat, daftar centang, alir ke workflow": "Quick notes, checklists, straight into the workflow",
+    "Pustaka Link & File": "Links & Files Library",
+    "Pustaka": "Library",
+    "Tautan per Kategori": "Links by Category",
+    "Semua Berkas": "All Files",
+    "Tautan kerja & dokumen, tertata per kategori": "Work links and documents, sorted by category",
+    "Daftar Nilai": "Gradebook",
+    "Rekap Nilai": "Score Recap",
+    "Tugas Siswa": "Student Tasks",
+    "Jadwal, logbook, KPI, tugas & ujian": "Timetable, logbook, KPI, assignments & exams",
+    "Klien, pengerjaan, invoice & kwitansi": "Clients, delivery, invoices & receipts",
+    "Refleksi harian, kebiasaan, to-do": "Daily reflection, habits, to-dos",
+    "Semua dokumen dari seluruh modul": "Every document from every module",
+    "Bimbel, les privat, workshop": "Tutoring, private lessons, workshops",
+    "Buku kas pusat, pinjaman, proyeksi": "Central cash book, loans, projections",
+    "Isi & Ubah Lembar": "Fill & Edit Sheets",
+    "Tutup jendela Catatan": "Close the Notes window",
+    "Tutup jendela Jurnal": "Close the Journal window",
+    "Tutup jendela File": "Close the Files window",
+    "Tutup jendela Keuangan": "Close the Finance window",
+    "Tutup jendela Project": "Close the Projects window",
+    "Tutup jendela Pustaka": "Close the Library window",
+    "Tutup jendela Sekolah": "Close the School window",
+    "Tutup jendela Tutor": "Close the Tutor window",
+    "Tutup jendela Agenda": "Close the Agenda window",
+    "Tutup jendela Beranda": "Close the Home window",
+    "Tautan baru": "New link",
+    "Tugas baru": "New task",
+    "Tautan siswa": "Student link",
+    "Tambah siswa": "Add students",
+    "Salin dari Score List": "Copy from the Score List",
+    "Impor jadwal": "Import timetable",
+    "Impor fresh data": "Import fresh data",
+    "Simpan perubahan": "Save changes",
+    "Simpan jurnal": "Save journal",
+    "Simpan profil": "Save profile",
+    "Simpan & hubungkan": "Save & connect",
+    "Pilih file": "Choose a file",
+    "Buat project dari hitungan ini": "Create a project from this estimate",
+    "Buka riwayat & urungkan": "Open history & undo",
+    "Buka spreadsheet": "Open the spreadsheet",
+    "Buka di Google Sheets": "Open in Google Sheets",
+    "Lupakan perangkat ini": "Forget this device",
+    "Ekspor semua (.xlsx)": "Export everything (.xlsx)",
+    "Impor dari Excel": "Import from Excel",
+    "Kirim data lokal ke Google Sheets": "Push local data to Google Sheets",
+    "Catat ke Buku Kas bulan ini": "Record into this month's cash book",
+    "Bulan berikutnya": "Next month",
+    "Bulan sebelumnya": "Previous month",
+    "Hari ini & terlambat": "Today & overdue",
+    "Semua bidang": "All fields",
+    "Semua sumber": "All sources",
+    "Semua kategori": "All categories",
+    "Semua jenis": "All types",
+    "Semua periode": "All periods",
+    "semua periode": "all periods",
+    "Cari keterangan, kategori, nominal…": "Search description, category, amount…",
+    "Cari klien, kode, kampus…": "Search client, code, campus…",
+    "Cari nama file…": "Search file name…",
+    "Tambah tugas cepat lalu tekan Enter…": "Add a quick task, then press Enter…",
+    "Klik atau seret file ke sini": "Click or drag a file here",
+    "Judul": "Title",
+    "Mood": "Mood",
+    "Tag (pisahkan dengan koma)": "Tags (comma separated)",
+    "Jumlah (Rp)": "Amount (Rp)",
+    "Harga (Rp)": "Price (Rp)",
+    "Diskon (Rp)": "Discount (Rp)",
+    "Pengeluaran lain (Rp)": "Other expenses (Rp)",
+    "Pengeluaran lain": "Other expenses",
+    "NIM / NPM (untuk kontrak)": "Student ID (for the contract)",
+    "Catatan (judul, dosen pembimbing, dll.)": "Notes (title, supervisor, etc.)",
+    "Tingkat kesulitan (0–100) untuk hitung harga": "Difficulty (0–100) used to price the work",
+    "Otomatis dari estimasi hari kerja; boleh diubah.": "Set automatically from the estimated working days; you can change it.",
+    "Untuk kirim invoice & kwitansi via Gmail": "Used to email invoices and receipts via Gmail",
+    "Tanggal diberikan": "Assigned on",
+    "Mapel": "Subject",
+    "Kelas": "Class",
+    "Task Link (tautan atau keterangan)": "Task link (URL or note)",
+    "(kolom Sisa Hari tetap dihitung rumus Excel).": "(the Days Left column is still computed by the Excel formula).",
+    "Tambah tugas / ujian": "Add an assignment / exam",
+    "Tambah jobdesc / kepanitiaan": "Add a duty / committee role",
+    "Posisi jabatan": "Position held",
+    "Bidang ilmu terkait": "Related field of study",
+    "Jangka waktu kerja": "Working span",
+    "Progres (%)": "Progress (%)",
+    "Keterangan / uraian tugas": "Notes / duty description",
+    "Bobot, setara JP, prediksi ketercapaian, dan tingkat risiko dihitung oleh rumus di sheet": "Weight, equivalent periods, attainment forecast, and risk level are computed by formulas in the sheet",
+    "Belum ada pinjaman": "No loans yet",
+    "Belum ada pembayaran.": "No payments yet.",
+    "Belum ada pembayaran project.": "No project payments yet.",
+    "Belum ada kelas": "No classes yet",
+    "Belum ada jurnal.": "No journal entries yet.",
+    "Belum ada habit": "No habits yet",
+    "Belum ada catatan": "No records yet",
+    "Belum ada catatan pertemuan.": "No meeting records yet.",
+    "Belum ada catatan pertemuan bulan ini.": "No meeting records this month.",
+    "Belum ada catatan kehadiran": "No attendance records yet",
+    "Belum ada project pada filter ini.": "No projects match this filter.",
+    "Tidak ada tugas pada filter ini.": "No tasks match this filter.",
+    "Belum ada pengeluaran bulan ini": "No expenses this month",
+    "Belum ada pemasukan": "No income yet",
+    "Tidak ada cicilan": "No instalments",
+    "Semua pinjaman lunas.": "All loans are paid off.",
+    "Semua project sudah lunas.": "Every project is fully paid.",
+    "Tidak ada piutang": "No receivables",
+    "Semua lunas": "All settled",
+    "Belum dibayar": "Unpaid",
+    "Belum": "Not yet",
+    "belum": "not yet",
+    "belum dibuat": "not created",
+    "belum dipasang": "not installed",
+    "Catat pinjaman, paylater, KPR, atau leasing untuk jadwal cicilan & pengingat otomatis.": "Record a loan, paylater, mortgage, or lease to get an instalment schedule and automatic reminders.",
+    "Buat kelas bimbel/les; sesi dan prediksi tanggal selesai dibuat otomatis.": "Create a tutoring class; sessions and the estimated finish date are generated automatically.",
+    "Tambahkan kebiasaan harian lalu centang setiap hari untuk membangun streak.": "Add a daily habit, then tick it each day to build a streak.",
+    "Catat kehadiran tiap pertemuan untuk melihat ketercapaian TP.": "Log attendance for each meeting to see objective attainment.",
+    "Catat kehadiran tiap pertemuan untuk melihat ketercapaian TP per kelas.": "Log attendance for each meeting to see objective attainment per class.",
+    "Ketercapaian dihitung dari jumlah siswa yang tuntas dibanding siswa yang hadir.": "Attainment is the number of students who passed against the number present.",
+    "Indikator dihitung dari logbook, tugas, dan progres TP.": "The indicators are computed from the logbook, assignments, and objective progress.",
+    "Gaji dari modul Sekolah, fee dari Project, dan honor Tutor masuk otomatis ke sini.": "Salary from School, fees from Projects, and tutoring income flow in here automatically.",
+    "Setiap entri di sini otomatis masuk ke Buku Kas di Personal Finance dengan sumber \"Sekolah\".": "Every entry here flows into the Personal Finance cash book under the source \"School\".",
+    "Seret kartu antar kolom untuk mengubah status. Perubahan ikut memperbarui event Google Calendar.": "Drag cards between columns to change status. Changes also update the Google Calendar event.",
+    "Pricelist tersimpan di sheet \"Pricelist\" (data dasar). Paket tidak dihapus — nonaktifkan bila tidak dipakai.": "The pricelist lives in the \"Pricelist\" sheet (master data). Packages are never deleted — deactivate the ones you do not use.",
+    "Tampilan hanya-baca. Semua rumus, format, dan grafik tetap hidup di spreadsheet.": "Read-only view. Every formula, format, and chart stays live in the spreadsheet.",
+    "Klik tanggal untuk melihat & menambah kegiatan hari itu. Daftar kegiatan ada di tab": "Click a date to view and add activities for that day. The activity list lives in the tab",
+    "Kehadiran per kelas": "Attendance per class",
+    "Kehadiran siswa": "Student attendance",
+    "Progres TP": "Objective progress",
+    "Progres tujuan pembelajaran (TP)": "Learning objective progress",
+    "Skor refleksi per pertemuan": "Reflection score per meeting",
+    "Tugas tuntas": "Assignments completed",
+    "Mood 30 hari": "Mood over 30 days",
+    "Streak terpanjang saat ini": "Longest current streak",
+    "Sesi bulan ini": "Sessions this month",
+    "Piutang per project": "Receivables per project",
+    "Sisa honor sesi bimbel": "Outstanding tutoring fees",
+    "sesi belum dibayar s.d. akhir bulan": "unpaid sessions through the end of the month",
+    "termasuk yang terlambat": "including overdue ones",
+    "tanpa pinjaman": "excluding loans",
+    "maks(pemasukan bulan ini, pemasukan rutin)": "max(income this month, recurring income)",
+    "Total pemasukan sekolah (semua)": "Total school income (all time)",
+    "Pengaturan": "Settings",
+    "Alamat (untuk kontrak & invoice)": "Address (for contracts & invoices)",
+    "Catatan kaki invoice/kwitansi": "Invoice / receipt footer",
+    "Menit per JP": "Minutes per period",
+    "Target JP per minggu": "Target periods per week",
+    "Kapasitas tugas tambahan (JP / minggu)": "Extra-duty capacity (periods / week)",
+    "Faktor perhitungan beban": "Workload calculation factors",
+    "Atur faktor beban kerja": "Tune the workload factors",
+    "Lihat cara hitungnya": "See how it is calculated",
+    "Pengali jabatan, risiko, kepadatan jangka waktu, dan fase kerja semuanya bisa diubah sendiri.": "Position, risk, span-density, and work-phase multipliers can all be changed yourself.",
+    "Dipakai untuk event berulang jadwal mengajar.": "Used for recurring teaching-timetable events.",
+    "Sumber nilai untuk modul Nilai & Score List.": "The score source for the Scores & Score List module.",
+    "Sinkron otomatis ke Google Calendar": "Sync automatically to Google Calendar",
+    "Undang klien bimbel ke event sesi": "Invite tutoring clients to session events",
+    "Kirim kwitansi otomatis saat pembayaran dicatat": "Send a receipt automatically when a payment is recorded",
+    "Selalu kirim bila email klien ada": "Always send when the client has an email address",
+    "Ringkasan harian ke Gmail": "Daily digest to Gmail",
+    "Salinan spreadsheet ke folder": "Spreadsheet copy into the folder",
+    "Lokal di browser ini (untuk mencoba)": "Local to this browser (for trying it out)",
+    "Terhubung ke Google Sheets.": "Connected to Google Sheets.",
+    "Isi contoh singkat untuk melihat cara kerja tiap modul.": "A short sample fill so you can see how each module works.",
+    "Semua tabel dalam satu file Excel (cadangan lengkap).": "Every table in one Excel file (a complete backup).",
+    "Mengirim data yang tersimpan di browser (mode lokal) ke Google Sheets. Baris dengan ID yang sama dilewati.": "Pushes data stored in this browser (local mode) to Google Sheets. Rows with a matching ID are skipped.",
+    "Dari file cadangan aplikasi ini atau Excel lama Anda (Task Management, Appointment, Schedule, PROJECT, dll).": "From a backup of this app or your older Excel files (Task Management, Appointment, Schedule, PROJECT, and so on).",
+    "Setiap tambah/ubah/hapus tercatat di sheet": "Every add, edit, and delete is logged in the sheet",
+    "dan bisa diurungkan (90 hari).": "and can be undone (90 days).",
+    "dengan pengingat H-3, H-1, dan 1 jam (cicilan: H-5, H-3, H-1).": "with reminders at D-3, D-1, and one hour before (instalments: D-5, D-3, D-1).",
+    "tidak diubah dan tidak dihapus": "is neither changed nor deleted",
+    "(atau file cadangan). Semua sheet dimasukkan sekaligus; data yang sudah ada": "(or a backup file). Every sheet is imported at once; data already present",
+    "; 8 salinan terakhir disimpan, sisanya ke Sampah. Trigger mingguan:": "; the 8 most recent copies are kept, the rest go to the Bin. Weekly trigger:",
+    "Dari Deploy > Manage deployments. Harus berakhiran": "From Deploy > Manage deployments. It must end with",
+    "Tidak": "No"
   },
   init() {
     const saved = Keep.get(this.KEY);
@@ -6167,9 +6467,18 @@ const I18N = {
     const jobs = [];
     while (walker.nextNode()) {
       const n = walker.currentNode;
+      // Teks <option> yang TIDAK punya atribut value sekaligus menjadi nilainya,
+      // jadi menerjemahkannya akan menulis kata Inggris ke dalam sheet
+      // (mis. status "Selesai" berubah menjadi "Done"). Opsi seperti itu dilewati;
+      // opsi dengan value sendiri aman diterjemahkan. Isi textarea juga dilewati
+      // karena itu tulisan penggunanya.
+      const pe = n.parentElement;
+      if (!pe || pe.closest('textarea, [data-noi18n]')) continue;
+      const opt = pe.closest('option');
+      if (opt && !opt.hasAttribute('value')) continue;
       const raw = n.nodeValue;
       const k = raw.trim();
-      if (!k || k.length > 90) continue;
+      if (!k || k.length > 300) continue;
       const v = this.dict[k];
       if (v) jobs.push([n, raw.replace(k, v)]);
     }
@@ -6184,6 +6493,40 @@ const I18N = {
 };
 
 /* -------------- 30.2 ANTREAN SINKRONISASI ANTI-GAGAL ---------------- */
+/** Batas server: 500 operasi per permintaan. Semua pengiriman dipecah di sini
+ *  supaya satu tindakan besar (impor Excel, tarik daftar nilai, tambah banyak
+ *  siswa) tidak pernah ditolak utuh dan hilang diam-diam. */
+const OPS_PER_REQUEST = 400;
+function chunkOps(ops) {
+  const out = [];
+  for (let i = 0; i < ops.length; i += OPS_PER_REQUEST) out.push(ops.slice(i, i + OPS_PER_REQUEST));
+  return out;
+}
+/** Kirim seluruh operasi bertahap. Bila satu bagian gagal, error membawa
+ *  `done` (jumlah yang sudah tersimpan) dan `rest` (yang belum) agar sisanya
+ *  bisa diantrekan, bukan dibuang. */
+async function sendOps(payload, onProgress) {
+  const parts = chunkOps(payload);
+  const merged = { ok: true, results: [], patches: [], warnings: [] };
+  let done = 0;
+  for (let i = 0; i < parts.length; i++) {
+    let j;
+    try {
+      j = await Api.call('batch', { ops: parts[i] });
+    } catch (e) {
+      e.done = done;
+      e.rest = payload.slice(done);
+      throw e;
+    }
+    (j.results || []).forEach((x) => merged.results.push(x));
+    (j.patches || []).forEach((x) => merged.patches.push(x));
+    (j.warnings || []).forEach((x) => merged.warnings.push(x));
+    done += parts[i].length;
+    if (parts.length > 1 && onProgress) onProgress(done, payload.length);
+  }
+  return merged;
+}
+
 const SyncQueue = {
   KEY: 'mph_queue',
   items: [],
@@ -6192,7 +6535,7 @@ const SyncQueue = {
   load() { try { this.items = JSON.parse(Keep.get(this.KEY) || '[]'); } catch (e) { this.items = []; } return this.items; },
   save() { try { Keep.set(this.KEY, JSON.stringify(this.items.slice(0, 200))); } catch (e) { } },
   add(ops) {
-    this.items.push({ at: Date.now(), ops });
+    chunkOps(ops).forEach((part) => this.items.push({ at: Date.now(), ops: part }));
     this.save();
     UI.syncChip();
     this.schedule(3000);
@@ -6209,7 +6552,7 @@ const SyncQueue = {
     try {
       while (this.items.length) {
         const job = this.items[0];
-        await Api.call('batch', { ops: job.ops });   // create bersifat idempoten di server
+        await sendOps(job.ops);   // create bersifat idempoten di server, aman dikirim ulang
         this.items.shift();
         this.save();
         delivered++;
@@ -8418,11 +8761,14 @@ const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
 /* ------------------------------ (A) NOTE ---------------------------- */
 
-const NOTE_COLORS = ['none', 'amber', 'jade', 'sky', 'violet', 'rose', 'coral', 'slate'];
+/* Warna catatan mengikuti palet tiga tone: netral + indigo + teal + emas. */
+const NOTE_COLORS = ['none', 't1', 't2', 't3'];
 const NOTE_COLOR_LABEL = {
-  none: ['Putih', 'White'], amber: ['Kuning', 'Amber'], jade: ['Hijau', 'Green'], sky: ['Biru langit', 'Sky'],
-  violet: ['Ungu', 'Violet'], rose: ['Merah muda', 'Rose'], coral: ['Merah', 'Coral'], slate: ['Kelabu', 'Slate']
+  none: ['Putih', 'White'], t1: ['Indigo', 'Indigo'], t2: ['Teal', 'Teal'], t3: ['Emas', 'Gold']
 };
+/* catatan lama yang warnanya dari palet versi sebelumnya tetap tampil rapi */
+const NOTE_COLOR_MAP = { amber: 't3', rose: 't3', jade: 't2', sky: 't2', violet: 't1', brand: 't1', coral: 't3', slate: 'none' };
+const noteColor = (c) => { const k = String(c || 'none'); return NOTE_COLORS.includes(k) ? k : (NOTE_COLOR_MAP[k] || 'none'); };
 /* Tujuan alir kerja: catatan bisa "dikeluarkan" menjadi baris kerja nyata. */
 const NOTE_FLOW = [
   ['tugas', 'Tugas & Ujian', 'Teaching task'],
@@ -8471,7 +8817,7 @@ const Notes = {
     const startList = r ? this.isList(r) : !!(preset && preset.items);
     let items = this.items(init);
     let mode = startList ? 'list' : 'text';
-    let color = init.color || 'none';
+    let color = noteColor(init.color);
     const self = this;
 
     const rowHTML = (it, i) => `<div class="nk-item" data-i="${i}">
@@ -8735,7 +9081,7 @@ const Notes = {
     const labels = String(n.label || '').split(',').map((x) => x.trim()).filter(Boolean);
     const live = place === 'board';
     const flowLbl = n.refKind ? (NOTE_FLOW.find((f) => f[0] === n.refKind) || [, n.refKind, n.refKind]) : null;
-    return `<article class="nk-card nk-c-${n.color || 'none'} ${this.pinned(n) ? 'pin' : ''}">
+    return `<article class="nk-card nk-c-${noteColor(n.color)} ${this.pinned(n) ? 'pin' : ''}">
       <header>
         <h4>${n.title ? esc(n.title) : `<span class="muted">${I18N.p('Tanpa judul', 'Untitled')}</span>`}</h4>
         ${live ? `<button class="nk-ic ${this.pinned(n) ? 'on' : ''}" data-act="nkPin" data-id="${n.id}" title="${I18N.p('Sematkan', 'Pin')}" aria-label="${I18N.p('Sematkan', 'Pin')}">${ic('flame')}</button>` : ''}
@@ -9033,12 +9379,405 @@ const JobLoad = {
 };
 ACT.jlExplain = () => JobLoad.explain();
 
-/* Ringkasan beban juga tampil di tab Sekolah → Jobdesc, tempat datanya dikelola. */
+/* =====================================================================
+ * v8 — (A) Assignment & Task: satu rekap untuk tugas guru + tugas siswa,
+ *          lengkap dengan jejak pengumpulan dan rekap per siswa
+ *      (B) Beban JP terpadu: JP mengajar + JP jobdesc = total JP,
+ *          seluruh faktor hitungnya bisa diatur sendiri
+ * =================================================================== */
+
+/* ------------------- (B) FAKTOR BEBAN YANG BISA DIATUR -------------- */
+/* Setiap angka boleh diubah dari Pengaturan → Beban kerja. Nilai bawaan
+   dikalibrasi dari sheet Jobdesc yang ada sekarang. */
+const LOAD_FACTORS = [
+  ['jpTarget', 30, 'Kapasitas JP mengajar / minggu', 'Teaching capacity (periods/week)', 'Beban mengajar yang dianggap penuh.', 'The teaching load considered full.'],
+  ['jobCap', 24, 'Kapasitas JP tugas tambahan / minggu', 'Extra-duty capacity (periods/week)', 'Beban jobdesc tambahan yang dianggap penuh.', 'The extra-duty load considered full.'],
+  ['loadJpCap', 10, 'Batas setara JP per jobdesc', 'Per-duty periods cap', 'Satu amanah tidak boleh menyumbang lebih dari ini.', 'A single duty may not contribute more than this.'],
+  ['loadLead', 1.35, 'Pengali jabatan: ketua / koordinator / pembina', 'Multiplier: chair / coordinator / supervisor', '', ''],
+  ['loadDeputy', 1.2, 'Pengali jabatan: wakil / sekretaris / bendahara', 'Multiplier: deputy / secretary / treasurer', '', ''],
+  ['loadMember', 1, 'Pengali jabatan: anggota', 'Multiplier: member', '', ''],
+  ['loadRiskHigh', 1.2, 'Pengali risiko tinggi', 'Multiplier: high risk', '', ''],
+  ['loadRiskMed', 1.1, 'Pengali risiko sedang', 'Multiplier: medium risk', '', ''],
+  ['loadSpanShort', 1, 'Kepadatan: beberapa bulan / mingguan', 'Density: a few months / weekly', 'Amanah yang menumpuk sekarang.', 'Duties that pile up right now.'],
+  ['loadSpanSem', 0.75, 'Kepadatan: satu semester', 'Density: one semester', '', ''],
+  ['loadSpanYear', 0.5, 'Kepadatan: satu tahun', 'Density: one year', 'Amanah tahunan tersebar, tekanannya per minggu lebih ringan.', 'Annual duties are spread out, so weekly pressure is lighter.'],
+  ['loadPhaseIdle', 0.45, 'Fase: belum berjalan', 'Phase: not started', '', ''],
+  ['loadPhaseLate', 0.7, 'Fase: lewat tenggat', 'Phase: overdue', '', ''],
+  ['loadLateBump', 1.5, 'Tambahan beban bila lewat tenggat (JP)', 'Overdue stress bump (periods)', '', ''],
+  ['loadMinRemain', 15, 'Sisa pekerjaan minimum (%)', 'Minimum work-left (%)', 'Amanah yang hampir tuntas tetap menyisakan ongkos.', 'A nearly finished duty still carries overhead.']
+];
+const LOAD_DEFAULT = {};
+LOAD_FACTORS.forEach(([k, v]) => { LOAD_DEFAULT[k] = v; });
+
+/** Baca satu faktor beban: dari Pengaturan bila diisi, selain itu nilai bawaan. */
+function lf(key) {
+  const raw = Store.settings()[key];
+  const n = Number(String(raw == null ? '' : raw).replace(',', '.'));
+  return raw === '' || raw == null || !isFinite(n) ? LOAD_DEFAULT[key] : n;
+}
+
+/* --------------- (B) BEBAN TERPADU: MENGAJAR + JOBDESC -------------- */
+const Workload = {
+  teachingJP() { return round2(School.jpPerWeek(Number(Store.settings().jpMinutes) || 40)); },
+  dutyJP() { return JobLoad.calc().total; },
+
+  /** JP mengajar + JP jobdesc = total, beserta kapasitas dan levelnya. */
+  calc() {
+    const teach = this.teachingJP();
+    const jl = JobLoad.calc();
+    const duty = jl.total;
+    const total = round2(teach + duty);
+    const capTeach = Math.max(1, lf('jpTarget'));
+    const capDuty = Math.max(1, lf('jobCap'));
+    const capAll = round2(capTeach + capDuty);
+    const pct = Math.round(total / capAll * 100);
+    const lv = JOB_LEVELS.find((l) => pct <= l.max) || JOB_LEVELS[JOB_LEVELS.length - 1];
+    return {
+      teach, duty, total, capTeach, capDuty, capAll, pct, lv, jl,
+      teachPct: Math.round(teach / capTeach * 100),
+      dutyPct: jl.pct,
+      share: total ? Math.round(duty / total * 100) : 0
+    };
+  },
+
+  /** Baris ringkas "25 JP mengajar + 32,1 JP jobdesc = 57,1 JP". */
+  equation(w) {
+    w = w || this.calc();
+    return `<div class="wl-eq">
+      <span class="wl-term teach"><b>${w.teach}</b><small>${I18N.p('JP mengajar', 'teaching')}</small></span>
+      <span class="wl-op">+</span>
+      <span class="wl-term duty"><b>${w.duty}</b><small>${I18N.p('JP jobdesc', 'extra duties')}</small></span>
+      <span class="wl-op">=</span>
+      <span class="wl-term all"><b>${w.total}</b><small>${I18N.p('JP total / minggu', 'total periods / week')}</small></span>
+    </div>`;
+  },
+
+  /** Kartu beban terpadu untuk Dashboard dan tab Jobdesc. */
+  panel() {
+    const w = this.calc();
+    return `<div class="wl-wrap">
+      ${JobLoad.gauge(w.pct, w.lv)}
+      <div class="wl-main">
+        <div class="jl-head">${JobLoad.levelBadge(w.lv)}<span class="muted mini">${I18N.p(`terhadap kapasitas ${w.capAll} JP / minggu`, `against a ${w.capAll} periods/week capacity`)}</span></div>
+        ${this.equation(w)}
+        <div class="wl-split">
+          <div><span>${I18N.p('Mengajar', 'Teaching')}</span><div class="progress" style="--mc:var(--sky)"><i style="width:${clamp(w.teach / Math.max(1, w.total) * 100, 2, 100)}%"></i></div><b>${w.teach} JP</b><small>${I18N.p(`kapasitas ${w.capTeach}`, `capacity ${w.capTeach}`)} · ${w.teachPct}%</small></div>
+          <div><span>${I18N.p('Jobdesc tambahan', 'Extra duties')}</span><div class="progress" style="--mc:var(--violet)"><i style="width:${clamp(w.duty / Math.max(1, w.total) * 100, 2, 100)}%"></i></div><b>${w.duty} JP</b><small>${I18N.p(`kapasitas ${w.capDuty}`, `capacity ${w.capDuty}`)} · ${w.dutyPct}%</small></div>
+        </div>
+        <p class="mini muted jl-note">${esc(I18N.p(w.lv.note[0], w.lv.note[1]))} ${I18N.p(`Tugas tambahan menyumbang ${w.share}% dari total beban.`, `Extra duties make up ${w.share}% of the total load.`)}</p>
+      </div>
+    </div>
+    <div class="jl-stats wl-stats">
+      <div><small>${I18N.p('Jobdesc aktif', 'Active duties')}</small><b>${w.jl.active.length}</b></div>
+      <div><small>${I18N.p('Lewat tenggat', 'Overdue')}</small><b class="${w.jl.late ? 'neg' : 'pos'}">${w.jl.late}</b></div>
+      <div><small>${I18N.p('Risiko tinggi', 'High risk')}</small><b class="${w.jl.risky ? 'warn' : 'pos'}">${w.jl.risky}</b></div>
+      <div><small>${I18N.p('Rata-rata progres', 'Average progress')}</small><b>${w.jl.avgProg}%</b></div>
+    </div>
+    <div class="bars jl-bars">${w.jl.rows.filter((r) => !r.finished).slice(0, 5).map((r) => `<div class="bar-row" style="grid-template-columns:1fr 90px auto">
+        <span>${esc(r.j.activity)}<div class="s muted mini">${esc(r.j.field || '')}${r.j.position ? ' — ' + esc(r.j.position) : ''}</div></span>
+        <div class="progress" style="--mc:var(--${r.late ? 'coral' : 'violet'})"><i style="width:${clamp(r.total / Math.max(1, w.duty) * 100, 3, 100)}%"></i></div>
+        <span class="mini nowrap"><b>${r.total}</b> JP${r.late ? ` · <span class="neg">${I18N.p('telat', 'late')}</span>` : ''}</span></div>`).join('')}</div>
+    <div class="btn-row mt">
+      <button class="btn sm" data-act="open" data-mod="school" data-sub="jobdesc">${ic('school')}${I18N.p('Buka Jobdesc', 'Open Jobdesc')}</button>
+      <button class="btn sm ghost" data-act="jlExplain">${ic('alert')}${I18N.p('Cara hitungnya', 'How it is calculated')}</button>
+      <button class="btn sm ghost" data-act="wlTune">${ic('settings')}${I18N.p('Atur faktor beban', 'Tune the factors')}</button>
+    </div>`;
+  },
+
+  /** Semua faktor hitung bisa diubah sendiri, lengkap dengan tombol kembalikan. */
+  tune() {
+    UI.form({
+      title: I18N.p('Atur faktor beban kerja', 'Tune the workload factors'), size: 'wide',
+      note: I18N.p('Angka bawaan dikalibrasi dari sheet Jobdesc yang ada. Ubah bila beban terasa terlalu keras atau terlalu longgar — levelnya ikut bergerak seketika.',
+        'The defaults are calibrated from the current Jobdesc sheet. Change them if the load feels too harsh or too lenient — the level moves with them.'),
+      values: LOAD_FACTORS.reduce((o, [k]) => { o[k] = lf(k); return o; }, {}),
+      fields: [{ t: 'section', l: I18N.p('Kapasitas', 'Capacity') }]
+        .concat(LOAD_FACTORS.slice(0, 3).map(([k, d, idl, en, ih, eh]) => ({ k, l: I18N.p(idl, en), t: 'number', hint: I18N.p(ih, eh) || I18N.p(`bawaan ${d}`, `default ${d}`) })))
+        .concat([{ t: 'section', l: I18N.p('Pengali jabatan & risiko', 'Position & risk multipliers') }])
+        .concat(LOAD_FACTORS.slice(3, 8).map(([k, d, idl, en]) => ({ k, l: I18N.p(idl, en), t: 'number', step: '0.05', hint: I18N.p(`bawaan ${d}`, `default ${d}`) })))
+        .concat([{ t: 'section', l: I18N.p('Kepadatan jangka waktu & fase kerja', 'Span density & work phase') }])
+        .concat(LOAD_FACTORS.slice(8).map(([k, d, idl, en, ih, eh]) => ({ k, l: I18N.p(idl, en), t: 'number', step: '0.05', hint: I18N.p(ih, eh) || I18N.p(`bawaan ${d}`, `default ${d}`) }))),
+      extraFoot: `<button class="btn left" data-act="wlReset">${ic('refresh')}${I18N.p('Kembalikan ke bawaan', 'Restore defaults')}</button>`,
+      submit: I18N.p('Simpan faktor', 'Save factors'),
+      onSubmit: async (v) => {
+        const out = {};
+        LOAD_FACTORS.forEach(([k]) => { out[k] = String(v[k] === '' || v[k] == null ? LOAD_DEFAULT[k] : v[k]); });
+        await Store.saveSettings(out);
+        UI.toast(I18N.p('Faktor beban tersimpan', 'Workload factors saved'), 'ok');
+        App.refresh();
+      }
+    });
+  },
+  async reset() {
+    const out = {};
+    LOAD_FACTORS.forEach(([k]) => { out[k] = String(LOAD_DEFAULT[k]); });
+    await Store.saveSettings(out);
+    UI.closeAll();
+    UI.toast(I18N.p('Faktor beban dikembalikan ke bawaan', 'Workload factors restored to defaults'), 'ok');
+    App.refresh();
+  }
+};
+ACT.wlTune = () => Workload.tune();
+ACT.wlReset = () => Workload.reset();
+
+/* Perhitungan jobdesc kini membaca faktor yang bisa diatur. */
+JobLoad.cap = function () { return Math.max(2, lf('jobCap')); };
+JobLoad.posWeight = function (p) {
+  const s = String(p || '').toLowerCase();
+  if (/ketua|koordinator|kepala|penanggung|ka\.|pj\b|manager|manajer|pembina/.test(s)) return lf('loadLead');
+  if (/wakil|sekretaris|bendahara|wakoor|sekben/.test(s)) return lf('loadDeputy');
+  return lf('loadMember');
+};
+JobLoad.riskWeight = function (r) {
+  const s = String(r || '').toLowerCase();
+  if (/tinggi|high/.test(s)) return lf('loadRiskHigh');
+  if (/sedang|medium/.test(s)) return lf('loadRiskMed');
+  return 1;
+};
+JobLoad.spanWeight = function (period) {
+  const s = String(period || '').toLowerCase();
+  if (!s) return round2((lf('loadSpanShort') + lf('loadSpanSem')) / 2);
+  if (/harian|mingguan|per minggu|weekly|daily/.test(s)) return lf('loadSpanShort');
+  if (/beberapa bulan|bulanan|per bulan|monthly|triwulan|kegiatan|event|insidental/.test(s)) return lf('loadSpanShort');
+  if (/semester|6 bulan|enam bulan/.test(s)) return lf('loadSpanSem');
+  if (/tahun|annual|yearly/.test(s)) return lf('loadSpanYear');
+  return round2((lf('loadSpanShort') + lf('loadSpanSem')) / 2);
+};
+JobLoad.one = function (j) {
+  const t = todayISO();
+  const st = String(j.status || '');
+  const prog = clamp(Number(j.progress) || 0, 0, 100);
+  const finished = /sudah selesai|^selesai|done|tuntas/i.test(st) || prog >= 100;
+  const notStarted = /belum (ber)?jalan|belum mulai|not started|rencana/i.test(st);
+  const jpCap = Math.max(1, lf('loadJpCap'));
+  let base = Math.min(jpCap, Number(j.jp) || 0);
+  if (!base) base = Math.min(jpCap, Math.max(1, (Number(j.weight) || 1) * 2));
+  const pos = this.posWeight(j.position);
+  const risk = this.riskWeight(j.risk);
+  const span = this.spanWeight(j.period);
+  const remain = Math.max(clamp(lf('loadMinRemain'), 0, 100) / 100, (100 - prog) / 100);
+  let phase = 1, phaseLbl = ['berjalan', 'running'];
+  const late = !!(j.endDate && j.endDate < t && !finished);
+  if (notStarted || (j.startDate && j.startDate > t)) { phase = lf('loadPhaseIdle'); phaseLbl = ['belum berjalan', 'not started']; }
+  else if (late) { phase = lf('loadPhaseLate'); phaseLbl = ['lewat tenggat', 'overdue']; }
+  const load = finished ? 0 : base * pos * risk * span * remain * phase;
+  const penalty = late ? lf('loadLateBump') : 0;
+  return {
+    j, base, pos, risk, span, spanLbl: this.spanLabel(j.period), remain, phase, phaseLbl, late, finished, notStarted,
+    prog, load: round2(load), penalty, total: round2(load + penalty)
+  };
+};
+JobLoad.spanLabel = function (period) {
+  const w = this.spanWeight(period);
+  const sem = lf('loadSpanSem'), yr = lf('loadSpanYear');
+  if (w <= yr) return ['tersebar 1 tahun', 'spread over a year'];
+  if (w <= sem) return ['tersebar 1 semester', 'spread over a semester'];
+  if (w >= lf('loadSpanShort')) return ['padat', 'concentrated'];
+  return ['sedang', 'moderate'];
+};
+/* Kartu beban memakai tampilan terpadu (mengajar + jobdesc). */
+JobLoad.panel = function () {
+  const c = this.calc();
+  if (!c.rows.length) {
+    return UI.empty(I18N.p('Belum ada jobdesc tambahan', 'No additional duties yet'),
+      I18N.p('Isi sheet Jobdesc atau tambahkan dari modul Sekolah agar beban tugas tambahan ikut terhitung di sini.', 'Fill the Jobdesc sheet or add one from the School module so the extra workload is counted here.'),
+      `<button class="btn sm" data-act="jobAdd">${ic('plus')}Jobdesc</button>`);
+  }
+  return Workload.panel();
+};
+
+/* ---------- (A) REKAP TERPADU: TUGAS GURU + TUGAS SISWA ------------- */
+const TaskRecap = {
+  TEACHER_DONE: ['Selesai', 'Dinilai'],
+
+  /** Statistik pengumpulan satu tugas siswa. */
+  stat(t) {
+    const subs = Store.where('_Pengumpulan', (s) => s.taskId === t.id);
+    const graded = subs.filter((s) => s.score !== '' && s.score != null && !isNaN(Number(s.score)));
+    const roster = Store.where('_Siswa', (s) => s.className === t.className).length;
+    const expect = Math.max(roster, subs.length);
+    const avg = graded.length ? Math.round(sum(graded, (s) => Number(s.score)) / graded.length * 10) / 10 : null;
+    return { subs, graded: graded.length, total: subs.length, expect, avg, missing: Math.max(0, expect - subs.length) };
+  },
+
+  /** Semua baris rekap: tugas guru (Assignments) + tugas siswa (_Tugas). */
+  rows() {
+    const out = [];
+    Store.all('Assignments').forEach((a) => {
+      if (!a.title) return;
+      out.push({
+        kind: 'guru', id: a.id, raw: a, title: a.title, type: a.type || 'Tugas', subject: a.subject || '',
+        className: a.className || '', given: a.given || '', due: a.deadline || '', status: a.status || '',
+        done: this.TEACHER_DONE.includes(a.status), link: a.link || '', st: null
+      });
+    });
+    Store.all('_Tugas').forEach((t) => {
+      if (!t.title) return;
+      const st = this.stat(t);
+      out.push({
+        kind: 'siswa', id: t.id, raw: t, title: t.title, type: t.type || 'Tugas', subject: t.subject || '',
+        className: t.className || '', given: t.assignDate || '', due: t.dueDate || '', status: t.status || '',
+        done: String(t.status) === 'Tutup', link: t.link || '', st,
+        bookId: t.bookId || '', component: t.component || '', tpCode: t.tpCode || ''
+      });
+    });
+    return out.sort((a, b) => String(a.due || '9999').localeCompare(String(b.due || '9999')));
+  },
+
+  /** Rekap per siswa di seluruh tugas siswa — supaya tiap anak tercatat. */
+  perStudent(cls) {
+    const tasks = Store.all('_Tugas').filter((t) => t.title && (!cls || t.className === cls));
+    const byId = {}; tasks.forEach((t) => { byId[t.id] = t; });
+    const ids = Object.keys(byId);
+    const map = {};
+    const touch = (name, className) => {
+      const k = String(name || '').trim().toLowerCase();
+      if (!k) return null;
+      if (!map[k]) map[k] = { name: String(name).trim(), className: className || '', assigned: 0, submitted: 0, graded: 0, scores: [], late: 0 };
+      if (className && !map[k].className) map[k].className = className;
+      return map[k];
+    };
+    // daftar siswa resmi lebih dulu agar yang belum mengumpulkan tetap muncul
+    Store.all('_Siswa').forEach((s) => { if (!cls || s.className === cls) touch(s.name, s.className); });
+    Store.all('_Pengumpulan').forEach((p) => {
+      if (!ids.includes(p.taskId)) return;
+      const r = touch(p.studentName, p.className || byId[p.taskId].className);
+      if (!r) return;
+      r.submitted++;
+      const due = byId[p.taskId].dueDate;
+      if (due && p.submittedAt && String(p.submittedAt).slice(0, 10) > due) r.late++;
+      if (p.score !== '' && p.score != null && !isNaN(Number(p.score))) { r.graded++; r.scores.push(Number(p.score)); }
+    });
+    Object.values(map).forEach((r) => {
+      r.assigned = tasks.filter((t) => !r.className || t.className === r.className).length;
+      r.avg = r.scores.length ? Math.round(sum(r.scores, (x) => x) / r.scores.length * 10) / 10 : null;
+      r.rate = r.assigned ? Math.round(r.submitted / r.assigned * 100) : 0;
+    });
+    return Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
+  },
+
+  statusBadge(r) {
+    if (r.kind === 'guru') {
+      const map = { Diberikan: 'sky', Dikumpulkan: 'amber', Dinilai: 'violet', Selesai: 'jade' };
+      return UI.badge(r.status || '—', map[r.status] || 'slate');
+    }
+    if (r.done) return UI.badge(I18N.p('Tutup', 'Closed'), 'slate');
+    return UI.badge(I18N.p('Terbuka', 'Open'), 'jade');
+  }
+};
+
+VIEWS.school.tugas = {
+  actions: () => `<button class="btn" data-act="expSheet" data-sheet="Assignments">${ic('download')}${I18N.p('Ekspor', 'Export')}</button>
+    <button class="btn" data-act="taskNew">${ic('plus')}${I18N.p('Tugas siswa', 'Student task')}</button>
+    <button class="btn mod" data-act="asgAdd">${ic('plus')}${I18N.p('Tugas / ujian', 'Assignment / exam')}</button>`,
+  render() {
+    const s = App.s('school');
+    const f = s.asgStatus || 'aktif';
+    const src = s.asgSrc || 'semua';
+    const q = (s.asgQ || '').toLowerCase();
+    const t = todayISO();
+    const all = TaskRecap.rows();
+
+    let list = all.slice();
+    if (src !== 'semua') list = list.filter((r) => r.kind === src);
+    if (f === 'aktif') list = list.filter((r) => !r.done);
+    else if (f === 'lewat') list = list.filter((r) => !r.done && r.due && r.due < t);
+    else if (f === 'selesai') list = list.filter((r) => r.done);
+    else if (f === 'belumnilai') list = list.filter((r) => r.kind === 'siswa' && r.st && r.st.total > r.st.graded);
+    if (s.asgClass) list = list.filter((r) => r.className === s.asgClass);
+    if (q) list = list.filter((r) => `${r.title} ${r.subject} ${r.className} ${r.type}`.toLowerCase().includes(q));
+
+    const siswa = all.filter((r) => r.kind === 'siswa');
+    const subsAll = sum(siswa, (r) => r.st.total);
+    const gradedAll = sum(siswa, (r) => r.st.graded);
+    const missingAll = sum(siswa, (r) => r.st.missing);
+    const classes = [...new Set(all.map((r) => r.className).filter(Boolean))].sort();
+    const roster = TaskRecap.perStudent(s.asgClass || '');
+
+    return `
+      <div class="grid g4 mb">
+        <div class="stat accent"><small>${I18N.p('Tugas aktif', 'Open assignments')}</small><b>${all.filter((r) => !r.done).length}</b><span class="sub">${I18N.p(`${siswa.length} tugas siswa`, `${siswa.length} student tasks`)}</span></div>
+        <div class="stat"><small>${I18N.p('Lewat deadline', 'Past deadline')}</small><b class="neg">${all.filter((r) => !r.done && r.due && r.due < t).length}</b></div>
+        <div class="stat"><small>${I18N.p('Pengumpulan masuk', 'Submissions received')}</small><b>${subsAll}</b><span class="sub">${I18N.p(`${gradedAll} sudah dinilai`, `${gradedAll} graded`)}</span></div>
+        <div class="stat"><small>${I18N.p('Belum mengumpulkan', 'Not submitted')}</small><b class="${missingAll ? 'warn' : 'pos'}">${missingAll}</b></div>
+      </div>
+      <div class="toolbar">
+        <input class="input search" placeholder="${I18N.p('Cari judul, kelas, mapel…', 'Search title, class, subject…')}" data-chg="asgQ" data-live data-fk="asgQ" value="${esc(s.asgQ || '')}">
+        <select class="select" data-chg="asgSrc">${[['semua', I18N.p('Semua sumber', 'All sources')], ['guru', I18N.p('Tugas & ujian guru', 'Teacher assignments')], ['siswa', I18N.p('Tugas siswa (ada pengumpulan)', 'Student tasks (with submissions)')]].map(([k, l]) => `<option value="${k}" ${k === src ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
+        <select class="select" data-chg="asgStatus">${[['aktif', I18N.p('Aktif', 'Open')], ['lewat', I18N.p('Lewat deadline', 'Past deadline')], ['belumnilai', I18N.p('Belum dinilai', 'Awaiting grading')], ['selesai', I18N.p('Selesai', 'Done')], ['semua', I18N.p('Semua', 'All')]].map(([k, l]) => `<option value="${k}" ${k === f ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
+        <select class="select" data-chg="asgClass"><option value="">${I18N.p('Semua kelas', 'All classes')}</option>${classes.map((c) => `<option ${c === s.asgClass ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+      </div>
+      ${UI.table([
+      { h: I18N.p('Tugas / ujian', 'Assignment / exam'), f: (r) => `<div class="t">${esc(r.title)}</div><div class="s">${esc(r.type)}${r.subject ? ' — ' + esc(r.subject) : ''}${r.kind === 'siswa' ? ` ${UI.badge(I18N.p('tugas siswa', 'student task'), 'violet')}` : ''}</div>` },
+      { h: I18N.p('Kelas', 'Class'), f: (r) => esc(r.className || '—') },
+      { h: I18N.p('Diberikan', 'Assigned'), f: (r) => `<span class="nowrap">${r.given ? fmtDate(r.given) : '—'}</span>` },
+      { h: 'Deadline', f: (r) => `<span class="nowrap">${r.due ? fmtDate(r.due) : '—'}</span><div>${r.due ? UI.dueBadge(r.due, r.done ? I18N.p('Selesai', 'Done') : '') : ''}</div>` },
+      {
+        h: I18N.p('Pengumpulan', 'Submissions'), f: (r) => {
+          if (r.kind !== 'siswa') return '<span class="muted mini">—</span>';
+          const st = r.st;
+          return `<div style="min-width:132px">${UI.progress(st.expect ? st.total / st.expect * 100 : 0)}
+            <div class="s"><b>${st.total}</b>/${st.expect} ${I18N.p('masuk', 'in')} · <b>${st.graded}</b> ${I18N.p('dinilai', 'graded')}${st.avg != null ? ` · ${I18N.p('rata', 'avg')} <b>${st.avg}</b>` : ''}</div></div>`;
+        }
+      },
+      { h: 'Status', f: (r) => r.kind === 'guru'
+        ? `<select class="inline" data-chg="asgSet" data-id="${r.id}">${['Diberikan', 'Dikumpulkan', 'Dinilai', 'Selesai'].map((o) => `<option ${o === r.status ? 'selected' : ''}>${o}</option>`).join('')}</select>`
+        : TaskRecap.statusBadge(r) },
+      { h: I18N.p('Nilai masuk ke', 'Scores land in'), f: (r) => {
+        if (r.kind !== 'siswa') return '<span class="muted mini">—</span>';
+        const b = r.bookId ? Store.get('_DaftarNilai', r.bookId) : null;
+        return b ? `<div class="t mini">${esc(b.name)}</div><div class="s">${esc(r.component || '—')}${r.tpCode ? ' · ' + esc(r.tpCode) : ''}</div>` : `<span class="muted mini">${I18N.p('belum ditautkan', 'not linked')}</span>`;
+      } },
+      { h: '', cls: 'act', f: (r) => r.kind === 'guru'
+        ? `${r.done ? '' : `<button class="btn xs mod" data-act="planDone" data-kind="tugas" data-id="${r.id}" title="${I18N.p('Tandai selesai', 'Mark done')}">${ic('check')}</button> `}${r.link && /^https?:/.test(r.link) ? `<a class="btn xs" href="${esc(r.link)}" target="_blank" rel="noopener">${ic('link')}</a>` : ''}<button class="btn xs" data-act="asgEdit" data-id="${r.id}">${ic('edit')}</button>`
+        : `<button class="btn xs mod" data-act="taskOpen" data-id="${r.id}" title="${I18N.p('Buka pengumpulan', 'Open submissions')}">${ic('eye')}${r.st.total}</button> <button class="btn xs" data-act="taskEdit" data-id="${r.id}">${ic('edit')}</button>` }
+    ], list, { emptyMsg: I18N.p('Tidak ada tugas pada filter ini.', 'No assignments match this filter.') })}
+
+      <div class="card mt"><h3>${ic('tutor')}${I18N.p('Rekap per siswa', 'Per-student recap')}${s.asgClass ? ` <span class="badge">${esc(s.asgClass)}</span>` : ''}</h3>
+        <p class="mini muted" style="margin-top:0">${I18N.p('Setiap siswa yang terdaftar atau pernah mengumpulkan tercatat di sini, termasuk yang belum mengumpulkan sama sekali.', 'Every registered student, and anyone who has ever submitted, is recorded here — including those who have not submitted at all.')}</p>
+        ${UI.table([
+      { h: I18N.p('Siswa', 'Student'), f: (r) => `<div class="t">${esc(r.name)}</div><div class="s">${esc(r.className || '—')}</div>` },
+      { h: I18N.p('Tugas diberikan', 'Tasks assigned'), cls: 'r', f: (r) => r.assigned },
+      { h: I18N.p('Dikumpulkan', 'Submitted'), f: (r) => `<div style="min-width:110px">${UI.progress(r.rate)}<div class="s"><b>${r.submitted}</b>/${r.assigned} · ${r.rate}%</div></div>` },
+      { h: I18N.p('Dinilai', 'Graded'), cls: 'r', f: (r) => r.graded },
+      { h: I18N.p('Terlambat', 'Late'), cls: 'r', f: (r) => r.late ? `<span class="neg">${r.late}</span>` : '—' },
+      { h: I18N.p('Rata-rata nilai', 'Average score'), cls: 'r', f: (r) => r.avg == null ? '<span class="muted">—</span>' : `<b>${r.avg}</b>` },
+      { h: '', cls: 'act', f: (r) => `<button class="btn xs" data-act="tgStudent" data-name="${esc(r.name)}">${ic('eye')}${I18N.p('Rincian', 'Details')}</button>` }
+    ], roster, { emptyMsg: I18N.p('Belum ada siswa terdaftar maupun pengumpulan.', 'No registered students or submissions yet.') })}</div>`;
+  }
+};
+
+/** Rincian satu siswa: setiap tugas, kapan mengumpulkan, nilainya. */
+TaskRecap.student = function (name) {
+  const key = String(name).trim().toLowerCase();
+  const tasks = Store.all('_Tugas').filter((t) => t.title);
+  const subs = Store.all('_Pengumpulan').filter((p) => String(p.studentName || '').trim().toLowerCase() === key);
+  const byTask = {}; subs.forEach((p) => { byTask[p.taskId] = p; });
+  const mine = tasks.filter((t) => byTask[t.id] || Store.where('_Siswa', (s) => s.className === t.className && String(s.name).trim().toLowerCase() === key).length);
+  const rows = mine.sort((a, b) => String(b.dueDate).localeCompare(String(a.dueDate)));
+  UI.modal({
+    title: I18N.p(`Rekap tugas — ${name}`, `Task record — ${name}`), size: 'full',
+    body: UI.table([
+      { h: I18N.p('Tugas', 'Task'), f: (t) => `<div class="t">${esc(t.title)}</div><div class="s">${esc(t.className)}${t.subject ? ' — ' + esc(t.subject) : ''}</div>` },
+      { h: I18N.p('Batas', 'Due'), f: (t) => t.dueDate ? fmtDate(t.dueDate) : '—' },
+      { h: I18N.p('Dikumpulkan', 'Submitted'), f: (t) => { const p = byTask[t.id]; return p ? `<span class="nowrap">${fmtDate(String(p.submittedAt || '').slice(0, 10))}</span>${t.dueDate && String(p.submittedAt || '').slice(0, 10) > t.dueDate ? ` ${UI.badge(I18N.p('terlambat', 'late'), 'coral')}` : ''}` : UI.badge(I18N.p('belum', 'not yet'), 'slate'); } },
+      { h: I18N.p('Isi / tautan', 'Content / link'), f: (t) => { const p = byTask[t.id]; if (!p) return '—'; return p.link && /^https?:/.test(p.link) ? `<a href="${esc(p.link)}" target="_blank" rel="noopener">${esc(String(p.link).slice(0, 48))}</a>` : esc(String(p.content || '').slice(0, 70) || '—'); } },
+      { h: I18N.p('Nilai', 'Score'), cls: 'r', f: (t) => { const p = byTask[t.id]; return p && p.score !== '' && p.score != null ? `<b>${esc(p.score)}</b> <span class="muted mini">/ ${esc(t.maxScore || 100)}</span>` : '<span class="muted">—</span>'; } },
+      { h: I18N.p('Umpan balik', 'Feedback'), f: (t) => { const p = byTask[t.id]; return p && p.feedback ? esc(p.feedback) : '<span class="muted">—</span>'; } }
+    ], rows, { emptyMsg: I18N.p('Belum ada tugas untuk siswa ini.', 'No tasks for this student yet.') }),
+    foot: `<button class="btn" data-close>${I18N.p('Tutup', 'Close')}</button>`
+  });
+};
+ACT.tgStudent = (d) => TaskRecap.student(d.name);
+
+Object.assign(CHG, { asgSrc: (v) => { App.s('school').asgSrc = v; App.refresh(); } });
+
+/* Beban terpadu tampil di atas tab Jobdesc. */
 (function () {
   const base = VIEWS.school.jobdesc.render;
   VIEWS.school.jobdesc.render = function () {
     const c = JobLoad.calc();
-    const head = c.rows.length ? `<div class="card mb"><h3>${ic('alert')}${I18N.p('Beban tugas tambahan', 'Additional duty load')}</h3>${JobLoad.panel()}</div>` : '';
+    const head = c.rows.length ? `<div class="card mb"><h3>${ic('alert')}${I18N.p('Beban kerja terpadu', 'Combined workload')}</h3>${Workload.panel()}</div>` : '';
     return head + base.call(this);
   };
 })();
