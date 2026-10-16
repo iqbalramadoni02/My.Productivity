@@ -4,9 +4,9 @@
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='4' y1='4' x2='60' y2='60' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%236d4bff'/%3E%3Cstop offset='.5' stop-color='%23b14bff'/%3E%3Cstop offset='1' stop-color='%23ff4d97'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='2' y='2' width='60' height='60' rx='18' fill='url(%23g)'/%3E%3Crect x='13' y='34' width='9' height='17' rx='4.5' fill='%23fff' opacity='.72'/%3E%3Crect x='27.5' y='25' width='9' height='26' rx='4.5' fill='%23fff' opacity='.88'/%3E%3Crect x='42' y='16' width='9' height='35' rx='4.5' fill='%23fff'/%3E%3Ccircle cx='46.5' cy='10' r='5.5' fill='%23fff'/%3E%3Ccircle cx='46.5' cy='10' r='2.4' fill='url(%23g)'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='4' y1='4' x2='60' y2='60' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%234A57B8'/%3E%3Cstop offset='.5' stop-color='%2346756A'/%3E%3Cstop offset='1' stop-color='%23D9BC63'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='2' y='2' width='60' height='60' rx='18' fill='url(%23g)'/%3E%3Crect x='13' y='34' width='9' height='17' rx='4.5' fill='%23fff' opacity='.72'/%3E%3Crect x='27.5' y='25' width='9' height='26' rx='4.5' fill='%23fff' opacity='.88'/%3E%3Crect x='42' y='16' width='9' height='35' rx='4.5' fill='%23fff'/%3E%3Ccircle cx='46.5' cy='10' r='5.5' fill='%23fff'/%3E%3Ccircle cx='46.5' cy='10' r='2.4' fill='url(%23g)'/%3E%3C/svg%3E">
   <title>My Productivity Hub</title>
-  <meta name="theme-color" content="#2f45c5">
+  <meta name="theme-color" content="#4A57B8">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -16,10 +16,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
 /* =========================================================
    MY PRODUCTIVITY HUB — Design tokens
@@ -1109,6 +1105,193 @@ h1, .hello h1 { font-weight: 800; letter-spacing: -.035em; }
   background-image: linear-gradient(90deg, var(--mc), color-mix(in srgb, var(--mc) 55%, var(--air-4)));
 }
 
+/* =====================================================================
+   v9 — latar belakang, kepadatan aktivitas, chip JP, spreadsheet terhubung
+   =================================================================== */
+
+/* --- wallpaper: satu lapis di belakang semuanya --- */
+#wallpaper {
+  position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  background-repeat: no-repeat; background-size: cover; background-position: center;
+}
+.wall-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+.wall-pick {
+  display: grid; gap: 6px; padding: 7px; cursor: pointer; border-radius: 14px;
+  border: 1.5px solid var(--line); background: var(--surface); font: inherit; color: inherit; text-align: center;
+}
+.wall-pick:hover { border-color: var(--brand); }
+.wall-pick.on { border-color: var(--brand); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 30%, transparent); }
+.wall-prev {
+  display: grid; place-items: center; height: 56px; border-radius: 9px;
+  background-color: var(--surface-2); border: 1px solid var(--line); color: var(--muted);
+}
+.wall-name { font-size: 11.5px; font-weight: 600; }
+.wall-wrap input[type="range"] { width: 100%; accent-color: var(--brand); }
+
+/* --- kepadatan aktivitas --- */
+.dens-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 11px; }
+.dens-tile {
+  border: 1px solid var(--line); border-radius: 13px; padding: 11px 13px; display: grid; gap: 6px;
+  background-image: linear-gradient(150deg, color-mix(in srgb, var(--dc, var(--brand)) 12%, var(--surface)), var(--surface));
+}
+.dens-tile small { font-size: 11px; color: var(--muted); font-weight: 600; }
+.dens-bar { height: 7px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
+.dens-bar > i { display: block; height: 100%; border-radius: 99px; background: var(--dc, var(--brand)); }
+.dens-note { margin: 10px 0 12px; }
+.dens-badge {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700;
+  padding: 3px 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-2);
+}
+.dens-badge i { font-style: normal; font-size: 13px; line-height: 1; color: var(--dc, var(--brand)); }
+.dens-badge.d-little { --dc: var(--t2); }
+.dens-badge.d-medium { --dc: var(--t1); }
+.dens-badge.d-busy { --dc: var(--t3); }
+.dens-badge.d-crowded { --dc: var(--warn); background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 30%, transparent); color: var(--warn); }
+.dens-badge.d-dying { --dc: var(--danger); background: var(--danger-soft); border-color: color-mix(in srgb, var(--danger) 34%, transparent); color: var(--danger); }
+.dens-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; padding-top: 11px; border-top: 1px solid var(--line); }
+.dens-key { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+.dens-key i { width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--line); }
+.dens-key em { font-style: normal; opacity: .72; }
+
+.an-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.an-head h3 { margin: 0; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--surface-2); }
+.seg-b {
+  border: 0; background: transparent; font: inherit; font-size: 12.5px; font-weight: 700; color: var(--muted);
+  padding: 5px 13px; border-radius: 999px; cursor: pointer;
+}
+.seg-b.on { background: var(--surface); color: var(--brand); box-shadow: var(--shadow-sm); }
+
+/* --- chip JP total di bilah atas --- */
+.chip.jp { gap: 6px; padding-right: 8px; }
+.chip.jp .jp-n { font-weight: 800; font-size: 14.5px; letter-spacing: -.02em; color: var(--brand); }
+.chip.jp .jp-l { font-size: 10.5px; color: var(--muted); font-weight: 700; }
+@media (max-width: 760px) { .chip.jp .badge { display: none; } }
+
+/* --- tanggal rinci --- */
+.dt { display: inline-grid; gap: 1px; line-height: 1.32; }
+.dt b { font-weight: 700; }
+.dt-t { font-size: 11.5px; color: var(--ink-2); }
+.dt-m { font-size: 11px; color: var(--muted); }
+.dt-m i { font-style: normal; font-weight: 600; }
+
+/* --- pemilih lembar saat menghubungkan spreadsheet --- */
+.wb-picklist { max-height: 260px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--surface-2); }
+.wb-pick { display: flex; align-items: flex-start; gap: 9px; padding: 7px 8px; border-radius: 9px; cursor: pointer; }
+.wb-pick:hover { background: var(--surface); }
+.wb-pick .grow { display: grid; gap: 1px; }
+.wb-pick .s { font-size: 11.5px; color: var(--muted); }
+
+/* --- daftar aturan otomatisasi --- */
+.auto-list { display: grid; gap: 8px; }
+.auto-rule {
+  display: flex; align-items: flex-start; gap: 10px; padding: 11px 13px; cursor: pointer;
+  border: 1.5px solid var(--line); border-radius: 13px; background: var(--surface);
+}
+.auto-rule:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); }
+.auto-rule.on { border-color: color-mix(in srgb, var(--brand) 55%, transparent); background-image: linear-gradient(150deg, color-mix(in srgb, var(--brand) 9%, var(--surface)), var(--surface)); }
+.auto-rule .grow { display: grid; gap: 2px; }
+.auto-rule .s { font-size: 11.5px; color: var(--muted); }
+
+/* tombol tambah spreadsheet di bilah kiri */
+.nav-btn.ghosty { opacity: .62; border: 1px dashed var(--line); margin-top: 4px; }
+.nav-btn.ghosty:hover { opacity: 1; border-color: var(--brand); color: var(--brand); }
+
+/* =====================================================================
+   v10 — riwayat pembelajaran, absen, dan halaman siswa
+   =================================================================== */
+
+/* --- tabel absen guru --- */
+.absen-tbl th, .absen-tbl td { padding: 6px 8px; }
+.absen-tbl th.r, .absen-tbl td.r { text-align: right; }
+.abs {
+  display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px;
+  font-size: 11px; font-weight: 800; background: var(--surface-2); color: var(--muted);
+}
+.abs.a-hadir { background: var(--ok-soft); color: var(--ok); }
+.abs.a-izin { background: var(--warn-soft); color: var(--warn); }
+.abs.a-sakit { background: var(--t3-soft); color: var(--t3); }
+.abs.a-alpa { background: var(--danger-soft); color: var(--danger); }
+.abs.a-x { opacity: .4; }
+
+/* --- halaman siswa --- */
+.student-mode .student-wrap { max-width: 720px; margin: 0 auto; padding: 18px 16px 60px; }
+.stu-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.stu-chip {
+  display: grid; gap: 3px; padding: 14px 12px; cursor: pointer; text-align: left;
+  border: 1.5px solid var(--line); border-radius: 15px; background: var(--surface); font: inherit; color: inherit;
+  background-image: linear-gradient(150deg, color-mix(in srgb, var(--t1) 9%, var(--surface)), var(--surface));
+}
+.stu-chip:hover { border-color: var(--brand); transform: translateY(-1px); }
+.stu-chip b { font-size: 17px; }
+.stu-chip span { font-size: 11.5px; color: var(--muted); }
+
+.stu-names { display: grid; gap: 7px; max-height: 58vh; overflow: auto; }
+.stu-name {
+  text-align: left; padding: 13px 15px; border-radius: 13px; cursor: pointer; font: inherit; font-weight: 600;
+  border: 1.5px solid var(--line); background: var(--surface); color: inherit;
+}
+.stu-name:hover { border-color: var(--brand); color: var(--brand); }
+
+.stu-back { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+.stu-id { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.stu-id .stu-back { margin: 0; }
+.stu-id .grow { display: grid; gap: 1px; }
+.stu-id b { font-size: 16px; }
+
+.stu-abs { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 9px; margin-top: 10px; }
+.stu-ab {
+  padding: 15px 10px; border-radius: 14px; cursor: pointer; font: inherit; font-weight: 700; font-size: 14.5px;
+  border: 1.5px solid var(--line); background: var(--surface); color: var(--ink-2);
+}
+.stu-ab:hover { transform: translateY(-1px); }
+.stu-ab.a-ok { border-color: color-mix(in srgb, var(--ok) 42%, transparent); color: var(--ok); }
+.stu-ab.a-warn { border-color: color-mix(in srgb, var(--warn) 42%, transparent); color: var(--warn); }
+.stu-ab.a-danger { border-color: color-mix(in srgb, var(--danger) 42%, transparent); color: var(--danger); }
+.stu-ab.on { color: #fff; }
+.stu-ab.a-ok.on { background: var(--ok); border-color: var(--ok); }
+.stu-ab.a-warn.on { background: var(--warn); border-color: var(--warn); }
+.stu-ab.a-danger.on { background: var(--danger); border-color: var(--danger); }
+
+.stu-task { border: 1px solid var(--line); border-radius: 14px; padding: 13px 15px; margin-bottom: 11px; background: var(--surface-2); }
+.stu-task .t { font-weight: 700; font-size: 15px; }
+.stu-sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(94px, 1fr)); gap: 9px; }
+.stu-sum > div { background: var(--surface-2); border-radius: 11px; padding: 9px 11px; }
+.stu-sum small { display: block; font-size: 10.5px; color: var(--muted); line-height: 1.3; }
+.stu-sum b { font-size: 18px; font-weight: 800; }
+.stu-abshist { display: flex; flex-wrap: wrap; gap: 5px; }
+@media (max-width: 560px) {
+  .stu-pick { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); }
+  .stu-ab { padding: 17px 8px; }
+}
+
+/* --- tautan materi per pertemuan --- */
+.lk-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+.lk-chip {
+  display: inline-flex; align-items: center; gap: 5px; max-width: 220px; padding: 4px 10px;
+  border-radius: 999px; border: 1px solid var(--line); background: var(--t1-soft); color: var(--t1);
+  font-size: 11.5px; font-weight: 700; text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lk-chip:hover { border-color: var(--t1); }
+.lk-chip .i { width: 13px; height: 13px; flex: 0 0 auto; }
+.lk-row { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
+@media (max-width: 620px) { .lk-row { grid-template-columns: 1fr auto; } .lk-row .lk-u { grid-column: 1 / -1; } }
+
+/* --- riwayat pembelajaran di halaman siswa --- */
+.les-list { display: grid; gap: 10px; }
+.les {
+  border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: var(--surface-2);
+  background-image: linear-gradient(150deg, color-mix(in srgb, var(--t1) 6%, transparent), transparent 62%);
+}
+.les.soon { opacity: .62; border-style: dashed; }
+.les-h { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 5px; }
+.les-h b { font-size: 14px; }
+.les-tp { margin-bottom: 4px; }
+.les-t { font-size: 13.5px; font-weight: 600; line-height: 1.45; }
+.les-m { font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: 2px; }
+.abs.a-tidak { opacity: .5; }
+
 </style>
 </head>
 <body>
@@ -1148,7 +1331,7 @@ h1, .hello h1 { font-weight: 800; letter-spacing: -.035em; }
 const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbzWcLKC82ZjHoOFPJSVZ-kAOA4Ry_0A7yyEk6ANBMg-Cn96__N2mwu5d1fMmLtdPHc1/exec';
 const DEFAULT_API_KEY = 'mph_86556476be2b4bdcbc46ae435d41f2cc';
 
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '2.2.0';
 
 /* Deteksi: dibuka langsung dari URL Apps Script (HtmlService) atau dari hosting statis. */
 const BOOT = (() => {
@@ -1194,6 +1377,9 @@ const SCHEMA = {
   Jobdesc: ['id', 'no', 'field', 'activity', 'position', 'weight', 'jp', 'discipline', 'linearity', 'period', 'startDate', 'endDate', 'status', 'target', 'progress', 'prediction', 'risk', 'note'],
   Links: ['id', 'title', 'label', 'url', 'status', 'division'],
   _Catatan: ['id', 'title', 'body', 'items', 'color', 'label', 'pinned', 'status', 'refKind', 'refId', 'remindDate', 'createdAt', 'updatedAt'],
+  _Workbook: ['id', 'name', 'ssId', 'url', 'tabs', 'icon', 'color', 'note', 'createdAt', 'updatedAt'],
+  _Pertemuan: ['id', 'no', 'date', 'day', 'start', 'end', 'className', 'subject', 'program', 'scheduleId', 'tpCodes', 'topic', 'material', 'method', 'links', 'taskId', 'status', 'note', 'createdAt', 'updatedAt'],
+  _Absen: ['id', 'date', 'className', 'studentName', 'status', 'at', 'meetingId', 'note', 'createdAt', 'updatedAt'],
   Pricelist: ['id', 'no', 'category', 'name', 'normalMin', 'normalMax', 'expressMin', 'expressMax', 'daysNormal', 'daysExpress', 'active', 'note', 'createdAt', 'updatedAt'],
   Categories: ['id', 'type', 'name', 'active', 'createdAt', 'updatedAt']
 };
@@ -1678,6 +1864,18 @@ const Store = {
     return this.all(name);
   },
 
+  /** Muat tabel lazy lalu gambar ulang layar bila isinya baru.
+   *  Tanpa ini, tab yang butuh _Nilai/_Pengumpulan sempat tampil kosong
+   *  karena pemuatannya selesai setelah layar digambar. */
+  ensureThen(names) {
+    const list = [].concat(names).filter((k) => !this.loaded[k]);
+    if (!list.length || !this.isRemote()) return;
+    const at = App.active, sub = App.sub[App.active];
+    Promise.all(list.map((k) => this.ensure(k)))
+      .then(() => { if (App.active === at && App.sub[App.active] === sub) App.refresh(); })
+      .catch(() => { });
+  },
+
   async init() {
     if (this.needsKey()) {
       this.setAll({}); this.status = 'err'; this.lastError = 'API key belum diisi.';
@@ -1719,6 +1917,7 @@ const Store = {
         reload.forEach((k) => { this.ensure(k, true); });
       }
       this.status = 'ok'; this.lastSync = new Date(); this.lastError = '';
+      try { if (typeof Workbooks !== 'undefined') Workbooks.register(); } catch (e) { }
       this.saveCache();
     } catch (e) {
       this.status = 'err'; this.lastError = e.message;
@@ -2100,6 +2299,7 @@ const App = {
   s(mod) { return (this.st[mod] = this.st[mod] || {}); },
 
   shell() {
+    try { if (typeof Workbooks !== 'undefined') Workbooks.register(); } catch (e) { }
     const nav = Object.keys(MODULES).map((k) => `<button class="nav-btn m-${k}" data-act="open" data-mod="${k}" data-navmod="${k}" title="${esc(MODULES[k].title)}">${ic(MODULES[k].icon)}<span class="lbl">${esc(MODULES[k].nav)}</span><span class="dot" style="background:var(--mc)"></span></button>`).join('');
     $('#app').innerHTML = `
     <div class="shell ${Config.data.collapsed ? 'collapsed' : ''}" id="shell">
@@ -2108,7 +2308,8 @@ const App = {
         <div class="brand">${logoSVG(34, 'nav')}<span>My Productivity Hub</span></div>
         <button class="nav-btn" data-act="open" data-mod="home" data-navmod="home">${ic('home')}<span class="lbl">Beranda</span></button>
         <div class="nav-sep">Modul</div>
-        ${nav}
+        <div id="nav-mods" data-sig="${esc(Object.keys(MODULES).join('|'))}">${nav}</div>
+        <button class="nav-btn ghosty" data-act="wbConnect" title="${I18N.p('Hubungkan Google Sheet lain sebagai tab baru', 'Connect another Google Sheet as a new tab')}">${ic('plus')}<span class="lbl">${I18N.p('Hubungkan sheet', 'Connect a sheet')}</span></button>
         <div class="sidebar-foot">
           <button class="nav-btn" data-act="palette">${ic('search')}<span class="lbl">Cari & perintah</span></button>
           <button class="nav-btn" data-act="settings">${ic('settings')}<span class="lbl">Pengaturan</span></button>
@@ -2120,6 +2321,7 @@ const App = {
           <button class="icon-btn mobile-only" data-act="openMobileNav" aria-label="Menu">${ic('menu')}</button>
           <button class="search-btn" data-act="palette">${ic('search')}<span class="lbl">Cari klien, transaksi, pinjaman, file…</span><kbd>Ctrl K</kbd></button>
           <div class="top-spacer"></div>
+          <button class="chip jp" id="jp-chip" data-act="jpDetail" title="JP total" hidden></button>
           <button class="chip" id="sync-chip" data-act="syncNow"></button>
           <button class="chip desk-only" id="gw-chip" data-act="settings" data-tab="google"></button>
           <button class="icon-btn" data-act="notif" aria-label="Notifikasi" id="bell">${ic('bell')}</button>
@@ -2203,6 +2405,7 @@ const App = {
       console.error(e);
       ws.innerHTML = `<div class="win-body"><div class="note warn">Terjadi kesalahan saat menampilkan halaman: ${esc(e.message)}</div></div>`;
     }
+    try { if (typeof JPChip !== 'undefined') JPChip.paint(); } catch (e) { }
     this.renderBell();
     this.renderGwChip();
     $$('#lang-switch button').forEach((b) => b.classList.toggle('on', b.dataset.l === I18N.lang));
@@ -2228,6 +2431,16 @@ const App = {
   },
 
   renderNav() {
+    // daftar modul bisa bertambah saat spreadsheet baru dihubungkan,
+    // jadi bilah kiri dibangun ulang bila jumlahnya berubah
+    const host = $('#nav-mods');
+    if (host) {
+      const want = Object.keys(MODULES).join('|');
+      if (host.dataset.sig !== want) {
+        host.dataset.sig = want;
+        host.innerHTML = Object.keys(MODULES).map((k) => `<button class="nav-btn m-${k}" data-act="open" data-mod="${k}" data-navmod="${k}" title="${esc(MODULES[k].title)}">${ic(MODULES[k].icon)}<span class="lbl">${esc(MODULES[k].nav)}</span><span class="dot" style="background:var(--mc)"></span></button>`).join('');
+      }
+    }
     $$('[data-navmod]').forEach((b) => b.classList.toggle('on', b.dataset.navmod === this.active));
   },
 
@@ -2421,7 +2634,7 @@ const Settings = {
     const svc = Store.services || {};
     const remote = Store.isRemote();
     const body = `
-      <div class="subtabs" style="padding:0 0 0;margin:-6px 0 16px">${[['koneksi', 'Koneksi'], ['profil', 'Profil & Invoice'], ['google', 'Google Workspace'], ['data', 'Data & Cadangan']].map(([k, l]) => `<button class="subtab ${k === tab ? 'on' : ''}" data-stab="${k}">${l}</button>`).join('')}</div>
+      <div class="subtabs" style="padding:0 0 0;margin:-6px 0 16px">${[['koneksi', 'Koneksi'], ['profil', 'Profil & Invoice'], ['google', 'Google Workspace'], ['tampilan', 'Tampilan & Latar'], ['otomatis', 'Otomatisasi'], ['sheet', 'Spreadsheet Terhubung'], ['data', 'Data & Cadangan']].map(([k, l]) => `<button class="subtab ${k === tab ? 'on' : ''}" data-stab="${k}">${l}</button>`).join('')}</div>
       <div data-spane="koneksi" ${tab !== 'koneksi' ? 'hidden' : ''}>
         ${EMBEDDED && BOOT.owner ? `<div class="note ok mb">Akses pemilik aktif — Anda membuka aplikasi dengan akun Google pemilik spreadsheet, jadi tidak perlu API key. API key hanya diperlukan bila aplikasi dibuka dari perangkat/akun lain atau dari hosting luar.</div>` : EMBEDDED ? `<div class="note mb">Aplikasi berjalan langsung dari Google Apps Script. Masukkan API key sekali di perangkat ini (atau buka dengan akun Google pemilik agar otomatis).</div>` : ''}
         <div class="form">
@@ -2474,6 +2687,22 @@ const Settings = {
         </div>
         ${remote ? `<p class="mini muted mt">${I18N.p('Akun Google', 'Google account')}: ${esc(svc.owner || '-')} — ${I18N.p('sisa kuota email hari ini', 'email quota left today')}: ${svc.mailQuota == null ? '-' : svc.mailQuota}</p>` : ''}
       </div>
+      <div data-spane="tampilan" ${tab !== 'tampilan' ? 'hidden' : ''}>
+        <h4 style="margin-top:0">${ic('eye')}Latar belakang</h4>
+        ${typeof Wall !== 'undefined' ? Wall.panel() : ''}
+      </div>
+      <div data-spane="otomatis" ${tab !== 'otomatis' ? 'hidden' : ''} id="s-auto">
+        ${typeof Auto !== 'undefined' ? Auto.panel() : ''}
+      </div>
+      <div data-spane="sheet" ${tab !== 'sheet' ? 'hidden' : ''}>
+        <div class="note mb">Hubungkan Google Sheet mana pun. Spreadsheet itu akan muncul sebagai menu tersendiri di bilah kiri, dan tiap lembarnya menjadi sub-tab yang bisa diisi langsung dari aplikasi ini.</div>
+        <div class="btn-row mb"><button class="btn primary" data-act="wbConnect">${ic('plus')}Hubungkan spreadsheet</button></div>
+        ${typeof Workbooks !== 'undefined' && Workbooks.all().length ? `<ul class="list">${Workbooks.all().map((w) => `<li><span class="dotc" style="background:var(--${w.color || 't1'})"></span>
+          <div class="grow"><div class="t">${esc(w.name)}</div><div class="s">${Workbooks.tabsOf(w).length} lembar — ${esc(Workbooks.tabsOf(w).slice(0, 5).join(', '))}${Workbooks.tabsOf(w).length > 5 ? '…' : ''}</div></div>
+          <a class="btn xs" href="${esc(w.url)}" target="_blank" rel="noopener">${ic('eye')}</a>
+          <button class="btn xs" data-act="wbEdit" data-id="${w.id}">${ic('edit')}</button></li>`).join('')}</ul>`
+        : UI.empty('Belum ada spreadsheet terhubung', 'Tempel alamat Google Sheet lain agar muncul sebagai tab baru di aplikasi ini.')}
+      </div>
       <div data-spane="data" ${tab !== 'data' ? 'hidden' : ''}>
         <div class="grid g2">
           <div class="card soft"><h4>${ic('download')}Ekspor</h4><p class="mini muted" style="margin-top:0">Semua tabel dalam satu file Excel (cadangan lengkap).</p><button class="btn sm" data-s="export">Ekspor semua (.xlsx)</button></div>
@@ -2492,6 +2721,8 @@ const Settings = {
     UI.modal({
       title: 'Pengaturan', size: 'wide', body,
       onMount: (box, m) => {
+        Settings.repaint = () => { const p = box.querySelector('#s-auto'); if (p && typeof Auto !== 'undefined') p.innerHTML = Auto.panel(); };
+        if (typeof Auto !== 'undefined' && Store.isRemote()) Auto.load().then(() => Settings.repaint());
         box.addEventListener('click', async (e) => {
           const tb = e.target.closest('[data-stab]');
           if (tb) {
@@ -2868,7 +3099,7 @@ const Home = {
 
     return `<div class="home">
       <div class="hello">
-        <div><h1>${greet}${first ? ', ' + esc(first) : ''}.</h1><p>${fmtDate(t, true)} — ${alerts.filter((a) => a.level !== 'info').length ? I18N.p(`${alerts.filter((a) => a.level !== 'info').length} hal perlu perhatian hari ini.`, `${alerts.filter((a) => a.level !== 'info').length} items need your attention today.`) : I18N.p('tidak ada deadline mendesak.', 'no urgent deadlines.')}</p></div>
+        <div><h1>${greet}${first ? ', ' + esc(first) : ''}.</h1><p>${typeof fmtDateFull === 'function' ? fmtDateFull(t) + ' · ' + I18N.p(`minggu ke-${isoWeek(t)}`, `week ${isoWeek(t)}`) : fmtDate(t, true)} — ${alerts.filter((a) => a.level !== 'info').length ? I18N.p(`${alerts.filter((a) => a.level !== 'info').length} hal perlu perhatian hari ini.`, `${alerts.filter((a) => a.level !== 'info').length} items need your attention today.`) : I18N.p('tidak ada deadline mendesak.', 'no urgent deadlines.')}</p></div>
         <div class="btn-row"><button class="btn" data-act="quickTxn">${ic('plus')}Catat transaksi</button><button class="btn primary" data-act="palette">${ic('search')}Cari / perintah</button></div>
       </div>
       <div class="hub">
@@ -2885,10 +3116,11 @@ const Home = {
       </div>
       <div class="panels">
         <div class="card"><h3>${ic('alert')}Perlu perhatian</h3>${alerts.length ? `<ul class="list">${alerts.slice(0, 8).map((a) => `<li class="link" data-act="open" data-mod="${a.mod}" data-sub="${a.subTab}"><span class="dotc" style="background:var(--${a.level === 'danger' ? 'coral' : a.level === 'warn' ? 'amber' : 'sky'})"></span><div class="grow"><div class="t">${esc(a.text)}</div><div class="s">${esc(a.sub || '')}</div></div></li>`).join('')}</ul>` : UI.empty('Semua aman', 'Tidak ada deadline atau tagihan mendesak.')}</div>
-        <div class="card"><h3>${ic('calendar')}7 hari ke depan</h3>${upcoming.length ? `<ul class="list">${upcoming.slice(0, 9).map((e) => `<li class="link" data-act="open" data-mod="${e.mod}" data-sub="${e.sub}"><span class="dotc" style="background:var(--${e.color})"></span><div class="grow"><div class="t">${esc(e.title)}</div><div class="s">${fmtDate(e.date, true)}${e.time ? ' — ' + esc(e.time) : ''}</div></div><span class="badge">${esc(e.kind)}</span></li>`).join('')}</ul>` : UI.empty('Minggu yang lapang', 'Belum ada agenda, sesi, deadline, atau cicilan.')}</div>
+        <div class="card"><h3>${ic('calendar')}7 hari ke depan</h3>${upcoming.length ? `<ul class="list">${upcoming.slice(0, 9).map((e) => `<li class="link" data-act="open" data-mod="${e.mod}" data-sub="${e.sub}"><span class="dotc" style="background:var(--${e.color})"></span><div class="grow"><div class="t">${esc(e.title)}</div><div class="s">${typeof dateLine === 'function' ? dateLine(e.date, { time: e.time, week: false }) : fmtDate(e.date, true)}</div></div><span class="badge">${esc(e.kind)}</span></li>`).join('')}</ul>` : UI.empty('Minggu yang lapang', 'Belum ada agenda, sesi, deadline, atau cicilan.')}</div>
         <div class="card"><h3>${ic('clock')}Jadwal hari ini</h3>${this.todayPanel(dow, jpMin)}</div>
         <div class="card span2"><h3>${ic('alert')}${I18N.p('Beban kerja terpadu — JP mengajar + JP jobdesc', 'Combined workload — teaching + extra duties')}</h3>${typeof Workload !== 'undefined' ? Workload.panel() : ''}</div>
         <div class="card span2"><h3>${ic('check')}Kehadiran & ketercapaian TP</h3>${this.tpPanel()}</div>
+        <div class="card span2"><h3>${ic('calendar')}${I18N.p('Kepadatan aktivitas', 'Activity density')}</h3>${typeof Activity !== 'undefined' ? Activity.card() : ''}</div>
         <div class="card"><h3>${ic('cloud')}Google Workspace</h3>${this.syncPanel()}</div>
       </div>
     </div>`;
@@ -2907,6 +3139,25 @@ const Home = {
       <div><div class="progress" style="--mc:var(--sky)"><i style="width:${clamp(c.att || 0, 0, 100)}%"></i></div><div class="progress mt" style="--mc:var(--jade);margin-top:4px"><i style="width:${clamp(c.ach || 0, 0, 100)}%"></i></div></div>
       <span class="mini nowrap">hadir <b>${c.att == null ? '—' : Math.round(c.att) + '%'}</b> · TP <b class="${c.ach != null && c.ach >= Hadir.kkm() ? 'pos' : ''}">${c.ach == null ? '—' : Math.round(c.ach) + '%'}</b></span></div>`).join('')}</div>
       <p class="mini muted">Biru = kehadiran siswa/siswi, hijau = ketercapaian TP (KKM ${typeof Hadir !== 'undefined' ? Hadir.kkm() : 75}%).</p>`;
+  },
+
+  after() {
+    if (typeof Activity === 'undefined' || !document.getElementById('ch-dens-home')) return;
+    const data = Activity.series('day').slice(14);          // 7 hari lalu + 13 hari ke depan
+    const ramp = Activity.ramp();
+    mkChart('ch-dens-home', {
+      type: 'bar',
+      data: { labels: data.map((d) => d.label), datasets: [{ data: data.map((d) => d.score),
+        backgroundColor: data.map((d) => ramp[d.level.idx]),
+        borderColor: data.map((d) => d.today ? cssVar('--ink') : 'transparent'),
+        borderWidth: data.map((d) => d.today ? 2 : 0), borderRadius: 4, borderSkipped: 'bottom' }] },
+      options: { maintainAspectRatio: false, animation: { duration: 200 },
+        plugins: { legend: { display: false }, tooltip: { callbacks: {
+          title: (c) => { const d = data[c[0].dataIndex]; return `${d.label} · ${d.sub}`; },
+          label: (c) => { const d = data[c.dataIndex]; return `${I18N.p(d.level.lv.id, d.level.lv.en)} — ${d.n} ${I18N.p('kegiatan', 'items')}`; }
+        } } },
+        scales: { y: { beginAtZero: true, display: false, grid: { display: false } }, x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 7 } } } }
+    });
   },
 
   syncPanel() {
@@ -2930,10 +3181,47 @@ ACT.quickTxn = () => Finance.txnForm();
  * 18. CHART & KALENDER BULANAN (dipakai beberapa modul)
  * ------------------------------------------------------------------- */
 const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888';
+
+/* Empat pustaka besar (grafik, Excel, PDF) tidak lagi dimuat di awal.
+   Tampilan pertama jadi tidak menunggu ±1,2 MB yang sering tidak dipakai;
+   masing-masing diambil saat benar-benar dibutuhkan, lalu diingat. */
+const LIBS = {
+  chart: 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js',
+  xlsx: 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+  jspdf: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  jspdfAT: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'
+};
+const LIB_NAME = { chart: 'grafik (Chart.js)', xlsx: 'Excel (SheetJS)', jspdf: 'PDF (jsPDF)', jspdfAT: 'tabel PDF' };
+const _libs = {};
+function needLib(k) {
+  if (_libs[k]) return _libs[k];
+  _libs[k] = new Promise((res, rej) => {
+    const el = document.createElement('script');
+    el.src = LIBS[k]; el.async = true;
+    el.onload = () => res(true);
+    el.onerror = () => {
+      _libs[k] = null;
+      rej(new Error(I18N.p(`Pustaka ${LIB_NAME[k]} gagal diunduh. Periksa koneksi internet — bila jaringan sekolah memblokir cdnjs.cloudflare.com, fitur ini tidak bisa dipakai di jaringan itu.`,
+        `The ${LIB_NAME[k]} library failed to download. Check the connection — if the school network blocks cdnjs.cloudflare.com, this feature cannot run on that network.`)));
+    };
+    document.head.appendChild(el);
+  });
+  return _libs[k];
+}
+async function needPdf() { await needLib('jspdf'); await needLib('jspdfAT'); }
+/** Muat pustaka di waktu senggang supaya sudah siap saat tombolnya ditekan. */
+function warmLibs() {
+  const go = () => { needLib('chart').catch(() => { }); needLib('xlsx').catch(() => { }); needPdf().catch(() => { }); };
+  if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 4000 }); else setTimeout(go, 1800);
+}
 function mkChart(id, config) {
   const el = document.getElementById(id);
-  if (!el || typeof Chart === 'undefined') {
-    if (el && el.parentElement) el.parentElement.innerHTML = '<div class="note">Grafik tidak dapat dimuat (library Chart.js belum tersedia / offline).</div>';
+  if (!el) return null;
+  if (typeof Chart === 'undefined') {
+    // pustaka grafik belum ada: ambil dulu, lalu gambar bila kanvasnya masih di layar
+    needLib('chart')
+      .then(() => { if (document.getElementById(id) === el) mkChart(id, config); })
+      .catch((e) => { if (el.parentElement) el.parentElement.innerHTML = `<div class="note warn">${esc(e.message)}</div>`; });
     return null;
   }
   Chart.defaults.font.family = cssVar('--font').replace(/'/g, '') || 'sans-serif';
@@ -5053,8 +5341,9 @@ document.addEventListener('drop', (e) => {
  * 25. DOKUMEN PDF (Invoice, Kwitansi, Laporan Sesi) + Gmail
  * ------------------------------------------------------------------- */
 const Docs = {
+  async ready() { await needPdf(); return window.jspdf.jsPDF; },
   lib() {
-    if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('Library PDF (jsPDF) belum termuat. Periksa koneksi internet lalu muat ulang halaman.');
+    if (!window.jspdf || !window.jspdf.jsPDF) throw new Error(I18N.p('Pustaka PDF belum selesai diunduh. Coba lagi sebentar lagi.', 'The PDF library has not finished downloading. Try again in a moment.'));
     return window.jspdf.jsPDF;
   },
   pdfText(s) { return String(s == null ? '' : s).replace(/[—–]/g, '-').replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/[^\x09\x0A\x0D\x20-\x7E\xA0-\xFF]/g, ''); },
@@ -5256,7 +5545,8 @@ const IMPORT_TARGETS = {
 };
 
 const Excel = {
-  lib() { if (typeof XLSX === 'undefined') throw new Error('Library Excel (SheetJS) belum termuat. Periksa koneksi internet lalu muat ulang.'); return XLSX; },
+  async ready() { await needLib('xlsx'); return XLSX; },
+  lib() { if (typeof XLSX === 'undefined') throw new Error(I18N.p('Pustaka Excel belum selesai diunduh. Coba lagi sebentar lagi.', 'The Excel library has not finished downloading. Try again in a moment.')); return XLSX; },
 
   exportAll() {
     const X = this.lib();
@@ -5717,6 +6007,7 @@ async function boot() {
   const prefersDark = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
   document.documentElement.dataset.theme = Config.data.theme || 'dark';   // tampilan futuristik: gelap sebagai bawaan
   App.shell();
+  try { Wall.apply(); } catch (e) { }
   bindGlobalEvents();
   try {
     await Lock.gate();
@@ -5725,7 +6016,9 @@ async function boot() {
     console.error(e);
     UI.toast('Gagal memuat data: ' + e.message, 'err', 8000);
   }
+  try { Workbooks.register(); } catch (e) { }
   App.refresh();
+  warmLibs();
   if (Store.isRemote() && Store.services && Store.services.pinSet) Lock.arm();
   if (Store.needsKey()) {
     UI.toast('Masukkan API key untuk memuat data dari Google Sheets.', '', 6000);
@@ -6261,6 +6554,8 @@ const I18N = {
     'Koneksi': 'Connection', 'Profil & Invoice': 'Profile & Invoice', 'Data & Cadangan': 'Data & Backup',
     'Cari': 'Search', 'Filter': 'Filter', 'Bulan ini': 'This month', 'Hari ini': 'Today', 'Besok (H-1)': 'Tomorrow (D-1)', 'Semua modul': 'All modules',
     /* v8 — sapuan antarmuka; nilai yang tersimpan di sheet sengaja tidak diterjemahkan */
+    "Riwayat Pembelajaran": "Teaching History", "Absen Siswa": "Student Attendance",
+    "Grafik & Kepadatan": "Charts & Density", "Tampilan & Latar": "Appearance & Background", "Otomatisasi": "Automation", "Spreadsheet Terhubung": "Connected Spreadsheets", "Latar belakang": "Background", "Hubungkan spreadsheet": "Connect a spreadsheet", "Belum ada spreadsheet terhubung": "No spreadsheet connected yet", "Tempel alamat Google Sheet lain agar muncul sebagai tab baru di aplikasi ini.": "Paste another Google Sheet address so it appears as a new tab in this app.", "Hubungkan Google Sheet mana pun. Spreadsheet itu akan muncul sebagai menu tersendiri di bilah kiri, dan tiap lembarnya menjadi sub-tab yang bisa diisi langsung dari aplikasi ini.": "Connect any Google Sheet. It appears as its own menu in the sidebar, and each of its sheets becomes a sub-tab you can fill in right here.", "Kepadatan aktivitas": "Activity density",
     "Semua kelas": "All classes", "Semua bidang": "All fields", "Semua jenis": "All types", "Semua bulan": "All months", "Semua sumber": "All sources", "Semua kategori": "All categories", "Semua modul": "All modules", "Semua": "All", "Belum selesai": "Not finished", "Belum": "Not yet", "Semua status": "All statuses", "Semua tahun": "All years", "Semua tipe": "All types",
     "Catatan": "Notes",
     "Papan Catatan": "Note Board",
@@ -9781,6 +10076,1568 @@ Object.assign(CHG, { asgSrc: (v) => { App.s('school').asgSrc = v; App.refresh();
     return head + base.call(this);
   };
 })();
+
+/* =====================================================================
+ * v9a — (1) Spreadsheet lain jadi tab tersendiri
+ *       (2) Tanggal yang lebih rinci
+ *       (3) JP TOTAL selalu terlihat di bilah atas
+ *       (4) Wallpaper / latar belakang
+ * =================================================================== */
+
+/* ----------------------- (2) TANGGAL LEBIH RINCI -------------------- */
+
+/** Nomor minggu ISO — dipakai untuk "minggu ke-42". */
+function isoWeek(iso) {
+  const d = parseISO(iso);
+  if (!d) return 0;
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+  const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return Math.ceil(((t - y0) / 86400000 + 1) / 7);
+}
+
+/** "Rabu, 15 Oktober 2026" / "Wednesday, 15 October 2026" */
+function fmtDateFull(iso) {
+  const d = parseISO(iso);
+  if (!d) return '—';
+  return `${HARI[d.getDay()]}, ${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/** Jarak hari dalam kata: "hari ini", "besok", "3 hari lagi", "lewat 5 hari". */
+function relDay(iso) {
+  const d = diffDays(todayISO(), iso);
+  if (d == null || isNaN(d)) return '';
+  if (d === 0) return I18N.p('hari ini', 'today');
+  if (d === 1) return I18N.p('besok', 'tomorrow');
+  if (d === -1) return I18N.p('kemarin', 'yesterday');
+  if (d > 1) return I18N.p(`${d} hari lagi`, `in ${d} days`);
+  return I18N.p(`lewat ${-d} hari`, `${-d} days ago`);
+}
+
+/** Rentang jam → durasi: "07:00–09:20 · 2 jam 20 menit". */
+function fmtSpanTime(start, end) {
+  const s = String(start || '').trim(), e = String(end || '').trim();
+  if (!s) return '';
+  if (!e) return s;
+  const toMin = (x) => { const m = String(x).match(/(\d{1,2})[.:](\d{2})/); return m ? +m[1] * 60 + +m[2] : null; };
+  const a = toMin(s), b = toMin(e);
+  if (a == null || b == null || b <= a) return `${s}–${e}`;
+  const n = b - a, h = Math.floor(n / 60), mm = n % 60;
+  const dur = [h ? I18N.p(`${h} jam`, `${h}h`) : '', mm ? I18N.p(`${mm} menit`, `${mm}m`) : ''].filter(Boolean).join(' ');
+  return `${s}–${e} · ${dur}`;
+}
+
+/** Rentang tanggal → durasi hari: "12–15 Okt 2026 · 4 hari". */
+function fmtSpanDate(from, to) {
+  if (!from) return '—';
+  if (!to || to <= from) return fmtDateFull(from);
+  const a = parseISO(from), b = parseISO(to);
+  const n = diffDays(from, to) + 1;
+  const same = a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+  const left = same ? String(a.getDate()) : `${a.getDate()} ${BLN[a.getMonth()]}`;
+  return `${left}–${b.getDate()} ${BLN[b.getMonth()]} ${b.getFullYear()} · ${n} ${I18N.p('hari', 'days')}`;
+}
+
+/** Baris tanggal lengkap untuk kartu & daftar: hari, tanggal, minggu, jarak. */
+function dateLine(iso, { time = '', endTime = '', endDate = '', week = true } = {}) {
+  if (!iso) return '<span class="muted">—</span>';
+  const rel = relDay(iso);
+  const past = diffDays(todayISO(), iso) < 0;
+  const span = endDate && endDate > iso ? fmtSpanDate(iso, endDate) : fmtDateFull(iso);
+  const t = time ? fmtSpanTime(time, endTime) : '';
+  return `<span class="dt"><b>${span}</b>${t ? `<span class="dt-t">${esc(t)}</span>` : ''}` +
+    `<span class="dt-m">${week ? I18N.p(`minggu ke-${isoWeek(iso)}`, `week ${isoWeek(iso)}`) + ' · ' : ''}` +
+    `<i class="${past ? 'neg' : ''}">${rel}</i></span></span>`;
+}
+
+/* ------------------ (1) SPREADSHEET LAIN JADI TAB ------------------- */
+
+const Workbooks = {
+  all() { return Store.all('_Workbook').filter((w) => w.ssId && w.name); },
+  tabsOf(w) { return String(w.tabs || '').split('|').map((x) => x.trim()).filter(Boolean); },
+  key(w) { return 'wb_' + w.id; },
+  source(w) { return 'wb:' + w.ssId; },
+  state(w) { const s = App.s(this.key(w)); s.edits = s.edits || {}; return s; },
+  byKey(k) { return this.all().filter((w) => this.key(w) === k)[0] || null; },
+
+  /** Tempel URL → periksa isinya → pilih lembar mana yang jadi sub-tab. */
+  connect(id) {
+    const ex = id ? Store.get('_Workbook', id) : null;
+    UI.form({
+      title: ex ? I18N.p('Ubah spreadsheet terhubung', 'Edit connected spreadsheet') : I18N.p('Hubungkan spreadsheet', 'Connect a spreadsheet'),
+      size: 'wide',
+      note: I18N.p('Tempel alamat Google Sheet mana pun. Setelah terhubung, spreadsheet itu muncul sebagai menu tersendiri di bilah kiri, dan tiap lembarnya jadi sub-tab yang bisa diisi langsung dari sini. Pastikan akun Google yang menjalankan aplikasi ini punya akses minimal Editor ke spreadsheet tersebut.',
+        'Paste any Google Sheet address. Once connected, that spreadsheet appears as its own menu in the sidebar, and each of its sheets becomes a sub-tab you can fill in right here. Make sure the Google account running this app has at least Editor access to it.'),
+      values: ex || { url: '', color: 't1' },
+      fields: [
+        { k: 'url', l: I18N.p('Alamat spreadsheet', 'Spreadsheet address'), req: 1, full: 1, ph: 'https://docs.google.com/spreadsheets/d/…' },
+        { k: 'name', l: I18N.p('Nama menu (boleh diganti)', 'Menu name (you may rename it)'), ph: I18N.p('terisi otomatis setelah diperiksa', 'filled in automatically after checking') },
+        { k: 'color', l: I18N.p('Warna', 'Colour'), t: 'select', o: [['t1', 'Indigo'], ['t2', 'Teal'], ['t3', I18N.p('Emas', 'Gold')]] },
+        { t: 'html', full: 1, html: `<label>${I18N.p('Lembar yang ditampilkan', 'Sheets to show')}</label>
+          <div class="btn-row mb"><button type="button" class="btn sm" data-wb="probe">${ic('refresh')}${I18N.p('Periksa isi spreadsheet', 'Check what is inside')}</button></div>
+          <div id="wb-sheets" class="wb-picklist"><p class="mini muted">${I18N.p('Tekan "Periksa isi spreadsheet" untuk melihat daftar lembarnya.', 'Press "Check what is inside" to see its sheet list.')}</p></div>` },
+        { k: 'note', l: I18N.p('Catatan (opsional)', 'Note (optional)'), full: 1 }
+      ],
+      extraFoot: ex ? `<button class="btn danger left" data-act="wbDel" data-id="${ex.id}">${ic('trash')}${I18N.p('Putuskan', 'Disconnect')}</button>` : '',
+      submit: I18N.p('Simpan koneksi', 'Save connection'),
+      onMount: (box) => {
+        let probed = ex ? { ssId: ex.ssId, name: ex.name, url: ex.url } : null;
+        const picked = new Set(ex ? this.tabsOf(ex) : []);
+        const paint = (sheets) => {
+          const el = box.querySelector('#wb-sheets');
+          if (!sheets || !sheets.length) { el.innerHTML = `<p class="mini muted">${I18N.p('Tidak ada lembar yang terbaca.', 'No sheets were read.')}</p>`; return; }
+          el.innerHTML = `<div class="btn-row mb"><button type="button" class="btn xs" data-wb="all">${I18N.p('Pilih semua', 'Select all')}</button><button type="button" class="btn xs" data-wb="none">${I18N.p('Kosongkan', 'Clear')}</button></div>` +
+            sheets.map((x) => `<label class="wb-pick"><input type="checkbox" class="check" data-wb-s="${esc(x.name)}" ${picked.has(x.name) ? 'checked' : ''}>
+              <span class="grow"><b>${esc(x.name)}</b><span class="s">${x.rows} ${I18N.p('baris', 'rows')} × ${x.cols} ${I18N.p('kolom', 'cols')}${x.hidden ? ' · ' + I18N.p('tersembunyi', 'hidden') : ''}</span></span></label>`).join('');
+        };
+        if (ex) paint(this.tabsOf(ex).map((n) => ({ name: n, rows: '—', cols: '—' })));
+        box.addEventListener('click', async (e) => {
+          const b = e.target.closest('[data-wb]');
+          if (!b) return;
+          if (b.dataset.wb === 'all') { $$('[data-wb-s]', box).forEach((c) => { c.checked = true; picked.add(c.dataset.wbS); }); return; }
+          if (b.dataset.wb === 'none') { $$('[data-wb-s]', box).forEach((c) => { c.checked = false; }); picked.clear(); return; }
+          if (b.dataset.wb !== 'probe') return;
+          const url = box.querySelector('#f_url').value.trim();
+          if (!url) return UI.toast(I18N.p('Isi alamat spreadsheet dulu.', 'Enter the spreadsheet address first.'), 'err');
+          b.disabled = true;
+          box.querySelector('#wb-sheets').innerHTML = `<p class="mini muted">${I18N.p('Membaca spreadsheet…', 'Reading the spreadsheet…')}</p>`;
+          try {
+            const j = await Api.call('wbProbe', { url });
+            probed = j;
+            if (!box.querySelector('#f_name').value.trim()) box.querySelector('#f_name').value = j.name || '';
+            if (!picked.size) j.sheets.filter((x) => !x.hidden).forEach((x) => picked.add(x.name));
+            paint(j.sheets);
+            UI.toast(I18N.p(`${j.sheets.length} lembar terbaca dari "${j.name}".`, `${j.sheets.length} sheets read from "${j.name}".`), 'ok');
+          } catch (err) {
+            box.querySelector('#wb-sheets').innerHTML = `<p class="mini neg">${esc(err.message)}</p>`;
+            UI.toast(err.message, 'err', 8000);
+          }
+          b.disabled = false;
+        });
+        box.addEventListener('change', (e) => {
+          const c = e.target.closest('[data-wb-s]');
+          if (!c) return;
+          if (c.checked) picked.add(c.dataset.wbS); else picked.delete(c.dataset.wbS);
+        });
+        box._wb = () => ({ probed, picked });
+      },
+      onSubmit: async (v, box) => {
+        const { probed, picked } = box._wb();
+        if (!probed || !probed.ssId) { UI.toast(I18N.p('Periksa dulu isi spreadsheet-nya.', 'Check the spreadsheet first.'), 'err'); return false; }
+        if (!picked.size) { UI.toast(I18N.p('Pilih minimal satu lembar untuk ditampilkan.', 'Pick at least one sheet to show.'), 'err'); return false; }
+        const row = {
+          name: (v.name || probed.name || 'Spreadsheet').trim(), ssId: probed.ssId,
+          url: probed.url || v.url, tabs: [...picked].join('|'),
+          color: v.color || 't1', note: v.note || ''
+        };
+        if (ex) await Store.update('_Workbook', ex.id, row); else await Store.create('_Workbook', row);
+        Workbooks.register();
+        UI.toast(I18N.p(`"${row.name}" terhubung — ${picked.size} lembar.`, `"${row.name}" connected — ${picked.size} sheets.`), 'ok');
+        App.refresh();
+      }
+    });
+  },
+
+  async remove(id) {
+    const w = Store.get('_Workbook', id);
+    if (!w) return;
+    if (!(await UI.confirm(I18N.p(`Putuskan "${w.name}"? Spreadsheet aslinya tidak dihapus — hanya menunya yang hilang dari aplikasi ini.`,
+      `Disconnect "${w.name}"? The spreadsheet itself is not deleted — only its menu disappears from this app.`), { ok: I18N.p('Putuskan', 'Disconnect'), danger: 1 }))) return;
+    const k = this.key(w);
+    await Store.remove('_Workbook', id);
+    delete MODULES[k]; delete VIEWS[k];
+    App.tabs = App.tabs.filter((t) => t !== k);
+    if (App.active === k) App.active = 'home';
+    UI.closeAll();
+    this.register();
+    App.refresh();
+  },
+
+  /** Daftarkan tiap spreadsheet terhubung sebagai modul (tab) tersendiri. */
+  register() {
+    Object.keys(MODULES).forEach((k) => { if (k.indexOf('wb_') === 0) delete MODULES[k]; });
+    Object.keys(VIEWS).forEach((k) => { if (k.indexOf('wb_') === 0) delete VIEWS[k]; });
+    this.all().forEach((w) => {
+      const k = this.key(w);
+      const tabs = this.tabsOf(w);
+      MODULES[k] = {
+        nav: w.name, title: w.name, short: w.name.slice(0, 14), icon: 'table',
+        desc: I18N.p(`Spreadsheet terhubung — ${tabs.length} lembar`, `Connected spreadsheet — ${tabs.length} sheets`),
+        subs: tabs.map((t) => [this.slug(t), t]), wb: w.id
+      };
+      VIEWS[k] = {};
+      tabs.forEach((t) => { VIEWS[k][this.slug(t)] = this.view(w, t); });
+    });
+  },
+  slug(name) { return 'sh' + hashStr(name); },
+
+  view(w, sheetName) {
+    const self = this;
+    return {
+      actions: () => `<button class="btn" data-act="wbReload" data-wb="${w.id}" data-sheet="${esc(sheetName)}">${ic('refresh')}${I18N.p('Muat ulang', 'Reload')}</button>
+        <button class="btn" data-act="wbAddRow" data-wb="${w.id}">${ic('plus')}${I18N.p('Baris baru', 'New row')}</button>
+        <button class="btn" data-act="wbNewSheet" data-wb="${w.id}">${ic('table')}${I18N.p('Lembar baru', 'New sheet')}</button>
+        <button class="btn mod" data-act="wbSave" data-wb="${w.id}" data-sheet="${esc(sheetName)}">${ic('check')}${I18N.p('Simpan', 'Save')}</button>`,
+      after: () => { const s = self.state(w); if (s.name !== sheetName && !s.loading) self.open(w, sheetName); },
+      render() {
+        const s = self.state(w);
+        const j = s.name === sheetName ? s.sheet : null;
+        const n = Object.keys(s.edits).length;
+        return `<div class="grid g4 mb">
+            <div class="stat accent"><small>${I18N.p('Lembar', 'Sheet')}</small><b style="font-size:16px">${esc(sheetName)}</b><span class="sub">${j ? `${j.rows} × ${j.cols}` : '—'}</span></div>
+            <div class="stat"><small>${I18N.p('Spreadsheet', 'Spreadsheet')}</small><b style="font-size:15px">${esc(w.name)}</b><span class="sub">${self.tabsOf(w).length} ${I18N.p('lembar terhubung', 'sheets connected')}</span></div>
+            <div class="stat"><small>${I18N.p('Perubahan belum disimpan', 'Unsaved changes')}</small><b class="${n ? 'warn' : ''}">${n}</b></div>
+            <div class="stat"><small>${I18N.p('Baris terakhir di sheet', 'Last row in the sheet')}</small><b>${j ? j.lastRow : '—'}</b></div>
+          </div>
+          <div class="toolbar">
+            <a class="btn sm" href="${esc(w.url)}" target="_blank" rel="noopener">${ic('eye')}${I18N.p('Buka di Google Sheets', 'Open in Google Sheets')}</a>
+            <button class="btn sm" data-act="wbEdit" data-id="${w.id}">${ic('settings')}${I18N.p('Atur lembar & nama', 'Sheets & name')}</button>
+            <span class="mini muted">${I18N.p('Ketik langsung di kotaknya lalu tekan Simpan. Sel berumus ditandai ƒ dan tidak akan tertimpa.', 'Type straight into the boxes, then press Save. Formula cells are marked ƒ and are never overwritten.')}</span>
+          </div>
+          ${s.loading ? UI.empty(I18N.p('Memuat lembar…', 'Loading sheet…'))
+            : j ? `<div class="card">${self.grid(w)}${j.truncated ? `<p class="mini warn">${I18N.p('Hanya 300 baris × 30 kolom pertama yang ditampilkan.', 'Only the first 300 rows × 30 columns are shown.')}</p>` : ''}</div>`
+              : UI.empty(I18N.p('Lembar belum dimuat', 'Sheet not loaded'), '', `<button class="btn sm" data-act="wbReload" data-wb="${w.id}" data-sheet="${esc(sheetName)}">${ic('refresh')}${I18N.p('Muat', 'Load')}</button>`)}`;
+      }
+    };
+  },
+
+  async open(w, name) {
+    const s = this.state(w);
+    if (!Store.isRemote()) return UI.toast(I18N.p('Fitur ini perlu koneksi Google Sheets.', 'This needs a Google Sheets connection.'), 'err');
+    s.loading = true; s.name = name; s.edits = {}; s.sheet = null;
+    App.refresh();
+    try { s.sheet = await Api.call('sheetEdit', { name, source: this.source(w) }); }
+    catch (e) { s.sheet = null; UI.toast(e.message, 'err', 8000); }
+    s.loading = false;
+    App.refresh();
+  },
+
+  async save(w, name) {
+    const s = this.state(w);
+    const keys = Object.keys(s.edits);
+    if (!keys.length && !(s.appends || []).length) return UI.toast(I18N.p('Tidak ada perubahan.', 'Nothing to save.'));
+    const edits = keys.map((k) => { const [r, c] = k.split(':'); return { r: +r, c: +c, v: s.edits[k] }; });
+    UI.toast(I18N.p('Menyimpan ke spreadsheet…', 'Saving to the spreadsheet…'), '', 2500);
+    try {
+      const j = await Api.call('sheetSave', { name, edits, appends: s.appends || [], source: this.source(w) });
+      s.edits = {}; s.appends = [];
+      UI.toast(I18N.p(`${j.written} sel tersimpan${j.skipped ? `, ${j.skipped} sel berumus dilewati` : ''}${j.added ? `, ${j.added} baris ditambahkan` : ''}.`,
+        `${j.written} cells saved${j.skipped ? `, ${j.skipped} formula cells skipped` : ''}${j.added ? `, ${j.added} rows added` : ''}.`), 'ok', 6000);
+      await this.open(w, name);
+    } catch (e) { UI.toast(e.message, 'err', 8000); }
+  },
+
+  addRow(w) {
+    const s = this.state(w);
+    if (!s.sheet) return;
+    s.appends = s.appends || [];
+    s.appends.push([]);
+    const cols = s.sheet.cols;
+    s.sheet.values.push([...Array(cols)].map(() => ''));
+    s.sheet.formulas.push([...Array(cols)].map(() => ''));
+    s.sheet.rows++;
+    UI.toast(I18N.p('Baris kosong ditambahkan di bawah — isi lalu tekan Simpan.', 'An empty row was added at the bottom — fill it in, then press Save.'), '', 4500);
+    App.refresh();
+  },
+
+  newSheet(w) {
+    UI.form({
+      title: I18N.p('Lembar baru di ' + w.name, 'New sheet in ' + w.name), size: 'narrow',
+      fields: [{ k: 'name', l: I18N.p('Nama lembar', 'Sheet name'), req: 1, full: 1 }],
+      onSubmit: async (v) => {
+        await Api.call('wbAddSheet', { source: this.source(w), name: v.name });
+        const tabs = this.tabsOf(w).concat([v.name.trim()]);
+        await Store.update('_Workbook', w.id, { tabs: tabs.join('|') });
+        this.register();
+        UI.toast(I18N.p(`Lembar "${v.name}" dibuat dan ditambahkan sebagai sub-tab.`, `Sheet "${v.name}" created and added as a sub-tab.`), 'ok');
+        App.refresh();
+      }
+    });
+  },
+
+  grid(w) {
+    const s = this.state(w);
+    const j = s.sheet;
+    if (!j) return '';
+    const colL = (c) => { let x = ''; while (c > 0) { const m = (c - 1) % 26; x = String.fromCharCode(65 + m) + x; c = Math.floor((c - 1) / 26); } return x; };
+    const head = `<tr><th class="rownum"></th>${[...Array(j.cols)].map((_, i) => `<th>${colL(i + 1)}</th>`).join('')}</tr>`;
+    const body = j.values.map((row, r) => `<tr><th class="rownum">${r + 1}</th>${[...Array(j.cols)].map((_, c) => {
+      const f = (j.formulas[r] || [])[c] || '';
+      const v = (row[c] == null ? '' : row[c]);
+      if (f) return `<td class="cell-f" title="${esc(f)}">${esc(v)}<i>ƒ</i></td>`;
+      const pend = s.edits[(r + 1) + ':' + (c + 1)];
+      return `<td><input class="cell-in${pend !== undefined ? ' edited' : ''}" data-chg="wbCell" data-wb="${w.id}" data-live data-rc="${r + 1}:${c + 1}" value="${esc(pend !== undefined ? pend : v)}"></td>`;
+    }).join('')}</tr>`).join('');
+    return `<div class="sheet-grid"><table class="tbl grid"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+  }
+};
+function hashStr(s) { let h = 0; String(s).split('').forEach((c) => { h = ((h << 5) - h + c.charCodeAt(0)) | 0; }); return Math.abs(h).toString(36); }
+
+Object.assign(ACT, {
+  wbConnect: () => Workbooks.connect(),
+  wbEdit: (d) => Workbooks.connect(d.id),
+  wbDel: (d) => Workbooks.remove(d.id),
+  wbReload: (d) => { const w = Store.get('_Workbook', d.wb); if (w) Workbooks.open(w, d.sheet); },
+  wbSave: (d) => { const w = Store.get('_Workbook', d.wb); if (w) Workbooks.save(w, d.sheet); },
+  wbAddRow: (d) => { const w = Store.get('_Workbook', d.wb); if (w) Workbooks.addRow(w); },
+  wbNewSheet: (d) => { const w = Store.get('_Workbook', d.wb); if (w) Workbooks.newSheet(w); }
+});
+Object.assign(CHG, {
+  wbCell: (v, el) => {
+    const w = Store.get('_Workbook', el.dataset.wb);
+    if (!w) return;
+    const s = Workbooks.state(w);
+    s.edits[el.dataset.rc] = v;
+    el.classList.add('edited');
+  }
+});
+
+/* ------------------------- (4) WALLPAPER ---------------------------- */
+
+const WALLS = [
+  ['none', 'Polos', 'Plain', ''],
+  ['aurora', 'Aurora', 'Aurora', 'radial-gradient(60% 50% at 12% 8%, var(--t1) 0%, transparent 62%), radial-gradient(55% 48% at 88% 4%, var(--t2) 0%, transparent 64%), radial-gradient(50% 44% at 50% 96%, var(--t3) 0%, transparent 66%)'],
+  ['mesh', 'Mesh', 'Mesh', 'radial-gradient(42% 38% at 18% 22%, var(--t1) 0%, transparent 60%), radial-gradient(38% 34% at 78% 18%, var(--t3) 0%, transparent 60%), radial-gradient(44% 40% at 62% 78%, var(--t2) 0%, transparent 62%), radial-gradient(36% 32% at 24% 82%, var(--t1) 0%, transparent 60%)'],
+  ['dawn', 'Fajar', 'Dawn', 'linear-gradient(170deg, var(--t1) 0%, var(--t3) 58%, transparent 100%)'],
+  ['grid', 'Garis', 'Grid', 'repeating-linear-gradient(0deg, var(--t1) 0 1px, transparent 1px 44px), repeating-linear-gradient(90deg, var(--t1) 0 1px, transparent 1px 44px)'],
+  ['dots', 'Titik', 'Dots', 'radial-gradient(var(--t1) 1.4px, transparent 1.5px)'],
+  ['waves', 'Gelombang', 'Waves', 'repeating-radial-gradient(circle at 10% 0%, var(--t2) 0 2px, transparent 2px 60px)'],
+  ['custom', 'Gambar sendiri', 'Your own image', '']
+];
+
+const Wall = {
+  KEY: 'mph_wall',
+  IMG: 'mph_wall_img',
+  cfg() {
+    let c = {};
+    try { c = JSON.parse(localStorage.getItem(this.KEY) || '{}'); } catch (e) { }
+    return Object.assign({ kind: 'none', opacity: 22, blur: 0, fixed: true }, c);
+  },
+  img() { try { return localStorage.getItem(this.IMG) || ''; } catch (e) { return ''; } },
+  save(c) { try { localStorage.setItem(this.KEY, JSON.stringify(c)); } catch (e) { } this.apply(); },
+
+  apply() {
+    const c = this.cfg();
+    let el = document.getElementById('wallpaper');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'wallpaper';
+      document.body.insertBefore(el, document.body.firstChild);
+    }
+    const def = WALLS.filter((w) => w[0] === c.kind)[0];
+    if (!def || c.kind === 'none') { el.style.display = 'none'; return; }
+    el.style.display = '';
+    el.style.opacity = String(Math.max(0, Math.min(100, c.opacity)) / 100);
+    el.style.filter = c.blur ? `blur(${c.blur}px)` : '';
+    el.style.backgroundAttachment = c.fixed ? 'fixed' : 'scroll';
+    if (c.kind === 'custom') {
+      const src = this.img();
+      el.style.backgroundImage = src ? `url("${src}")` : '';
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+      el.style.backgroundRepeat = 'no-repeat';
+    } else {
+      el.style.backgroundImage = def[3];
+      el.style.backgroundSize = c.kind === 'dots' ? '26px 26px' : c.kind === 'grid' ? 'auto' : 'cover';
+      el.style.backgroundPosition = '';
+      el.style.backgroundRepeat = c.kind === 'dots' || c.kind === 'grid' ? 'repeat' : 'no-repeat';
+    }
+  },
+
+  /** Gambar dikecilkan dulu supaya tidak membebani penyimpanan browser. */
+  pickImage() {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = () => {
+      const f = inp.files && inp.files[0];
+      if (!f) return;
+      const rd = new FileReader();
+      rd.onload = () => {
+        const im = new Image();
+        im.onload = () => {
+          const max = 1920;
+          const sc = Math.min(1, max / Math.max(im.width, im.height));
+          const cv = document.createElement('canvas');
+          cv.width = Math.round(im.width * sc); cv.height = Math.round(im.height * sc);
+          cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+          let data = cv.toDataURL('image/jpeg', 0.82);
+          if (data.length > 2.6e6) data = cv.toDataURL('image/jpeg', 0.6);
+          try { localStorage.setItem(this.IMG, data); }
+          catch (e) { return UI.toast(I18N.p('Gambar terlalu besar untuk disimpan di browser ini. Coba gambar yang lebih kecil.', 'The image is too large for this browser to store. Try a smaller one.'), 'err', 7000); }
+          const c = this.cfg(); c.kind = 'custom'; this.save(c);
+          UI.toast(I18N.p(`Latar dipasang (${Math.round(data.length / 1024)} KB, hanya tersimpan di perangkat ini).`, `Wallpaper set (${Math.round(data.length / 1024)} KB, stored on this device only).`), 'ok', 6000);
+          App.refresh();
+        };
+        im.src = rd.result;
+      };
+      rd.readAsDataURL(f);
+    };
+    inp.click();
+  },
+
+  panel() {
+    const c = this.cfg();
+    return `<div class="wall-wrap">
+      <div class="wall-grid">
+        ${WALLS.map(([k, idl, en, css]) => `<button class="wall-pick ${c.kind === k ? 'on' : ''}" data-act="wallSet" data-k="${k}">
+          <span class="wall-prev" style="${k === 'custom' ? `background-image:url('${esc(this.img())}');background-size:cover;background-position:center` : k === 'none' ? '' : `background-image:${css};background-size:${k === 'dots' ? '12px 12px' : 'cover'};opacity:.85`}">${k === 'custom' && !this.img() ? ic('upload') : ''}</span>
+          <span class="wall-name">${esc(I18N.p(idl, en))}</span></button>`).join('')}
+      </div>
+      <div class="form mt" style="grid-template-columns:1fr 1fr">
+        <div class="field"><label for="wall-op">${I18N.p('Keredupan', 'Strength')} — <b id="wall-op-v">${c.opacity}%</b></label>
+          <input type="range" id="wall-op" min="0" max="70" value="${c.opacity}" data-chg="wallOp" data-live></div>
+        <div class="field"><label for="wall-bl">${I18N.p('Keburaman', 'Blur')} — <b id="wall-bl-v">${c.blur}px</b></label>
+          <input type="range" id="wall-bl" min="0" max="24" value="${c.blur}" data-chg="wallBlur" data-live></div>
+      </div>
+      <label class="checkline"><input type="checkbox" class="check" data-chg="wallFixed" ${c.fixed ? 'checked' : ''}> ${I18N.p('Latar diam saat halaman digulir', 'Keep the background still while scrolling')}</label>
+      <div class="btn-row mt">
+        <button class="btn sm" data-act="wallUpload">${ic('upload')}${I18N.p('Unggah gambar sendiri', 'Upload your own image')}</button>
+        <button class="btn sm ghost" data-act="wallOff">${ic('x')}${I18N.p('Matikan latar', 'Turn the background off')}</button>
+      </div>
+      <p class="mini muted">${I18N.p('Latar hanya tersimpan di perangkat ini, tidak ikut ke Google Sheets maupun perangkat lain. Keredupan sengaja dibatasi 70% agar tulisan tetap terbaca.', 'The background is stored on this device only — it is not sent to Google Sheets or other devices. Strength is capped at 70% so text stays readable.')}</p>
+    </div>`;
+  }
+};
+Object.assign(ACT, {
+  wallSet: (d) => { if (d.k === 'custom' && !Wall.img()) return Wall.pickImage(); const c = Wall.cfg(); c.kind = d.k; Wall.save(c); App.refresh(); },
+  wallUpload: () => Wall.pickImage(),
+  wallOff: () => { const c = Wall.cfg(); c.kind = 'none'; Wall.save(c); App.refresh(); }
+});
+Object.assign(CHG, {
+  wallOp: (v) => { const c = Wall.cfg(); c.opacity = +v; Wall.save(c); const e = $('#wall-op-v'); if (e) e.textContent = v + '%'; },
+  wallBlur: (v) => { const c = Wall.cfg(); c.blur = +v; Wall.save(c); const e = $('#wall-bl-v'); if (e) e.textContent = v + 'px'; },
+  wallFixed: (v) => { const c = Wall.cfg(); c.fixed = !!v; Wall.save(c); }
+});
+
+/* =====================================================================
+ * v9b — (5) Grafik aktivitas harian / mingguan / bulanan
+ *       (6) Level kepadatan: Little · Medium · Busy · Crowded · Dying
+ *       (7) JP TOTAL selalu terlihat di bilah atas
+ *       (8) Pusat otomatisasi
+ * =================================================================== */
+
+/* -------------------- (6) LEVEL KEPADATAN AKTIVITAS ----------------- */
+
+/* Bobot tiap jenis kegiatan: berapa besar ia memakan satu hari.
+   Mengajar satu slot = 1; rapat/kegiatan lebih berat; cicilan hampir tak
+   memakan waktu, hanya perlu diingat. */
+const ACT_WEIGHT = {
+  mengajar: 1, agenda: 2, dinas: 2, tugas: 1.5, project: 2,
+  sesi: 1.5, cicilan: 0.4, todo: 0.6, jobdesc: 1
+};
+
+/* Tangga satu warna, terang → gelap. Bentuk ini dipilih karena kepadatan
+   itu besaran bertingkat, bukan kategori: lima warna pelangi gagal uji
+   keterbedaan (merah dan oranye tak terbedakan bahkan oleh mata normal),
+   sedangkan tangga satu warna tetap terbaca di cetak hitam-putih dan oleh
+   mata yang buta warna. Nama levelnya selalu ditulis, jadi warna tidak
+   pernah menjadi satu-satunya penanda. */
+const DENS_RAMP_LIGHT = ['#CBD1EF', '#A7AFE4', '#8089D6', '#5A66C4', '#3A4391'];
+const DENS_RAMP_DARK = ['#333B66', '#45508F', '#5D6BB8', '#7986D9', '#A0ABEF'];
+
+const DENSITY = [
+  { k: 'little', mul: 0.5, id: 'Little — lengang', en: 'Little', short: 'Little', icon: '○', note: ['Hari yang lapang. Waktu terbaik untuk pekerjaan yang butuh fokus panjang.', 'A clear day. The best time for work that needs long focus.'] },
+  { k: 'medium', mul: 1.0, id: 'Medium — sedang', en: 'Medium', short: 'Medium', icon: '◔', note: ['Terisi wajar. Masih ada ruang bila ada yang mendadak.', 'Reasonably full. There is still room if something comes up.'] },
+  { k: 'busy', mul: 1.6, id: 'Busy — sibuk', en: 'Busy', short: 'Busy', icon: '◑', note: ['Padat. Jangan menerima janji baru tanpa menggeser yang lain.', 'Packed. Do not take new commitments without moving something else.'] },
+  { k: 'crowded', mul: 2.4, id: 'Crowded — berjejal', en: 'Crowded', short: 'Crowded', icon: '◕', note: ['Berjejal. Ada yang perlu didelegasikan atau dijadwalkan ulang.', 'Crowded. Something needs delegating or rescheduling.'] },
+  { k: 'dying', mul: 99, id: 'Dying — sekarat', en: 'Dying', short: 'Dying', icon: '●', note: ['Sekarat. Beban hari ini tidak mungkin dipenuhi utuh — pilih yang benar-benar penting.', 'Dying. Today cannot be met in full — pick what truly matters.'] }
+];
+
+const Activity = {
+  /** Kapasitas nyaman satu hari, dalam satuan bobot. Bisa diubah di Pengaturan. */
+  dayCap() { return Math.max(1, Number(Store.settings().densDay) || 6); },
+
+  level(score, days) {
+    const cap = this.dayCap() * Math.max(1, days || 1);
+    const r = cap ? score / cap : 0;
+    const lv = DENSITY.filter((d) => r <= d.mul)[0] || DENSITY[DENSITY.length - 1];
+    return { lv, ratio: r, pct: Math.round(r * 100), cap: round2(cap), idx: DENSITY.indexOf(lv) };
+  },
+  ramp() { return document.documentElement.dataset.theme === 'dark' ? DENS_RAMP_DARK : DENS_RAMP_LIGHT; },
+  color(idx) { return this.ramp()[Math.max(0, Math.min(4, idx))]; },
+  badge(lv) { return `<span class="dens-badge d-${lv.k}"><i>${lv.icon}</i>${esc(I18N.p(lv.id, lv.en))}</span>`; },
+
+  /** Skor kepadatan per hari dalam rentang, dari SELURUH sumber kegiatan. */
+  byDay(from, to, opt = {}) {
+    const items = Planner.items(from, to, { teaching: true });
+    const map = {};
+    for (let d = from; d <= to; d = addDays(d, 1)) map[d] = { date: d, score: 0, n: 0, kinds: {}, done: 0 };
+    items.forEach((it) => {
+      if (!map[it.date]) return;
+      if (it.cancelled) return;
+      if (opt.openOnly && it.done) return;
+      const w = ACT_WEIGHT[it.kind] != null ? ACT_WEIGHT[it.kind] : 1;
+      const m = map[it.date];
+      m.score += w; m.n++;
+      if (it.done) m.done++;
+      m.kinds[it.kind] = (m.kinds[it.kind] || 0) + 1;
+    });
+    return Object.keys(map).sort().map((k) => {
+      const m = map[k];
+      m.score = round2(m.score);
+      m.level = this.level(m.score, 1);
+      return m;
+    });
+  },
+
+  /** Kelompokkan hari menjadi minggu (mulai Senin) atau bulan. */
+  group(days, mode) {
+    const out = {};
+    days.forEach((d) => {
+      let key, label, n;
+      if (mode === 'week') {
+        const dt = parseISO(d.date);
+        const off = (dt.getDay() + 6) % 7;            // Senin = 0
+        key = addDays(d.date, -off);
+        label = I18N.p(`Mg ${isoWeek(key)}`, `W${isoWeek(key)}`);
+        n = 7;
+      } else {
+        key = d.date.slice(0, 7);
+        label = `${BLN[(+key.slice(5)) - 1]} ${key.slice(2, 4)}`;
+        n = new Date(+key.slice(0, 4), +key.slice(5), 0).getDate();
+      }
+      if (!out[key]) out[key] = { key, label, days: n, score: 0, n: 0, done: 0, kinds: {}, from: key };
+      const g = out[key];
+      g.score += d.score; g.n += d.n; g.done += d.done;
+      Object.keys(d.kinds).forEach((k) => { g.kinds[k] = (g.kinds[k] || 0) + d.kinds[k]; });
+    });
+    return Object.keys(out).sort().map((k) => {
+      const g = out[k];
+      g.score = round2(g.score);
+      g.level = this.level(g.score, g.days);
+      return g;
+    });
+  },
+
+  /** Deret siap pakai untuk tiga grafik. */
+  series(mode) {
+    const t = todayISO();
+    if (mode === 'day') {
+      const days = this.byDay(addDays(t, -20), addDays(t, 13));
+      return days.map((d) => ({
+        key: d.date, label: `${parseISO(d.date).getDate()} ${BLN[parseISO(d.date).getMonth()]}`,
+        sub: HARI[parseISO(d.date).getDay()], score: d.score, n: d.n, done: d.done,
+        kinds: d.kinds, level: d.level, today: d.date === t, days: 1
+      }));
+    }
+    if (mode === 'week') {
+      const g = this.group(this.byDay(addDays(t, -77), addDays(t, 27)), 'week');
+      return g.map((x) => ({ key: x.key, label: x.label, sub: fmtDateShort(x.key), score: x.score, n: x.n, done: x.done, kinds: x.kinds, level: x.level, days: x.days, today: x.key <= t && addDays(x.key, 6) >= t }));
+    }
+    const g = this.group(this.byDay(addDays(t, -200), addDays(t, 160)), 'month');
+    return g.map((x) => ({ key: x.key, label: x.label, sub: '', score: x.score, n: x.n, done: x.done, kinds: x.kinds, level: x.level, days: x.days, today: x.key === t.slice(0, 7) }));
+  },
+
+  /** Satu grafik batang: tinggi = beban, warna = tingkat kepadatan. */
+  chart(id, mode) {
+    const data = this.series(mode);
+    const ramp = this.ramp();
+    const cap = this.dayCap();
+    mkChart(id, {
+      type: 'bar',
+      data: {
+        labels: data.map((d) => d.label),
+        datasets: [{
+          label: I18N.p('Beban aktivitas', 'Activity load'),
+          data: data.map((d) => d.score),
+          backgroundColor: data.map((d) => ramp[d.level.idx]),
+          borderColor: data.map((d) => d.today ? cssVar('--ink') : 'transparent'),
+          borderWidth: data.map((d) => d.today ? 2 : 0),
+          borderRadius: 4,
+          borderSkipped: 'bottom',
+          barPercentage: 0.82,
+          categoryPercentage: 0.88
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        animation: { duration: 220 },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: (c) => { const d = data[c[0].dataIndex]; return `${d.label}${d.sub ? ' · ' + d.sub : ''}`; },
+              label: (c) => {
+                const d = data[c.dataIndex];
+                const lv = I18N.p(d.level.lv.id, d.level.lv.en);
+                const kinds = Object.keys(d.kinds).sort((a, b) => d.kinds[b] - d.kinds[a])
+                  .map((k) => `${Planner.kindLabel(k)}: ${d.kinds[k]}`);
+                return [`${lv} — ${d.level.pct}% ${I18N.p('dari kapasitas', 'of capacity')}`,
+                  `${d.n} ${I18N.p('kegiatan', 'items')}${d.done ? ` (${d.done} ${I18N.p('selesai', 'done')})` : ''}`, ''].concat(kinds);
+              }
+            }
+          },
+          annotation: undefined
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: cssVar('--line') }, title: { display: true, text: I18N.p(`beban (kapasitas nyaman ${cap}/hari)`, `load (comfortable capacity ${cap}/day)`) } },
+          x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: mode === 'day' ? 12 : 14 } }
+        }
+      }
+    });
+  },
+
+  /** Ringkasan hari ini / minggu ini / bulan ini. */
+  now() {
+    const t = todayISO();
+    const day = this.byDay(t, t)[0];
+    const wkStart = addDays(t, -((parseISO(t).getDay() + 6) % 7));
+    const wk = this.group(this.byDay(wkStart, addDays(wkStart, 6)), 'week')[0];
+    const mStart = t.slice(0, 7) + '-01';
+    const mEnd = t.slice(0, 7) + '-' + String(new Date(+t.slice(0, 4), +t.slice(5, 7), 0).getDate()).padStart(2, '0');
+    const mo = this.group(this.byDay(mStart, mEnd), 'month')[0];
+    return { day, wk, mo };
+  },
+
+  /** Kartu ringkas untuk Beranda. */
+  card() {
+    const n = this.now();
+    const box = (label, g, days) => {
+      if (!g) return '';
+      const lv = g.level;
+      return `<div class="dens-tile" style="--dc:${this.color(lv.idx)}">
+        <small>${esc(label)}</small>
+        ${this.badge(lv.lv)}
+        <div class="dens-bar"><i style="width:${clamp(lv.pct, 3, 100)}%"></i></div>
+        <span class="mini muted">${g.n} ${I18N.p('kegiatan', 'items')} · ${g.score} / ${lv.cap} ${I18N.p('beban', 'load')} · ${lv.pct}%</span>
+      </div>`;
+    };
+    return `<div class="dens-row">
+        ${box(I18N.p('Hari ini', 'Today'), n.day, 1)}
+        ${box(I18N.p('Minggu ini', 'This week'), n.wk, 7)}
+        ${box(I18N.p('Bulan ini', 'This month'), n.mo, 30)}
+      </div>
+      <p class="mini muted dens-note">${esc(I18N.p(n.day.level.lv.note[0], n.day.level.lv.note[1]))}</p>
+      <div class="chart-box" style="height:150px"><canvas id="ch-dens-home"></canvas></div>
+      <button class="btn sm mt" data-act="open" data-mod="planner" data-sub="analitik">${ic('calendar')}${I18N.p('Lihat grafik lengkap', 'See the full charts')}</button>`;
+  }
+};
+
+MODULES.planner.subs = [['kalender', 'Kalender Terpadu'], ['appointment', 'Daftar Kegiatan'], ['rekap', 'Rekap Aktivitas'], ['analitik', 'Grafik & Kepadatan']];
+
+VIEWS.planner.analitik = {
+  actions: () => `<button class="btn" data-act="densCap">${ic('settings')}${I18N.p('Atur kapasitas harian', 'Set daily capacity')}</button>`,
+  render() {
+    const n = Activity.now();
+    const mode = App.s('planner').densMode || 'day';
+    const data = Activity.series(mode);
+    const ramp = Activity.ramp();
+    const busiest = data.slice().sort((a, b) => b.score - a.score)[0];
+    const kinds = {};
+    data.forEach((d) => Object.keys(d.kinds).forEach((k) => { kinds[k] = (kinds[k] || 0) + d.kinds[k]; }));
+    const totalN = Object.values(kinds).reduce((a, b) => a + b, 0);
+
+    const tile = (label, g) => `<div class="stat"><small>${esc(label)}</small>
+        <b style="font-size:16px">${Activity.badge(g.level.lv)}</b>
+        <span class="sub">${g.n} ${I18N.p('kegiatan', 'items')} · ${g.level.pct}% ${I18N.p('kapasitas', 'capacity')}</span></div>`;
+
+    return `
+      <div class="grid g4 mb">
+        ${tile(I18N.p('Hari ini', 'Today'), n.day)}
+        ${tile(I18N.p('Minggu ini', 'This week'), n.wk)}
+        ${tile(I18N.p('Bulan ini', 'This month'), n.mo)}
+        <div class="stat accent"><small>${I18N.p('Hari terpadat pada rentang ini', 'Busiest point in this range')}</small>
+          <b style="font-size:16px">${busiest ? esc(busiest.label) : '—'}</b>
+          <span class="sub">${busiest ? `${busiest.n} ${I18N.p('kegiatan', 'items')} · ${I18N.p(busiest.level.lv.id, busiest.level.lv.en)}` : ''}</span></div>
+      </div>
+
+      <div class="card mb">
+        <div class="an-head">
+          <h3>${ic('calendar')}${I18N.p('Grafik aktivitas', 'Activity chart')}</h3>
+          <div class="seg">
+            ${[['day', I18N.p('Harian', 'Daily')], ['week', I18N.p('Mingguan', 'Weekly')], ['month', I18N.p('Bulanan', 'Monthly')]]
+        .map(([k, l]) => `<button class="seg-b ${mode === k ? 'on' : ''}" data-act="densMode" data-m="${k}">${esc(l)}</button>`).join('')}
+          </div>
+        </div>
+        <p class="mini muted" style="margin-top:0">${I18N.p('Tinggi batang = beban, bukan sekadar jumlah kegiatan: mengajar 1, rapat/kegiatan 2, deadline dinas 2, tugas 1,5, sesi tutor 1,5, jobdesc 1, to-do 0,6, cicilan 0,4. Batang bergaris tebal adalah hari ini. Arahkan kursor untuk melihat rinciannya.',
+      'Bar height is load, not just a count: teaching 1, meetings 2, official deadlines 2, assignments 1.5, tutor sessions 1.5, duties 1, to-dos 0.6, instalments 0.4. The outlined bar is today. Hover for the breakdown.')}</p>
+        <div class="chart-box" style="height:300px"><canvas id="ch-dens"></canvas></div>
+        <div class="dens-legend">
+          ${DENSITY.map((d, i) => `<span class="dens-key"><i style="background:${ramp[i]}"></i>${esc(I18N.p(d.id, d.en))} <em>${i === 4 ? '>' : '≤'} ${Math.round((i === 4 ? DENSITY[3].mul : d.mul) * 100)}%</em></span>`).join('')}
+        </div>
+      </div>
+
+      <div class="grid g2">
+        <div class="card"><h3>${ic('table')}${I18N.p('Susunan kegiatan pada rentang ini', 'What makes up this range')}</h3>
+          ${totalN ? `<div class="bars">${Object.keys(kinds).sort((a, b) => kinds[b] - kinds[a]).map((k) => `<div class="bar-row" style="grid-template-columns:150px 1fr auto">
+              <span>${Planner.kindLabel(k)}<div class="s muted mini">${I18N.p('bobot', 'weight')} ${ACT_WEIGHT[k] != null ? ACT_WEIGHT[k] : 1}</div></span>
+              ${UI.progress(kinds[k] / totalN * 100)}
+              <span class="mini nowrap"><b>${kinds[k]}</b> · ${Math.round(kinds[k] / totalN * 100)}%</span></div>`).join('')}</div>`
+        : UI.empty(I18N.p('Belum ada kegiatan pada rentang ini', 'No activity in this range'))}</div>
+        <div class="card"><h3>${ic('alert')}${I18N.p('Hari yang perlu diwaspadai', 'Days to watch')}</h3>
+          ${(() => {
+        const hot = data.filter((d) => d.level.idx >= 3).slice(0, 8);
+        return hot.length ? `<ul class="list">${hot.map((d) => `<li><span class="dotc" style="background:${Activity.color(d.level.idx)}"></span>
+              <div class="grow"><div class="t">${esc(d.label)}${d.sub ? ` <span class="muted mini">${esc(d.sub)}</span>` : ''}</div>
+              <div class="s">${d.n} ${I18N.p('kegiatan', 'items')} · ${d.score} ${I18N.p('beban', 'load')}</div></div>
+              ${Activity.badge(d.level.lv)}</li>`).join('')}</ul>`
+          : UI.empty(I18N.p('Tidak ada hari berjejal', 'No crowded days'), I18N.p('Semua hari pada rentang ini masih di bawah tingkat Crowded.', 'Every day in this range stays below Crowded.'));
+      })()}</div>
+      </div>`;
+  },
+  after() { Activity.chart('ch-dens', App.s('planner').densMode || 'day'); }
+};
+
+Object.assign(ACT, {
+  densMode: (d) => { App.s('planner').densMode = d.m; App.refresh(); },
+  densCap: () => UI.form({
+    title: I18N.p('Kapasitas aktivitas harian', 'Daily activity capacity'), size: 'narrow',
+    note: I18N.p('Berapa besar beban satu hari yang masih terasa wajar. Angka inilah yang dipakai untuk menentukan Little, Medium, Busy, Crowded, atau Dying. Bawaannya 6 — kira-kira setara 6 jam pelajaran, atau 3 rapat.',
+      'How much load in one day still feels reasonable. This is the number that decides Little, Medium, Busy, Crowded, or Dying. The default is 6 — roughly six teaching periods, or three meetings.'),
+    values: { densDay: Activity.dayCap() },
+    fields: [{ k: 'densDay', l: I18N.p('Kapasitas nyaman per hari', 'Comfortable load per day'), t: 'number', min: 1, req: 1 }],
+    onSubmit: async (v) => { await Store.saveSettings({ densDay: String(v.densDay) }); UI.toast(I18N.p('Kapasitas disimpan', 'Capacity saved'), 'ok'); App.refresh(); }
+  })
+});
+
+/* ------------------- (7) JP TOTAL DI BILAH ATAS --------------------- */
+
+const JPChip = {
+  paint() {
+    const el = $('#jp-chip');
+    if (!el || typeof Workload === 'undefined') return;
+    let w;
+    try { w = Workload.calc(); } catch (e) { return; }
+    el.innerHTML = `<span class="jp-n">${w.total}</span><span class="jp-l">JP</span><span class="badge b-${w.lv.color}">${esc(I18N.p(w.lv.id.split(' —')[0], w.lv.en))}</span>`;
+    el.title = I18N.p(`${w.teach} JP mengajar + ${w.duty} JP jobdesc = ${w.total} JP per minggu (kapasitas ${w.capAll})`,
+      `${w.teach} teaching + ${w.duty} extra duties = ${w.total} periods per week (capacity ${w.capAll})`);
+    el.hidden = false;
+  },
+  detail() {
+    const w = Workload.calc();
+    UI.modal({
+      title: I18N.p('JP TOTAL per minggu', 'TOTAL periods per week'), size: 'wide',
+      body: `${Workload.equation(w)}
+        <div class="jl-stats mt">
+          <div><small>${I18N.p('JP mengajar', 'Teaching')}</small><b>${w.teach}</b><small>${I18N.p(`kapasitas ${w.capTeach} · ${w.teachPct}%`, `capacity ${w.capTeach} · ${w.teachPct}%`)}</small></div>
+          <div><small>${I18N.p('JP jobdesc', 'Extra duties')}</small><b>${w.duty}</b><small>${I18N.p(`kapasitas ${w.capDuty} · ${w.dutyPct}%`, `capacity ${w.capDuty} · ${w.dutyPct}%`)}</small></div>
+          <div><small>${I18N.p('JP total', 'Total')}</small><b>${w.total}</b><small>${I18N.p(`kapasitas ${w.capAll} · ${w.pct}%`, `capacity ${w.capAll} · ${w.pct}%`)}</small></div>
+          <div><small>Level</small><b style="font-size:15px">${JobLoad.levelBadge(w.lv)}</b></div>
+        </div>
+        <p class="mini muted mt">${esc(I18N.p(w.lv.note[0], w.lv.note[1]))}</p>
+        ${UI.table([
+        { h: I18N.p('Kegiatan', 'Activity'), f: (r) => `<div class="t">${esc(r.j.activity)}</div><div class="s">${esc(r.j.field || '')}${r.j.position ? ' — ' + esc(r.j.position) : ''}</div>` },
+        { h: I18N.p('Jangka waktu', 'Span'), f: (r) => esc(r.j.period || '—') },
+        { h: I18N.p('Progres', 'Progress'), cls: 'r', f: (r) => r.prog + '%' },
+        { h: 'JP', cls: 'r', f: (r) => r.finished ? `<span class="muted">${I18N.p('selesai', 'done')}</span>` : `<b>${r.total}</b>` }
+      ], w.jl.rows, { emptyMsg: I18N.p('Belum ada jobdesc.', 'No duties yet.'), foot: `<tr><th colspan="3">${I18N.p('Jumlah JP jobdesc', 'Total duty periods')}</th><th class="r">${w.duty}</th></tr>` })}`,
+      foot: `<button class="btn" data-act="jlExplain">${ic('alert')}${I18N.p('Cara hitungnya', 'How it is calculated')}</button>
+        <button class="btn" data-act="wlTune">${ic('settings')}${I18N.p('Atur faktor', 'Tune factors')}</button>
+        <button class="btn primary" data-close>${I18N.p('Tutup', 'Close')}</button>`
+    });
+  }
+};
+ACT.jpDetail = () => JPChip.detail();
+
+/* ---------------------- (8) PUSAT OTOMATISASI ----------------------- */
+
+const AUTO_RULES_UI = [
+  ['autoFormImport', 'Tarik balasan Google Form ke tugas siswa', 'Pull Google Form responses into student tasks',
+    'Untuk tugas yang kolom tautannya diisi NAMA lembar balasan form (bukan alamat http).', 'For tasks whose link field holds the response SHEET NAME (not an http address).'],
+  ['autoGradePush', 'Dorong nilai yang sudah diisi ke daftar nilai', 'Push graded submissions into the gradebook',
+    'Hanya untuk tugas yang sudah ditautkan ke daftar nilai dan komponennya.', 'Only for tasks already linked to a gradebook and component.'],
+  ['autoScorePull', 'Tarik ulang seluruh lembar Score List', 'Re-import every Score List sheet',
+    'Menyegarkan rekap nilai bila lembarnya diubah langsung di Google Sheets.', 'Refreshes the score recap when sheets are edited directly in Google Sheets.'],
+  ['autoCloseOverdue', 'Tutup tugas siswa yang sudah lewat batas', 'Close student tasks past their due date',
+    'Siswa tidak bisa mengumpulkan lagi setelah ditutup.', 'Students can no longer submit once a task is closed.'],
+  ['autoNoteArchive', 'Arsipkan catatan yang butirnya sudah selesai semua', 'Archive notes whose items are all ticked',
+    'Papan catatan tetap rapi tanpa perlu dibereskan manual.', 'Keeps the note board tidy without manual clearing.'],
+  ['autoDigest', 'Kirim ringkasan harian ke Gmail', 'Email the daily digest',
+    'Berisi deadline, cicilan, dan agenda terdekat.', 'Deadlines, instalments, and upcoming agenda.'],
+  ['autoBackup', 'Buat salinan spreadsheet', 'Back up the spreadsheet',
+    'Delapan salinan terakhir disimpan, sisanya ke Sampah.', 'The eight most recent copies are kept; older ones go to the Bin.']
+];
+
+const Auto = {
+  st: null,
+  async load(force) {
+    if (this.st && !force) return this.st;
+    try { this.st = await Api.call('autoStatus', {}); } catch (e) { this.st = { ok: false, error: e.message }; }
+    return this.st;
+  },
+  on(k) { return String(Store.settings()[k] || '').toLowerCase() === 'on'; },
+
+  panel() {
+    const s = this.st;
+    const last = s && s.last;
+    return `<div class="auto-wrap">
+      <div class="note mb">${I18N.p('Aturan yang dihidupkan akan berjalan sendiri di server Google, tanpa aplikasi ini perlu dibuka. Semua tetap bisa dijalankan manual kapan saja.',
+      'Rules you switch on run by themselves on Google servers, without this app being open. Everything can still be run manually at any time.')}</div>
+      <div class="auto-list">
+        ${AUTO_RULES_UI.map(([k, idl, en, ih, eh]) => `<label class="auto-rule ${this.on(k) ? 'on' : ''}">
+          <input type="checkbox" class="check" data-chg="autoTog" data-k="${k}" ${this.on(k) ? 'checked' : ''}>
+          <span class="grow"><b>${esc(I18N.p(idl, en))}</b><span class="s">${esc(I18N.p(ih, eh))}</span></span>
+        </label>`).join('')}
+      </div>
+      <div class="form mt" style="grid-template-columns:1fr 1fr auto">
+        <div class="field"><label for="auto-every">${I18N.p('Seberapa sering', 'How often')}</label>
+          <select class="select" id="auto-every" data-chg="autoEvery">
+            <option value="day" ${s && s.every !== 'hour' ? 'selected' : ''}>${I18N.p('Sekali sehari', 'Once a day')}</option>
+            <option value="hour" ${s && s.every === 'hour' ? 'selected' : ''}>${I18N.p('Tiap jam', 'Every hour')}</option>
+          </select></div>
+        <div class="field"><label for="auto-hour">${I18N.p('Jam (bila sekali sehari)', 'Hour (if once a day)')}</label>
+          <input class="input" type="number" id="auto-hour" min="0" max="23" value="${esc((s && s.hour) || '5')}"></div>
+        <div class="field" style="align-self:end"><button class="btn primary" data-act="autoInstall">${ic('check')}${I18N.p('Pasang jadwal', 'Install schedule')}</button></div>
+      </div>
+      <div class="btn-row mt">
+        <button class="btn sm" data-act="autoRunNow">${ic('refresh')}${I18N.p('Jalankan sekarang', 'Run it now')}</button>
+        <button class="btn sm ghost" data-act="autoStatus">${ic('eye')}${I18N.p('Segarkan status', 'Refresh status')}</button>
+        ${s && s.installed ? `<button class="btn sm danger" data-act="autoRemove">${ic('x')}${I18N.p('Hentikan jadwal', 'Stop the schedule')}</button>` : ''}
+      </div>
+      <ul class="list mt">
+        <li><span class="dotc" style="background:var(--${s && s.installed ? 'ok' : 'muted'})"></span>
+          <div class="grow"><div class="t">${I18N.p('Jadwal otomatis', 'Automatic schedule')}</div>
+          <div class="s">${s ? (s.installed ? I18N.p(`aktif — ${s.every === 'hour' ? 'tiap jam' : 'tiap hari pukul ' + s.hour + '.00'}`, `active — ${s.every === 'hour' ? 'every hour' : 'daily at ' + s.hour + ':00'}`) : I18N.p('belum dipasang', 'not installed')) : I18N.p('memuat…', 'loading…')}</div></div></li>
+        <li><span class="dotc" style="background:var(--${last && !(last.failed || []).length ? 'ok' : last ? 'warn' : 'muted'})"></span>
+          <div class="grow"><div class="t">${I18N.p('Jalan terakhir', 'Last run')}</div>
+          <div class="s">${last ? `${fmtDateFull(String(last.at).slice(0, 10))} ${String(last.at).slice(11, 16)} · ${last.ms} ms — ${(last.done || []).join(', ') || I18N.p('tidak ada aturan aktif', 'no active rules')}${(last.failed || []).length ? ` · ${I18N.p('gagal', 'failed')}: ${last.failed.join('; ')}` : ''}` : I18N.p('belum pernah', 'never')}</div></div></li>
+      </ul>
+    </div>`;
+  }
+};
+Object.assign(ACT, {
+  autoInstall: async () => {
+    const every = ($('#auto-every') || {}).value || 'day';
+    const hour = ($('#auto-hour') || {}).value || '5';
+    UI.toast(I18N.p('Memasang jadwal…', 'Installing the schedule…'), '', 2500);
+    await Api.call('autoSetup', { every, hour });
+    await Auto.load(true);
+    UI.toast(I18N.p('Jadwal otomatis dipasang.', 'Automatic schedule installed.'), 'ok');
+    App.refresh(); if (typeof Settings !== 'undefined' && Settings.repaint) Settings.repaint();
+  },
+  autoRemove: async () => { await Api.call('autoRemove', {}); await Auto.load(true); UI.toast(I18N.p('Jadwal dihentikan.', 'Schedule stopped.'), 'ok'); if (typeof Settings !== 'undefined' && Settings.repaint) Settings.repaint(); },
+  autoStatus: async () => { await Auto.load(true); if (typeof Settings !== 'undefined' && Settings.repaint) Settings.repaint(); },
+  autoRunNow: async () => {
+    UI.toast(I18N.p('Menjalankan otomatisasi…', 'Running the automation…'), '', 4000);
+    try {
+      const j = await Api.call('autoRunNow', {});
+      await Store.pull({ force: true });
+      UI.toast(I18N.p(`Selesai dalam ${j.ms} ms — ${(j.done || []).join(', ') || 'tidak ada aturan aktif'}${(j.failed || []).length ? ' · gagal: ' + j.failed.join('; ') : ''}`,
+        `Done in ${j.ms} ms — ${(j.done || []).join(', ') || 'no active rules'}${(j.failed || []).length ? ' · failed: ' + j.failed.join('; ') : ''}`), (j.failed || []).length ? 'err' : 'ok', 9000);
+      await Auto.load(true);
+      App.refresh();
+    } catch (e) { UI.toast(e.message, 'err', 8000); }
+  }
+});
+Object.assign(CHG, {
+  autoTog: async (v, el) => { await Store.saveSettings({ [el.dataset.k]: v ? 'on' : 'off' }); },
+  autoEvery: () => { }
+});
+
+/* =====================================================================
+ * v10 — (A) Riwayat pembelajaran: pertemuan dibuat dari jadwal, TP terisi
+ *           berurutan, jadi batas materi, dan bisa melahirkan penugasan
+ *       (B) Rekap absen siswa (sisi guru)
+ * =================================================================== */
+
+const MEET_STATUS = ['Terjadwal', 'Terlaksana', 'Ditunda', 'Libur'];
+const MEET_COLOR = { Terjadwal: 'slate', Terlaksana: 'ok', Ditunda: 'warn', Libur: 'danger' };
+
+const Ajar = {
+  rows() {
+    return Store.all('_Pertemuan').slice().sort((a, b) =>
+      String(b.date).localeCompare(String(a.date)) || String(b.start || '').localeCompare(String(a.start || '')));
+  },
+  classes() { return [...new Set(this.rows().map((m) => m.className).filter(Boolean))].sort(); },
+  tpOf(code, program) {
+    const c = String(code || '').trim();
+    if (!c) return null;
+    return Store.where('TP', (t) => String(t.code).trim() === c && (!program || String(t.program) === String(program)))[0]
+      || Store.where('TP', (t) => String(t.code).trim() === c)[0] || null;
+  },
+  codesOf(m) { return String(m.tpCodes || '').split(',').map((x) => x.trim()).filter(Boolean); },
+
+  /** Batas materi tiap kelas: sampai mana pelajaran sudah berjalan. */
+  progress() {
+    const by = {};
+    this.rows().forEach((m) => {
+      const cls = String(m.className || '').trim();
+      if (!cls) return;
+      by[cls] = by[cls] || { className: cls, program: m.program || '', done: 0, planned: 0, codes: {}, last: null, next: null };
+      const g = by[cls];
+      if (m.program && !g.program) g.program = m.program;
+      if (m.status === 'Terlaksana') {
+        g.done++;
+        this.codesOf(m).forEach((c) => { g.codes[c] = 1; });
+        if (!g.last || m.date > g.last.date) g.last = m;
+      } else if (m.status === 'Terjadwal') {
+        g.planned++;
+        if (m.date >= todayISO() && (!g.next || m.date < g.next.date)) g.next = m;
+      }
+    });
+    return Object.keys(by).sort().map((k) => {
+      const g = by[k];
+      const tps = Store.where('TP', (t) => {
+        const c = String(t.code || '').trim();
+        return c && c !== '-' && (!g.program || String(t.program) === g.program);
+      });
+      const covered = Object.keys(g.codes).length;
+      g.tpTotal = tps.length;
+      g.tpCovered = covered;
+      g.pct = tps.length ? Math.round(covered / tps.length * 100) : null;
+      g.tpNext = tps.filter((t) => !g.codes[String(t.code).trim()])[0] || null;
+      return g;
+    });
+  },
+
+  /** Buat pertemuan dari jadwal untuk rentang tanggal. */
+  generate() {
+    const t = todayISO();
+    const mon = addDays(t, -((parseISO(t).getDay() + 6) % 7));
+    UI.form({
+      title: I18N.p('Buat pertemuan dari jadwal mengajar', 'Generate meetings from the timetable'), size: 'wide',
+      note: I18N.p('Setiap slot di sheet <b>Schedule</b> pada rentang tanggal ini dijadikan satu pertemuan. Tujuan Pembelajaran diisi berurutan dari sheet TP — yang belum pernah dipakai di kelas itu diambil lebih dulu — beserta rincian materi, media, dan penugasannya. Menjalankan ulang tidak menggandakan: slot yang sudah ada akan dilewati.',
+        'Every slot in the <b>Schedule</b> sheet within this date range becomes one meeting. Objectives are filled in order from the TP sheet — the ones not yet used for that class come first — along with their material, media, and task. Re-running never duplicates: existing slots are skipped.'),
+      values: { from: mon, to: addDays(mon, 27), tpPerMeeting: 1 },
+      fields: [
+        { k: 'from', l: I18N.p('Dari tanggal', 'From'), t: 'date', req: 1 },
+        { k: 'to', l: I18N.p('Sampai tanggal', 'To'), t: 'date', req: 1 },
+        { k: 'tpPerMeeting', l: I18N.p('TP per pertemuan', 'Objectives per meeting'), t: 'number', min: 1, max: 4 }
+      ],
+      submit: I18N.p('Buat pertemuan', 'Generate'),
+      onSubmit: async (v) => {
+        if (v.to < v.from) { UI.toast(I18N.p('Tanggal akhir harus setelah tanggal mulai.', 'The end date must be after the start date.'), 'err'); return false; }
+        UI.toast(I18N.p('Menyusun pertemuan…', 'Building the meetings…'), '', 4000);
+        const j = await Api.call('genMeetings', { from: v.from, to: v.to, tpPerMeeting: v.tpPerMeeting });
+        await Store.pull({ force: true });
+        UI.toast(I18N.p(`${j.created} pertemuan dibuat${j.skipped ? `, ${j.skipped} sudah ada dan dilewati` : ''}.`,
+          `${j.created} meetings created${j.skipped ? `, ${j.skipped} already existed and were skipped` : ''}.`), 'ok', 7000);
+        App.refresh();
+      }
+    });
+  },
+
+  /** Ubah satu pertemuan — TP, materi, penugasan, status. */
+  form(id) {
+    const m = Store.get('_Pertemuan', id);
+    if (!m) return;
+    const prog = m.program || '';
+    const tps = Store.where('TP', (t) => {
+      const c = String(t.code || '').trim();
+      return c && c !== '-' && (!prog || String(t.program) === prog);
+    });
+    const task = m.taskId ? Store.get('_Tugas', m.taskId) : null;
+    UI.form({
+      title: I18N.p(`Pertemuan ${m.no} — ${m.className}`, `Meeting ${m.no} — ${m.className}`), size: 'wide',
+      note: dateLine(m.date, { time: m.start, endTime: m.end }),
+      values: m,
+      fields: [
+        { k: 'status', l: 'Status', t: 'select', o: MEET_STATUS },
+        { k: 'program', l: I18N.p('Program TP', 'Objective programme'), list: () => [...new Set(Store.all('TP').map((t) => t.program).filter(Boolean))] },
+        {
+          k: 'tpCodes', l: I18N.p('Kode TP (pisahkan dengan koma)', 'Objective codes (comma separated)'), full: 1,
+          list: () => tps.map((t) => String(t.code).trim()),
+          hint: I18N.p('Kosongkan lalu tekan "Isi otomatis" untuk mengambil TP berikutnya yang belum dipakai.', 'Leave empty and press "Auto-fill" to take the next unused objective.')
+        },
+        { k: 'topic', l: I18N.p('Tujuan pembelajaran / topik', 'Objective / topic'), t: 'textarea', rows: 2, full: 1 },
+        { k: 'material', l: I18N.p('Batas materi yang dibahas', 'Material covered'), t: 'textarea', rows: 2, full: 1 },
+        { k: 'method', l: I18N.p('Media / metode', 'Media / method'), full: 1 },
+        { k: 'note', l: I18N.p('Penugasan yang diberikan', 'Task given'), t: 'textarea', rows: 2, full: 1 },
+        {
+          t: 'html', full: 1, html: `<label>${I18N.p('Tugas siswa yang tertaut', 'Linked student task')}</label>` +
+            (task ? `<div class="note ok">${esc(task.title)} — ${esc(task.className)} · ${I18N.p('batas', 'due')} ${fmtDate(task.dueDate)}
+                <div class="btn-row mt"><button type="button" class="btn xs" data-act="taskOpen" data-id="${task.id}">${ic('eye')}${I18N.p('Lihat pengumpulan', 'See submissions')}</button></div></div>`
+              : `<div class="note">${I18N.p('Belum ada. Simpan dulu, lalu tekan tombol "Jadikan tugas siswa" di daftar pertemuan.', 'None yet. Save first, then press "Turn into a student task" in the meeting list.')}</div>`)
+        }
+      ],
+      extraFoot: `<button class="btn left" data-act="ajarAuto" data-id="${m.id}">${ic('refresh')}${I18N.p('Isi otomatis dari TP', 'Auto-fill from TP')}</button>
+        <button class="btn left" data-act="ajarLink" data-id="${m.id}">${ic('link')}${I18N.p('Materi / presentasi', 'Materials / slides')}</button>`,
+      onSubmit: (v) => Store.update('_Pertemuan', m.id, v)
+    });
+  },
+
+  /** Isi TP, topik, materi, media, dan penugasan dari TP berikutnya yang belum dipakai. */
+  async auto(id) {
+    const m = Store.get('_Pertemuan', id);
+    if (!m) return;
+    const g = this.progress().filter((x) => x.className === m.className)[0];
+    const tp = g && g.tpNext;
+    if (!tp) return UI.toast(I18N.p('Semua TP untuk kelas ini sudah terpakai.', 'Every objective for this class has been used.'), 'err');
+    await Store.update('_Pertemuan', m.id, {
+      tpCodes: String(tp.code).trim(),
+      topic: String(tp.objective || ''),
+      material: String(tp.detail || ''),
+      method: String(tp.media || ''),
+      note: String(tp.task || '')
+    });
+    UI.closeAll();
+    UI.toast(I18N.p(`TP ${tp.code} dipasang ke pertemuan ini.`, `Objective ${tp.code} attached to this meeting.`), 'ok');
+    App.refresh();
+  },
+
+  /** Satu pertemuan menjadi tugas siswa, dan tetap tertaut dua arah. */
+  toTask(id) {
+    const m = Store.get('_Pertemuan', id);
+    if (!m) return;
+    if (m.taskId && Store.get('_Tugas', m.taskId)) return Tugas.panel(m.taskId);
+    const books = typeof Rapor !== 'undefined' ? Rapor.books().filter((b) => b.className === m.className) : [];
+    UI.form({
+      title: I18N.p('Jadikan tugas siswa', 'Turn into a student task'), size: 'wide',
+      note: I18N.p(`Dari pertemuan ${m.no} kelas ${m.className} — ${fmtDateFull(m.date)}. Tugas ini langsung muncul di halaman siswa, dan hasilnya terekap kembali ke pertemuan ini.`,
+        `From meeting ${m.no} of ${m.className} — ${fmtDateFull(m.date)}. The task appears on the student page straight away, and its results are recapped back onto this meeting.`),
+      values: {
+        title: (m.note || m.topic || '').slice(0, 90) || I18N.p(`Tugas pertemuan ${m.no}`, `Task for meeting ${m.no}`),
+        className: m.className, subject: m.subject, type: 'Tugas', assignDate: m.date,
+        dueDate: addDays(m.date, 7), tpCode: this.codesOf(m)[0] || '', maxScore: 100, status: 'Terbuka',
+        instruction: [m.topic, m.material, m.note].filter(Boolean).join('\n')
+      },
+      fields: [
+        { k: 'title', l: I18N.p('Judul tugas', 'Task title'), req: 1, full: 1 },
+        { k: 'className', l: I18N.p('Kelas', 'Class'), req: 1 },
+        { k: 'subject', l: I18N.p('Mata pelajaran', 'Subject') },
+        { k: 'type', l: I18N.p('Jenis', 'Type'), t: 'select', o: ['Tugas', 'Proyek', 'Latihan', 'Ujian', 'Presentasi', 'Portofolio'] },
+        { k: 'assignDate', l: I18N.p('Diberikan', 'Assigned'), t: 'date' },
+        { k: 'dueDate', l: I18N.p('Batas pengumpulan', 'Due date'), t: 'date', req: 1 },
+        { k: 'maxScore', l: I18N.p('Nilai maksimum', 'Maximum score'), t: 'number', min: 1 },
+        { k: 'tpCode', l: I18N.p('Kode TP', 'Objective code') },
+        { k: 'instruction', l: I18N.p('Instruksi untuk siswa', 'Instructions for students'), t: 'textarea', rows: 4, full: 1 },
+        { k: 'bookId', l: I18N.p('Daftar nilai tujuan', 'Target gradebook'), t: 'select', o: () => [['', I18N.p('— belum ditautkan —', '— not linked —')]].concat(books.map((b) => [b.id, `${b.name} (${b.className})`])) },
+        { k: 'component', l: I18N.p('Komponen / section', 'Component / section') }
+      ],
+      submit: I18N.p('Buat tugas', 'Create the task'),
+      onSubmit: async (v) => {
+        const r = await Store.create('_Tugas', Object.assign({ link: '' }, v));
+        await Store.update('_Pertemuan', m.id, { taskId: r.id, note: v.title });
+        UI.toast(I18N.p('Tugas dibuat dan tertaut ke pertemuan ini.', 'Task created and linked to this meeting.'), 'ok');
+        App.refresh();
+      }
+    });
+  },
+
+  /* --- tautan materi / presentasi per pertemuan --- */
+  links(m) {
+    try { const a = JSON.parse(m.links || '[]'); return Array.isArray(a) ? a.filter((x) => x && x.u) : []; }
+    catch (e) { return []; }
+  },
+  packLinks(list) {
+    return JSON.stringify((list || [])
+      .filter((x) => String(x.u || '').trim())
+      .map((x) => ({ t: String(x.t || '').trim().slice(0, 80), u: String(x.u).trim().slice(0, 500) })));
+  },
+  linkIcon(u) {
+    const s = String(u).toLowerCase();
+    if (/docs\.google\.com\/presentation|\.pptx?$|canva|slides/.test(s)) return 'panel';
+    if (/docs\.google\.com\/document|\.docx?$/.test(s)) return 'file';
+    if (/youtube|youtu\.be|vimeo|\.mp4$/.test(s)) return 'eye';
+    if (/drive\.google\.com|\.pdf$/.test(s)) return 'download';
+    if (/forms\.gle|docs\.google\.com\/forms/.test(s)) return 'check';
+    return 'link';
+  },
+
+  /** Tempel tautan presentasi / materi untuk satu pertemuan. */
+  linkForm(id) {
+    const m = Store.get('_Pertemuan', id);
+    if (!m) return;
+    let list = this.links(m);
+    if (!list.length) list = [{ t: '', u: '' }];
+    const self = this;
+    const row = (x, i) => `<div class="lk-row" data-i="${i}">
+      <input class="input lk-t" data-i="${i}" placeholder="${I18N.p('Nama materi (mis. Slide pertemuan 3)', 'Material name (e.g. Slides for meeting 3)')}" value="${esc(x.t || '')}">
+      <input class="input lk-u" data-i="${i}" placeholder="https://…" value="${esc(x.u || '')}">
+      <button type="button" class="icon-btn xs" data-lk="del" data-i="${i}" aria-label="${I18N.p('Hapus', 'Remove')}">${ic('x')}</button>
+    </div>`;
+    UI.modal({
+      title: I18N.p(`Materi pertemuan ${m.no} — ${m.className}`, `Materials for meeting ${m.no} — ${m.className}`), size: 'wide',
+      body: `<div class="note mb">${dateLine(m.date, { time: m.start, endTime: m.end })}
+          <div class="mini" style="margin-top:6px">${esc(String(m.topic || '').slice(0, 160))}</div></div>
+        <p class="mini muted">${I18N.p('Tempel tautan slide, dokumen, video, atau bahan apa pun. Siswa melihatnya di riwayat pembelajaran mereka — pastikan aksesnya "siapa saja yang memiliki link" agar bisa dibuka.',
+        'Paste links to slides, documents, videos, or any material. Students see them in their learning history — set sharing to "anyone with the link" so they can open it.')}</p>
+        <div id="lk-rows">${list.map(row).join('')}</div>
+        <button type="button" class="btn sm" data-lk="add">${ic('plus')}${I18N.p('Tautan lain', 'Another link')}</button>`,
+      foot: `<button class="btn" data-close>${I18N.p('Batal', 'Cancel')}</button>
+        <button class="btn primary" data-lk="save">${ic('check')}${I18N.p('Simpan materi', 'Save materials')}</button>`,
+      onMount: (box, mm) => {
+        const read = () => {
+          const out = [];
+          $$('.lk-row', box).forEach((r) => {
+            out.push({ t: r.querySelector('.lk-t').value, u: r.querySelector('.lk-u').value });
+          });
+          return out;
+        };
+        const paint = () => { box.querySelector('#lk-rows').innerHTML = list.map(row).join(''); };
+        box.addEventListener('click', async (e) => {
+          const b = e.target.closest('[data-lk]');
+          if (!b) return;
+          if (b.dataset.lk === 'add') { list = read(); list.push({ t: '', u: '' }); paint(); return; }
+          if (b.dataset.lk === 'del') { list = read(); list.splice(+b.dataset.i, 1); if (!list.length) list = [{ t: '', u: '' }]; paint(); return; }
+          if (b.dataset.lk === 'save') {
+            const packed = self.packLinks(read());
+            await Store.update('_Pertemuan', m.id, { links: packed });
+            const n = JSON.parse(packed).length;
+            UI.toast(I18N.p(`${n} tautan materi tersimpan untuk pertemuan ini.`, `${n} material links saved for this meeting.`), 'ok');
+            mm.close();
+            App.refresh();
+          }
+        });
+      }
+    });
+  },
+
+  taskStat(m) {
+    if (!m.taskId) return null;
+    const t = Store.get('_Tugas', m.taskId);
+    if (!t) return null;
+    const subs = Store.where('_Pengumpulan', (s) => s.taskId === t.id);
+    const graded = subs.filter((s) => s.score !== '' && s.score != null && !isNaN(Number(s.score)));
+    return { task: t, n: subs.length, graded: graded.length, avg: graded.length ? Math.round(sum(graded, (s) => Number(s.score)) / graded.length * 10) / 10 : null };
+  }
+};
+
+MODULES.school.subs = [['jadwal', 'Jadwal & Kalender'], ['ajar', 'Riwayat Pembelajaran'], ['tugas', 'Tugas & Ujian'],
+['kegiatan', 'Kegiatan & Appointment'], ['deadline', 'Deadline Dinas'], ['absen', 'Absen Siswa'], ['kehadiran', 'Kehadiran & TP'],
+['nilai', 'Rekap Nilai'], ['scorelist', 'Score List'], ['daftarnilai', 'Daftar Nilai'], ['tugassiswa', 'Tugas Siswa'],
+['logbook', 'Logbook & KPI'], ['jobdesc', 'Jobdesc'], ['keuangan', 'Gaji & Honor'], ['lembar', 'Lembar Excel']];
+
+VIEWS.school.ajar = {
+  after: () => Store.ensureThen(['_Pengumpulan']),
+  actions: () => `<button class="btn" data-act="ajarGen">${ic('refresh')}${I18N.p('Buat dari jadwal', 'Generate from timetable')}</button>
+    <button class="btn mod" data-act="ajarAdd">${ic('plus')}${I18N.p('Pertemuan manual', 'Manual meeting')}</button>`,
+  render() {
+    const s = App.s('school');
+    const cls = s.ajarCls || '';
+    const q = (s.ajarQ || '').toLowerCase();
+    const st = s.ajarStatus || '';
+    let list = Ajar.rows();
+    if (cls) list = list.filter((m) => m.className === cls);
+    if (st) list = list.filter((m) => m.status === st);
+    if (q) list = list.filter((m) => `${m.className} ${m.subject} ${m.tpCodes} ${m.topic} ${m.material} ${m.note}`.toLowerCase().includes(q));
+    const prog = Ajar.progress();
+    const all = Ajar.rows();
+
+    if (!all.length) {
+      return UI.empty(I18N.p('Riwayat pembelajaran masih kosong', 'The teaching history is empty'),
+        I18N.p('Tekan "Buat dari jadwal" — setiap slot mengajar di sheet Schedule akan menjadi satu pertemuan, dengan TP, materi, media, dan penugasan terisi otomatis dan berurutan.',
+          'Press "Generate from timetable" — every teaching slot in the Schedule sheet becomes one meeting, with the objective, material, media, and task filled in automatically and in order.'),
+        `<button class="btn sm mod" data-act="ajarGen">${ic('refresh')}${I18N.p('Buat dari jadwal', 'Generate from timetable')}</button>`);
+    }
+
+    return `
+      <div class="grid g4 mb">
+        <div class="stat accent"><small>${I18N.p('Pertemuan tercatat', 'Meetings recorded')}</small><b>${all.length}</b>
+          <span class="sub">${all.filter((m) => m.status === 'Terlaksana').length} ${I18N.p('terlaksana', 'held')}</span></div>
+        <div class="stat"><small>${I18N.p('Kelas berjalan', 'Classes running')}</small><b>${prog.length}</b></div>
+        <div class="stat"><small>${I18N.p('Pertemuan berikutnya', 'Next meeting')}</small>
+          <b style="font-size:15px">${(() => { const n = all.filter((m) => m.status === 'Terjadwal' && m.date >= todayISO()).sort((a, b) => a.date.localeCompare(b.date))[0]; return n ? esc(n.className) : '—'; })()}</b>
+          <span class="sub">${(() => { const n = all.filter((m) => m.status === 'Terjadwal' && m.date >= todayISO()).sort((a, b) => a.date.localeCompare(b.date))[0]; return n ? fmtDateShort(n.date) + ' · ' + relDay(n.date) : ''; })()}</span></div>
+        <div class="stat"><small>${I18N.p('Sudah ada materi', 'With materials')}</small><b>${all.filter((m) => Ajar.links(m).length).length}</b>
+          <span class="sub">${all.filter((m) => m.taskId).length} ${I18N.p('jadi tugas', 'turned into tasks')}</span></div>
+      </div>
+
+      <div class="card mb"><h3>${ic('check')}${I18N.p('Batas materi tiap kelas', 'Material boundary per class')}</h3>
+        <p class="mini muted" style="margin-top:0">${I18N.p('Sudah sampai mana pelajaran berjalan, dihitung dari TP yang sudah dibahas di pertemuan berstatus Terlaksana.',
+      'How far each class has got, counted from the objectives covered in meetings marked as held.')}</p>
+        ${prog.length ? `<div class="bars">${prog.map((g) => `<div class="bar-row" style="grid-template-columns:132px 1fr auto">
+            <span><b>${esc(g.className)}</b><div class="s muted mini">${esc(g.program || '—')}</div></span>
+            <div>${UI.progress(g.pct == null ? 0 : g.pct)}
+              <div class="s mini">${g.last ? I18N.p(`terakhir: ${esc(g.last.tpCodes || '—')} — ${esc(String(g.last.topic || '').slice(0, 70))}`, `last: ${esc(g.last.tpCodes || '—')} — ${esc(String(g.last.topic || '').slice(0, 70))}`) : I18N.p('belum ada pertemuan terlaksana', 'no meetings held yet')}</div>
+              ${g.tpNext ? `<div class="s mini"><b>${I18N.p('berikutnya', 'next')}:</b> ${esc(g.tpNext.code)} — ${esc(String(g.tpNext.objective || '').slice(0, 70))}</div>` : ''}</div>
+            <span class="mini nowrap"><b>${g.tpCovered}</b>/${g.tpTotal} TP${g.pct != null ? ` · ${g.pct}%` : ''}<div class="s muted">${g.done} ${I18N.p('pertemuan', 'meetings')}</div></span></div>`).join('')}</div>`
+        : UI.empty(I18N.p('Belum ada data', 'No data yet'))}</div>
+
+      <div class="toolbar">
+        <input class="input search" placeholder="${I18N.p('Cari TP, materi, topik…', 'Search objective, material, topic…')}" data-chg="ajarQ" data-live data-fk="ajarQ" value="${esc(s.ajarQ || '')}">
+        <select class="select" data-chg="ajarCls"><option value="">${I18N.p('Semua kelas', 'All classes')}</option>${Ajar.classes().map((c) => `<option ${c === cls ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+        <select class="select" data-chg="ajarStatus"><option value="">${I18N.p('Semua status', 'All statuses')}</option>${MEET_STATUS.map((x) => `<option ${x === st ? 'selected' : ''}>${x}</option>`).join('')}</select>
+      </div>
+
+      ${UI.table([
+        { h: '#', cls: 'r', f: (m) => `<b>${m.no || '—'}</b>` },
+        { h: I18N.p('Tanggal & jam', 'Date & time'), f: (m) => dateLine(m.date, { time: m.start, endTime: m.end, week: false }) },
+        { h: I18N.p('Kelas', 'Class'), f: (m) => `<div class="t">${esc(m.className)}</div><div class="s">${esc(m.subject || '')}${m.program ? ' · ' + esc(m.program) : ''}</div>` },
+        {
+          h: I18N.p('TP & batas materi', 'Objective & material'), f: (m) => {
+            const codes = Ajar.codesOf(m);
+            return `${codes.length ? codes.map((c) => `<span class="badge b-brand">${esc(c)}</span>`).join(' ') : `<span class="muted mini">${I18N.p('belum diisi', 'not set')}</span>`}
+              ${m.topic ? `<div class="t" style="margin-top:4px">${esc(m.topic)}</div>` : ''}
+              ${m.material ? `<div class="s">${esc(m.material)}</div>` : ''}`;
+          }
+        },
+        {
+          h: I18N.p('Materi / presentasi', 'Material / slides'), f: (m) => {
+            const ls = Ajar.links(m);
+            return `${ls.length ? `<div class="lk-chips">${ls.slice(0, 4).map((l) => `<a class="lk-chip" href="${esc(l.u)}" target="_blank" rel="noopener" title="${esc(l.u)}">${ic(Ajar.linkIcon(l.u))}${esc(l.t || new URL(l.u, location.href).hostname.replace('www.', ''))}</a>`).join('')}${ls.length > 4 ? `<span class="mini muted">+${ls.length - 4}</span>` : ''}</div>` : ''}
+              <button class="btn xs ${ls.length ? 'ghost mt' : ''}" data-act="ajarLink" data-id="${m.id}">${ic(ls.length ? 'edit' : 'link')}${ls.length ? I18N.p('Ubah', 'Edit') : I18N.p('Tempel tautan', 'Paste a link')}</button>`;
+          }
+        },
+        {
+          h: I18N.p('Penugasan', 'Task given'), f: (m) => {
+            const st2 = Ajar.taskStat(m);
+            if (st2) return `<div class="t">${esc(st2.task.title)}</div><div class="s"><b>${st2.n}</b> ${I18N.p('terkumpul', 'in')} · <b>${st2.graded}</b> ${I18N.p('dinilai', 'graded')}${st2.avg != null ? ` · ${I18N.p('rata', 'avg')} ${st2.avg}` : ''}</div>`;
+            if (m.note) return `<div class="s">${esc(m.note)}</div><button class="btn xs mt" data-act="ajarTask" data-id="${m.id}">${ic('plus')}${I18N.p('Jadikan tugas siswa', 'Make it a student task')}</button>`;
+            return `<button class="btn xs" data-act="ajarTask" data-id="${m.id}">${ic('plus')}${I18N.p('Jadikan tugas siswa', 'Make it a student task')}</button>`;
+          }
+        },
+        { h: 'Status', f: (m) => `<select class="inline" data-chg="ajarSet" data-id="${m.id}">${MEET_STATUS.map((o) => `<option ${o === m.status ? 'selected' : ''}>${o}</option>`).join('')}</select>` },
+        { h: '', cls: 'act', f: (m) => `<button class="btn xs" data-act="ajarAuto" data-id="${m.id}" title="${I18N.p('Isi otomatis dari TP berikutnya', 'Auto-fill from the next objective')}">${ic('refresh')}</button>
+          <button class="btn xs" data-act="ajarEdit" data-id="${m.id}">${ic('edit')}</button>` }
+      ], list.slice(0, 200), { emptyMsg: I18N.p('Tidak ada pertemuan pada filter ini.', 'No meetings match this filter.') })}
+      ${list.length > 200 ? `<p class="mini muted">${I18N.p(`Menampilkan 200 dari ${list.length} pertemuan — persempit dengan filter di atas.`, `Showing 200 of ${list.length} meetings — narrow it with the filters above.`)}</p>` : ''}`;
+  }
+};
+
+Object.assign(ACT, {
+  ajarGen: () => Ajar.generate(),
+  ajarEdit: (d) => Ajar.form(d.id),
+  ajarAuto: (d) => Ajar.auto(d.id),
+  ajarTask: (d) => Ajar.toTask(d.id),
+  ajarLink: (d) => { UI.closeAll(); Ajar.linkForm(d.id); },
+  ajarAdd: async () => {
+    const cls = Ajar.classes()[0] || '';
+    const r = await Store.create('_Pertemuan', {
+      no: Ajar.rows().filter((m) => m.className === cls).length + 1, date: todayISO(), day: new Date().getDay() || 7,
+      start: '', end: '', className: cls, subject: '', program: '', scheduleId: '', tpCodes: '', topic: '',
+      material: '', method: '', taskId: '', status: 'Terlaksana', note: ''
+    });
+    Ajar.form(r.id);
+  }
+});
+Object.assign(CHG, {
+  ajarQ: (v) => { App.s('school').ajarQ = v; App.refresh(); },
+  ajarCls: (v) => { App.s('school').ajarCls = v; App.refresh(); },
+  ajarStatus: (v) => { App.s('school').ajarStatus = v; App.refresh(); },
+  ajarSet: (v, el) => Store.update('_Pertemuan', el.dataset.id, { status: v })
+});
+
+/* ------------------- (B) REKAP ABSEN — SISI GURU -------------------- */
+
+const Absen = {
+  rows() { return Store.all('_Absen').slice().sort((a, b) => String(b.date).localeCompare(String(a.date))); },
+  classes() {
+    const set = new Set();
+    this.rows().forEach((a) => a.className && set.add(a.className));
+    Store.all('_Siswa').forEach((s) => s.className && set.add(s.className));
+    Store.all('_Nilai').forEach((s) => s.className && set.add(s.className));
+    return [...set].sort();
+  },
+  roster(cls) {
+    const seen = {};
+    const add = (n) => { const k = String(n || '').trim().toLowerCase(); if (k && k.length > 1 && !seen[k]) seen[k] = String(n).trim(); };
+    Store.where('_Nilai', (r) => r.className === cls).forEach((r) => add(r.studentName));
+    Store.where('_Siswa', (r) => r.className === cls).forEach((r) => add(r.name));
+    Store.where('_NilaiSiswa', (r) => r.className === cls).forEach((r) => add(r.studentName));
+    return Object.keys(seen).sort().map((k) => seen[k]);
+  },
+  /** Rekap per siswa pada satu kelas. */
+  perStudent(cls) {
+    const rows = this.rows().filter((a) => a.className === cls);
+    const dates = [...new Set(rows.map((a) => a.date))].sort();
+    const names = this.roster(cls);
+    const by = {};
+    rows.forEach((a) => { by[String(a.studentName).trim().toLowerCase() + '|' + a.date] = a.status; });
+    return {
+      dates, rows: names.map((n) => {
+        const key = n.trim().toLowerCase();
+        const st = dates.map((d) => by[key + '|' + d] || '');
+        const hadir = st.filter((x) => x === 'Hadir').length;
+        const isi = st.filter(Boolean).length;
+        return { name: n, st, hadir, isi, alpa: st.filter((x) => x === 'Alpa').length, pct: isi ? Math.round(hadir / isi * 100) : null };
+      })
+    };
+  }
+};
+
+VIEWS.school.absen = {
+  after: () => Store.ensureThen(['_Nilai', '_Pengumpulan']),
+  actions: () => `<button class="btn" data-act="absenSync">${ic('refresh')}${I18N.p('Tarik nama dari database nilai', 'Pull names from the score database')}</button>
+    <button class="btn" data-act="absenLink">${ic('link')}${I18N.p('Tautan absen siswa', 'Student attendance link')}</button>`,
+  render() {
+    const s = App.s('school');
+    const classes = Absen.classes();
+    const cls = s.absenCls || classes[0] || '';
+    const all = Absen.rows();
+    const today = all.filter((a) => a.date === todayISO());
+    if (!classes.length) {
+      return UI.empty(I18N.p('Belum ada daftar nama siswa', 'No student roster yet'),
+        I18N.p('Nama siswa diambil dari database nilai (Score List) yang sudah ditarik ke aplikasi. Tarik Score List dulu, atau isi sheet _Siswa.',
+          'Student names come from the score database (Score List) already pulled into the app. Import the Score List first, or fill the _Siswa sheet.'),
+        `<button class="btn sm" data-act="open" data-mod="school" data-sub="scorelist">${ic('table')}Score List</button>`);
+    }
+    const rec = Absen.perStudent(cls);
+    const show = rec.dates.slice(-14);
+    const abbr = { Hadir: 'H', Izin: 'I', Sakit: 'S', Alpa: 'A' };
+    return `
+      <div class="grid g4 mb">
+        <div class="stat accent"><small>${I18N.p('Absen hari ini', "Today's check-ins")}</small><b>${today.length}</b>
+          <span class="sub">${today.filter((a) => a.status === 'Hadir').length} ${I18N.p('hadir', 'present')}</span></div>
+        <div class="stat"><small>${I18N.p('Nama di kelas ini', 'Names in this class')}</small><b>${rec.rows.length}</b></div>
+        <div class="stat"><small>${I18N.p('Hari tercatat', 'Days recorded')}</small><b>${rec.dates.length}</b></div>
+        <div class="stat"><small>${I18N.p('Rata-rata kehadiran', 'Average attendance')}</small>
+          <b>${(() => { const v = rec.rows.filter((r) => r.pct != null); return v.length ? Math.round(sum(v, (r) => r.pct) / v.length) + '%' : '—'; })()}</b></div>
+      </div>
+      <div class="toolbar">
+        <select class="select" data-chg="absenCls">${classes.map((c) => `<option ${c === cls ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+        <span class="mini muted">${I18N.p('Siswa menekan absen sendiri dari halaman siswa; namanya hanya bisa dipilih dari daftar kelas ini.', 'Students check in themselves from the student page; names can only be chosen from this class list.')}</span>
+      </div>
+      ${rec.dates.length ? `<div class="card"><div class="table-wrap"><table class="tbl absen-tbl">
+        <thead><tr><th>${I18N.p('Siswa', 'Student')}</th>${show.map((d) => `<th class="r" title="${fmtDateFull(d)}">${parseISO(d).getDate()}/${parseISO(d).getMonth() + 1}</th>`).join('')}<th class="r">${I18N.p('Hadir', 'Present')}</th><th class="r">%</th></tr></thead>
+        <tbody>${rec.rows.map((r) => `<tr><td><div class="t">${esc(r.name)}</div></td>
+          ${show.map((d) => { const v = r.st[rec.dates.indexOf(d)]; return `<td class="r"><span class="abs a-${(v || 'x').toLowerCase()}">${v ? abbr[v] : '·'}</span></td>`; }).join('')}
+          <td class="r"><b>${r.hadir}</b>/${r.isi}</td><td class="r">${r.pct == null ? '—' : `<b class="${r.pct >= 80 ? 'pos' : r.pct >= 60 ? 'warn' : 'neg'}">${r.pct}%</b>`}</td></tr>`).join('')}</tbody>
+      </table></div>${rec.dates.length > 14 ? `<p class="mini muted">${I18N.p(`Menampilkan 14 hari terakhir dari ${rec.dates.length} hari tercatat.`, `Showing the last 14 of ${rec.dates.length} recorded days.`)}</p>` : ''}</div>`
+      : UI.empty(I18N.p('Belum ada absen di kelas ini', 'No check-ins for this class yet'),
+        I18N.p('Bagikan tautan halaman siswa; mereka memilih kelas, memilih namanya, lalu menekan Hadir.', 'Share the student page link; they pick their class, pick their name, then press Present.'),
+        `<button class="btn sm" data-act="absenLink">${ic('link')}${I18N.p('Tautan absen siswa', 'Student attendance link')}</button>`)}`;
+  }
+};
+
+Object.assign(ACT, {
+  absenSync: async () => {
+    UI.toast(I18N.p('Menarik nama dari database nilai…', 'Pulling names from the score database…'), '', 3500);
+    const j = await Api.call('rosterSync', {});
+    await Store.pull({ force: true });
+    UI.toast(I18N.p(`${j.added} nama ditambahkan ke daftar siswa (${j.classes} kelas).`, `${j.added} names added to the student roster (${j.classes} classes).`), 'ok', 7000);
+    App.refresh();
+  },
+  absenLink: () => {
+    const url = typeof Tugas !== 'undefined' ? Tugas.studentUrl('') : '';
+    UI.modal({
+      title: I18N.p('Tautan halaman siswa', 'Student page link'), size: 'narrow',
+      body: `<p class="mini">${I18N.p('Bagikan tautan ini. Siswa memilih kelas, memilih namanya dari daftar, lalu bisa menekan absen dan mengumpulkan tugas.',
+        'Share this link. Students pick their class, pick their name from the list, then check in and submit their work.')}</p>
+        <input class="input" value="${esc(url)}" onclick="this.select()">
+        <div class="btn-row mt">${Absen.classes().map((c) => `<button class="btn xs" data-act="absenLinkCls" data-cls="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+        <p class="mini muted mt">${I18N.p('Tombol kelas di atas menyalin tautan yang langsung membuka kelas itu.', 'The class buttons above copy a link that opens straight to that class.')}</p>`
+    });
+  },
+  absenLinkCls: async (d) => {
+    const url = Tugas.studentUrl(d.cls);
+    try { await navigator.clipboard.writeText(url); UI.toast(I18N.p(`Tautan kelas ${d.cls} disalin.`, `Link for ${d.cls} copied.`), 'ok'); }
+    catch (e) { UI.toast(url, '', 9000); }
+  }
+});
+Object.assign(CHG, { absenCls: (v) => { App.s('school').absenCls = v; App.refresh(); } });
+
+/* =====================================================================
+ * v10b — Halaman siswa: pilih kelas → pilih nama dari daftar → absen,
+ *        kumpulkan tugas, dan lihat rekapnya sendiri.
+ *        Nama TIDAK boleh diketik bebas; hanya dari daftar kelas yang
+ *        dasarnya database nilai (Score List).
+ * =================================================================== */
+
+const ABSEN_PILIHAN = [
+  ['Hadir', 'Hadir', 'Present', 'ok'],
+  ['Izin', 'Izin', 'Excused', 'warn'],
+  ['Sakit', 'Sakit', 'Sick', 'warn'],
+  ['Alpa', 'Alpa', 'Absent', 'danger']
+];
+
+/* Portal siswa versi baru menggantikan isi objek Siswa yang lama. */
+Object.keys(Siswa).forEach((k) => { delete Siswa[k]; });
+Object.assign(Siswa, {
+  KEY: 'mph_siswa',
+  st: { cls: '', name: '', classes: [], names: [], tasks: [], recap: null },
+
+  remember() { try { localStorage.setItem(this.KEY, JSON.stringify({ cls: this.st.cls, name: this.st.name })); } catch (e) { } },
+  recall() { try { return JSON.parse(localStorage.getItem(this.KEY) || '{}'); } catch (e) { return {}; } },
+
+  async render(cls) {
+    document.body.classList.add('student-mode');
+    const root = $('#app') || document.body;
+    if (!$('#toast-root')) document.body.insertAdjacentHTML('beforeend', '<div id="toast-root"></div><div id="modal-root"></div>');
+    bindGlobalEvents();
+    root.innerHTML = `<div class="student-wrap">
+      <div class="student-head">${logoSVG(42, 'stu')}
+        <div><h1>Absen &amp; Pengumpulan Tugas</h1>
+        <p class="mini muted">SMAIT Al-Ittihad — pilih kelas, pilih namamu, lalu absen atau kumpulkan tugas</p></div>
+      </div>
+      <div id="stu-body">${UI.empty('Memuat…')}</div></div>`;
+    try {
+      const j = await Api.call('studentClasses');
+      this.st.classes = j.classes || [];
+    } catch (e) { $('#stu-body').innerHTML = UI.empty('Gagal memuat', e.message); return; }
+    const prev = this.recall();
+    const pick = cls || prev.cls || '';
+    if (pick && this.st.classes.some((c) => c.className === pick)) {
+      await this.openClass(pick, prev.name || '');
+    } else this.pickClass();
+  },
+
+  /* ---------------------------- langkah 1 --------------------------- */
+  pickClass() {
+    this.st.cls = ''; this.st.name = '';
+    const box = $('#stu-body');
+    const cs = this.st.classes;
+    box.innerHTML = `<div class="card"><h3>${ic('school')}Pilih kelasmu</h3>
+      ${cs.length ? `<div class="stu-pick">${cs.map((c) => `<button class="stu-chip" data-act="stuCls" data-cls="${esc(c.className)}">
+          <b>${esc(c.className)}</b><span>${c.students || 0} siswa${c.tasks ? ` · ${c.tasks} tugas` : ''}</span></button>`).join('')}</div>`
+      : UI.empty('Belum ada kelas', 'Guru belum memasukkan daftar siswa maupun tugas.')}</div>`;
+  },
+
+  /* ---------------------------- langkah 2 --------------------------- */
+  async openClass(cls, preName) {
+    this.st.cls = cls;
+    const box = $('#stu-body');
+    box.innerHTML = UI.empty('Memuat daftar nama…');
+    try {
+      const j = await Api.call('studentRoster', { className: cls });
+      this.st.names = j.names || [];
+    } catch (e) { box.innerHTML = UI.empty('Gagal memuat', e.message); return; }
+    if (preName && this.st.names.some((n) => n.toLowerCase() === String(preName).toLowerCase())) {
+      return this.openName(preName);
+    }
+    this.pickName();
+  },
+
+  pickName(filter) {
+    const box = $('#stu-body');
+    const q = String(filter == null ? (this.st.q || '') : filter).toLowerCase();
+    this.st.q = q;
+    const names = q ? this.st.names.filter((n) => n.toLowerCase().includes(q)) : this.st.names;
+    box.innerHTML = `<div class="card">
+      <div class="stu-back"><button class="btn xs" data-act="stuBack">${ic('chevL')}Ganti kelas</button>
+        <span class="badge b-brand">${esc(this.st.cls)}</span></div>
+      <h3>${ic('tutor')}Pilih namamu</h3>
+      <p class="mini muted" style="margin-top:0">Nama diambil dari daftar kelas yang dibuat guru. Kalau namamu tidak ada, beri tahu gurumu.</p>
+      <input class="input mb" id="stu-q" placeholder="Ketik untuk mencari namamu…" value="${esc(this.st.q || '')}" autocomplete="off">
+      ${names.length ? `<div class="stu-names">${names.map((n) => `<button class="stu-name" data-act="stuName" data-n="${esc(n)}">${esc(n)}</button>`).join('')}</div>`
+        : UI.empty(this.st.names.length ? 'Nama tidak ditemukan' : 'Daftar nama kelas ini masih kosong',
+          this.st.names.length ? 'Coba ketik sebagian namamu saja.' : 'Guru belum menarik daftar siswa kelas ini.')}
+      <p class="mini muted mt">${this.st.names.length} nama terdaftar di kelas ${esc(this.st.cls)}.</p></div>`;
+    const inp = $('#stu-q');
+    if (inp) {
+      inp.oninput = debounce(() => this.pickName(inp.value), 180);
+      if (q) { inp.focus(); inp.setSelectionRange(q.length, q.length); }
+    }
+  },
+
+  /* ---------------------------- langkah 3 --------------------------- */
+  async openName(name) {
+    this.st.name = name;
+    this.remember();
+    const box = $('#stu-body');
+    box.innerHTML = UI.empty('Memuat…');
+    try {
+      const [t, r] = await Promise.all([
+        Api.call('studentOpenTasks', { className: this.st.cls }),
+        Api.call('studentRecap', { className: this.st.cls, studentName: name })
+      ]);
+      this.st.tasks = t.tasks || [];
+      this.st.recap = r;
+    } catch (e) { box.innerHTML = UI.empty('Gagal memuat', e.message); return; }
+    this.home();
+  },
+
+  todayAbsen() {
+    const r = this.st.recap;
+    if (!r) return null;
+    const t = todayISO();
+    return (r.absen || []).filter((a) => a.date === t)[0] || null;
+  },
+
+  home() {
+    const box = $('#stu-body');
+    const r = this.st.recap || { ringkas: {}, absen: [], tugas: [] };
+    const ab = this.todayAbsen();
+    const rk = r.ringkas || {};
+    const open = this.st.tasks.filter((t) => !((r.tugas || []).filter((x) => x.id === t.id && x.submitted)[0]));
+    const doneIds = {};
+    (r.tugas || []).forEach((x) => { if (x.submitted) doneIds[x.id] = x; });
+
+    box.innerHTML = `
+      <div class="stu-id card">
+        <div class="stu-back"><button class="btn xs" data-act="stuBack">${ic('chevL')}Ganti</button></div>
+        <div class="grow"><b>${esc(this.st.name)}</b><span class="mini muted">Kelas ${esc(this.st.cls)}</span></div>
+      </div>
+
+      <div class="card mb"><h3>${ic('check')}Absen hari ini</h3>
+        <p class="mini muted" style="margin-top:0">${fmtDateFull(todayISO())}</p>
+        ${ab ? `<div class="note ok">Sudah absen hari ini: <b>${esc(ab.status)}</b> — pukul ${esc(String(ab.at || '').slice(11, 16))}.
+            <div class="mini muted">Masih bisa diubah bila keliru.</div></div>` : ''}
+        <div class="stu-abs">${ABSEN_PILIHAN.map(([k, idl, en, col]) => `<button class="stu-ab a-${col} ${ab && ab.status === k ? 'on' : ''}" data-act="stuAbsen" data-s="${k}">${esc(idl)}</button>`).join('')}</div>
+      </div>
+
+      <div class="card mb"><h3>${ic('school')}Tugas belum dikumpulkan <span class="badge">${open.length}</span></h3>
+        ${open.length ? open.map((t) => `<div class="stu-task">
+            <div class="t">${esc(t.title)}</div>
+            <div class="s muted">${esc([t.subject, t.type].filter(Boolean).join(' — '))} · batas ${fmtDate(t.dueDate)} ${UI.dueBadge(t.dueDate)}</div>
+            ${t.instruction ? `<p class="mini" style="white-space:pre-wrap">${esc(t.instruction)}</p>` : ''}
+            ${t.link ? `<a class="btn xs" href="${esc(t.link)}" target="_blank" rel="noopener">${ic('link')}Bahan tugas</a>` : ''}
+            <div class="form mt">
+              <div class="field full"><label>Tautan pekerjaan (Drive/Docs) — opsional</label><input class="input stu-link" data-task="${t.id}" placeholder="https://…"></div>
+              <div class="field full"><label>Jawaban / keterangan</label><textarea class="input stu-content" data-task="${t.id}" rows="3" placeholder="Tulis jawaban atau keterangan singkat"></textarea></div>
+            </div>
+            <button class="btn primary mt" data-act="stuSend" data-task="${t.id}">${ic('upload')}Kumpulkan</button>
+          </div>`).join('')
+        : UI.empty('Semua tugas sudah dikumpulkan', 'Tidak ada tugas terbuka yang menunggu.')}</div>
+
+      <div class="card mb"><h3>${ic('school')}Pembelajaran yang sudah berlangsung
+          <span class="badge">${((r.pelajaran || []).filter((m) => m.status === 'Terlaksana')).length}</span></h3>
+        <p class="mini muted" style="margin-top:0">Materi, slide, dan catatan tiap pertemuan — beserta kehadiranmu hari itu.</p>
+        ${(r.pelajaran || []).length ? `<div class="les-list">${(r.pelajaran || []).slice().sort((a, b) => {
+          const pa = (a.status === 'Terlaksana' || a.lewat) ? 0 : 1;
+          const pb = (b.status === 'Terlaksana' || b.lewat) ? 0 : 1;
+          return pa - pb || String(b.date).localeCompare(String(a.date));
+        }).slice(0, 40).map((m) => {
+          const abs = m.hadir ? `<span class="abs a-${String(m.hadir).toLowerCase()}">${m.hadir}</span>`
+            : (m.status === 'Terlaksana' && m.lewat ? '<span class="abs a-x">tidak tercatat</span>' : '');
+          return `<div class="les ${m.status === 'Terlaksana' ? '' : 'soon'}">
+            <div class="les-h"><b>Pertemuan ${m.no || '—'}</b>
+              <span class="mini muted">${fmtDateFull(m.date)}${m.start ? ' · ' + esc(m.start) + (m.end ? '–' + esc(m.end) : '') : ''}</span>
+              ${m.status === 'Terlaksana' ? abs : `<span class="badge">${esc(m.status)}</span>`}</div>
+            ${m.tpCodes ? `<div class="les-tp">${String(m.tpCodes).split(',').map((c) => `<span class="badge b-brand">${esc(c.trim())}</span>`).join(' ')}</div>` : ''}
+            ${m.topic ? `<div class="les-t">${esc(m.topic)}</div>` : ''}
+            ${m.material ? `<div class="les-m">${esc(m.material)}</div>` : ''}
+            ${(m.links || []).length ? `<div class="lk-chips">${m.links.map((l) => `<a class="lk-chip" href="${esc(l.u)}" target="_blank" rel="noopener">${ic('link')}${esc(l.t || 'Buka materi')}</a>`).join('')}</div>` : ''}
+            ${m.taskTitle ? `<div class="mini muted">Penugasan: ${esc(m.taskTitle)}</div>` : ''}
+          </div>`;
+        }).join('')}</div>` : UI.empty('Belum ada pembelajaran tercatat', 'Guru belum mengisi riwayat pertemuan untuk kelas ini.')}
+      </div>
+
+      <div class="card"><h3>${ic('table')}Rekapku</h3>
+        <div class="stu-sum">
+          <div><small>Pelajaran berlangsung</small><b>${rk.pelajaran || 0}</b></div>
+          <div><small>Kamu hadir</small><b>${rk.hadirDiPelajaran || 0}</b></div>
+          <div><small>Kehadiran</small><b>${rk.persen == null ? '—' : rk.persen + '%'}</b></div>
+          <div><small>Tugas dikumpulkan</small><b>${rk.dikumpulkan || 0}/${rk.tugas || 0}</b></div>
+          <div><small>Sudah dinilai</small><b>${rk.dinilai || 0}</b></div>
+        </div>
+        <h4 class="mt">Riwayat tugas</h4>
+        ${(r.tugas || []).length ? `<ul class="list">${(r.tugas || []).map((t) => `<li>
+            <span class="dotc" style="background:var(--${t.score !== '' && t.score != null ? 'ok' : t.submitted ? 'brand' : t.dueDate < todayISO() ? 'danger' : 'muted'})"></span>
+            <div class="grow"><div class="t">${esc(t.title)}</div>
+              <div class="s">batas ${fmtDate(t.dueDate)}${t.submitted ? ` · dikumpulkan ${fmtDate(String(t.submittedAt).slice(0, 10))}${t.late ? ' (terlambat)' : ''}` : ' · belum dikumpulkan'}${t.feedback ? ` · ${esc(t.feedback)}` : ''}</div></div>
+            ${t.score !== '' && t.score != null ? `<span class="badge b-jade">${esc(t.score)}/${esc(t.maxScore || 100)}</span>` : t.submitted ? '<span class="badge">menunggu nilai</span>' : ''}</li>`).join('')}</ul>`
+        : '<p class="mini muted">Belum ada tugas.</p>'}
+        <h4 class="mt">Riwayat absen</h4>
+        ${(r.absen || []).length ? `<div class="stu-abshist">${(r.absen || []).slice(0, 30).map((a) => `<span class="abs a-${String(a.status).toLowerCase()}" title="${fmtDateFull(a.date)} — ${esc(a.status)}">${parseISO(a.date).getDate()}/${parseISO(a.date).getMonth() + 1}</span>`).join('')}</div>`
+        : '<p class="mini muted">Belum ada catatan absen.</p>'}
+      </div>`;
+  },
+
+  async absen(status) {
+    try {
+      const j = await Api.call('studentAbsen', { className: this.st.cls, studentName: this.st.name, status });
+      UI.toast(j.updated ? `Absen diperbarui: ${status}.` : `Absen tercatat: ${status}. Terima kasih!`, 'ok', 5000);
+      this.st.recap = await Api.call('studentRecap', { className: this.st.cls, studentName: this.st.name });
+      this.home();
+    } catch (e) { UI.toast(e.message, 'err', 8000); }
+  },
+
+  async send(taskId) {
+    const link = ($(`.stu-link[data-task="${taskId}"]`) || {}).value || '';
+    const content = ($(`.stu-content[data-task="${taskId}"]`) || {}).value || '';
+    if (!String(content).trim() && !String(link).trim()) return UI.toast('Isi jawaban atau tautan pekerjaanmu dulu.', 'err');
+    try {
+      await Api.call('studentSubmit', { taskId, studentName: this.st.name, content, link });
+      UI.toast('Tugas terkumpul. Terima kasih!', 'ok', 5000);
+      const [t, r] = await Promise.all([
+        Api.call('studentOpenTasks', { className: this.st.cls }),
+        Api.call('studentRecap', { className: this.st.cls, studentName: this.st.name })
+      ]);
+      this.st.tasks = t.tasks || [];
+      this.st.recap = r;
+      this.home();
+    } catch (e) { UI.toast(e.message, 'err', 8000); }
+  }
+});
+
+Object.assign(ACT, {
+  stuCls: (d) => Siswa.openClass(d.cls, ''),
+  stuName: (d) => Siswa.openName(d.n),
+  stuBack: () => { Siswa.st.q = ''; Siswa.st.name ? Siswa.pickName('') : Siswa.pickClass(); },
+  stuAbsen: (d) => Siswa.absen(d.s),
+  stuSend: (d) => Siswa.send(d.task)
+});
 
 /* Mulai aplikasi */
 boot();
