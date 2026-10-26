@@ -1603,7 +1603,7 @@ span.rs-pill { cursor: default; }
 const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbyV8s3_yYClutUiPfF7Jam_Tww6QFJkoZKABIFBEvEV_jdR6fRASdixXHGxjj043WDsJw/exec';
 const DEFAULT_API_KEY = 'mph_86556476be2b4bdcbc46ae435d41f2cc';
 
-const APP_VERSION = '5.5.2';
+const APP_VERSION = '5.5.4';
 
 /* Deteksi: dibuka langsung dari URL Apps Script (HtmlService) atau dari hosting statis. */
 const BOOT = (() => {
@@ -2327,6 +2327,15 @@ const Store = {
       this.dataVersion = '';
       ops.forEach((op) => { if (LAZY.includes(op.sheet)) this.loadedAt[op.sheet] = Date.now(); });
       if (ops.some((op) => op.sheet === 'Schedule')) return this.pull().then(() => { App.refresh(); return j; });
+      /* Menilai tugas membuat server mengisi sel ledgernya pada permintaan
+         yang sama. Salinan _Ledger di sini tidak tahu itu, dan karena tabel
+         malas tidak ikut bootstrap, angkanya baru terlihat sesudah aplikasi
+         dibuka ulang — persis rasa "nilainya tidak terupdate". Jadi dibaca
+         ulang di sini, sekali, hanya bila memang ada nilai yang disimpan. */
+      if (ops.some((op) => op.sheet === '_Pengumpulan' && op.row
+        && op.row.score !== '' && op.row.score != null)) {
+        this.ensure('_Ledger', true).then(() => App.refresh()).catch(() => { });
+      }
       if (j.warnings && j.warnings.length) UI.toast('Tersimpan. Catatan kalender: ' + j.warnings[0], '', 6000);
       else if (!silent) UI.flashSaved();
       this.lastSync = new Date(); this.lastError = '';
@@ -20661,6 +20670,631 @@ VIEWS.school.kelas = {
     return pilihKelas + kepala + tab + isi;
   }
 };
+
+/* ====================================================================
+   v24 — KLASIFIKASI TUGAS KE SEL LEDGER
+
+   Keluhannya: "tugas siswa tidak terekap dan tidak terupdate". Sebabnya
+   satu dan terukur — tugas yang dibuat sebelum pemilih sel ledger ada
+   tidak tahu dirinya mengisi sel yang mana, jadi nilainya berhenti di
+   daftar pengumpulan. Di database Ustadz: 45 tugas, nol yang punya sel,
+   dan 9 nilai yang sudah diberikan tidak pernah sampai ke ledger.
+
+   Di sini tiap tugas diberi usul selnya dari judulnya, lalu gurunya yang
+   memutuskan. Usul, bukan keputusan: menebak salah berarti nilai seorang
+   siswa masuk ke komponen yang keliru, dan itu lebih buruk daripada sel
+   yang dibiarkan kosong.
+   ==================================================================== */
+
+function tkSt() {
+  const s = App.s('school');
+  s.tk = s.tk || { data: null, pilih: {}, mapel: {}, saring: 'belum', sibuk: false };
+  return s.tk;
+}
+
+const TK_SARING = [
+  ['belum', 'Perlu dibereskan', 'Needs attention'],
+  ['nilai', 'Sudah ada nilainya', 'Has grades'],
+  ['kosongan', 'Judulnya tanggal saja', 'Date-named only'],
+  ['semua', 'Semua tugas', 'All tasks']
+];
+
+/** Tugas mana saja yang ditampilkan menurut saringan yang dipilih.
+ *  "Perlu dibereskan" sengaja TIDAK memuat tugas yang judulnya cuma tanggal:
+ *  dari judul seperti itu tidak ada yang bisa dibaca, dan menyodorkan 34
+ *  baris semacam itu membuat layarnya tidak terpakai. */
+function tkDaftar() {
+  const st = tkSt();
+  const semua = (st.data && st.data.tugas) || [];
+  if (st.saring === 'nilai') return semua.filter((t) => t.dinilai > 0);
+  if (st.saring === 'kosongan') return semua.filter((t) => t.kosongan);
+  if (st.saring === 'semua') return semua;
+  /* Komponen yang terisi tetapi bukan sel ledger ikut di sini. Di layar
+     tugasnya terlihat sudah berkelas ("Writing"), padahal sel semacam itu
+     tidak pernah ada di ledger, jadi nilainya tidak akan pernah terekap —
+     justru inilah yang paling perlu dibereskan. */
+  return semua.filter((t) => (!t.component || t.tidakSah) && (!t.kosongan || t.dinilai > 0));
+}
+
+/** Apakah satu teks komponen benar-benar salah satu sel ledger. Dipakai di
+ *  lencana tombol, yang hanya punya data lokal dan tidak bisa menanyakan
+ *  keabsahannya ke server. Daftarnya sama dengan sel yang dipakai halaman
+ *  ledger: UNIT 1..3 × enam komponen, lalu MID TEST, FINAL TEST, Star Points. */
+function tkSelSah(teks) {
+  const s = String(teks || '').trim();
+  if (!s) return false;
+  if (!tkSelSah._set) {
+    const set = {};
+    LEDGER_LAIN.forEach((k) => { set[k.toUpperCase()] = 1; });
+    for (let u = 1; u <= 3; u++) {
+      UNIT_KOMP.forEach((k) => { set[('UNIT ' + u + ' — ' + k).toUpperCase()] = 1; });
+    }
+    tkSelSah._set = set;
+  }
+  /* Tanda pisahnya disamakan dulu: yang tersimpan bisa "-" biasa, bukan
+     hanya em dash. */
+  return !!tkSelSah._set[s.replace(/\s*[—–-]\s*/g, ' — ').toUpperCase()];
+}
+
+/** Sel yang akan disimpan untuk satu tugas: pilihan guru menang atas usul. */
+function tkSel(t) {
+  const st = tkSt();
+  if (st.pilih[t.id] !== undefined) return st.pilih[t.id];
+  /* Komponen yang tidak sah tidak dipakai sebagai pilihan awal: ia bukan
+     salah satu isi daftar, jadi kalau dipakai pemilihnya malah tampak
+     kosong dan usulnya hilang dari pandangan. */
+  if (t.tidakSah) return t.usul || '';
+  return t.component || t.usul || '';
+}
+
+function tkBarisUsul(t) {
+  if (t.kosongan) {
+    return `<span class="badge">${I18N.p('judul tanggal', 'date title')}</span>
+      <span class="mini muted">${I18N.p('dibuat otomatis oleh impor lama; beri nama dulu bila memang tugas', 'auto-created by an old import; rename it first if it really is a task')}</span>`;
+  }
+  const lencana = t.yakin === 'pasti'
+    ? `<span class="badge b-ok">${I18N.p('pasti', 'certain')}</span>`
+    : t.yakin === 'usul'
+      ? `<span class="badge b-amber">${I18N.p('usul', 'suggested')}</span>`
+      : `<span class="badge">${I18N.p('pilih sendiri', 'pick one')}</span>`;
+  /* Komponen yang tidak sah diberi tahu apa adanya: tanpa ini gurunya
+     melihat kolomnya sudah terisi dan menyangka tidak ada yang salah. */
+  const sah = t.tidakSah
+    ? ` <span class="badge b-rose">${I18N.p('bukan sel ledger', 'not a ledger cell')}</span>`
+    : '';
+  return `${lencana}${sah} <span class="mini muted">${esc(t.alasan || '')}</span>`;
+}
+
+ACT.tkBuka = async () => {
+  const st = tkSt();
+  st.pilih = {}; st.mapel = {};
+  UI.toast(I18N.p('Memeriksa tugas…', 'Checking tasks…'), '', 2000);
+  try {
+    st.data = await Api.call('tugasKlasifikasi', {});
+  } catch (e) {
+    UI.toast(I18N.p('Gagal memeriksa tugas: ', 'Could not check tasks: ') + e.message, 'err', 8000);
+    return;
+  }
+  tkLayar();
+};
+
+CHG.tkSel = (v, el) => { tkSt().pilih[el.dataset.id] = v; };
+CHG.tkMapel = (v, el) => { tkSt().mapel[el.dataset.id] = v; };
+ACT.tkSaring = (d) => { tkSt().saring = String(d.s || 'belum'); tkLayar(true); };
+
+/** Pakai seluruh usul yang tingkat keyakinannya 'pasti' saja — yang
+ *  'usul' sengaja tidak diborong, karena unitnya masih tebakan. */
+ACT.tkPakaiPasti = () => {
+  const st = tkSt();
+  let n = 0;
+  tkDaftar().forEach((t) => { if (t.yakin === 'pasti' && t.usul) { st.pilih[t.id] = t.usul; n++; } });
+  UI.toast(I18N.p(`${n} tugas memakai usulnya`, `${n} tasks use their suggestion`), 'ok');
+  tkLayar(true);
+};
+
+/** Merapikan ejaan mapel di seluruh tugas — terpisah dari pemilihan sel,
+ *  karena ini bukan keputusan: "EW (X.4)" memang English Wajib. */
+ACT.tkRapiMapel = async () => {
+  const st = tkSt();
+  if (st.sibuk) return;
+  let pra;
+  try { pra = await Api.call('tugasRapikanMapel', { pratinjau: true }); }
+  catch (e) { UI.toast(e.message, 'err', 8000); return; }
+  if (!pra.diubah) {
+    UI.toast(I18N.p('Ejaan mata pelajaran sudah seragam.', 'Subject spelling is already consistent.'), 'ok');
+    return;
+  }
+  const contoh = (pra.ubah || []).slice(0, 6)
+    .map((u) => `<li><b>${esc(u.dari || '(kosong)')}</b> → ${esc(u.ke)} <span class="mini muted">${esc(u.title)}</span></li>`).join('');
+  const ya = await UI.confirm(I18N.p(
+    `${pra.diubah} tugas akan diseragamkan ejaan mata pelajarannya:<ul class="list mt">${contoh}</ul>`
+    + ((pra.ubah || []).length > 6 ? `<p class="mini muted">… dan ${pra.diubah - 6} lagi</p>` : '')
+    + `<p class="mini mt">Nilai tugasnya ikut jatuh ke kolom ledger yang benar sesudah ini.</p>`,
+    `${pra.diubah} tasks will have their subject spelling unified:<ul class="list mt">${contoh}</ul>`
+    + ((pra.ubah || []).length > 6 ? `<p class="mini muted">… and ${pra.diubah - 6} more</p>` : '')
+    + `<p class="mini mt">Their scores will then land in the right ledger column.</p>`),
+  { ok: I18N.p('Rapikan', 'Tidy up') });
+  if (!ya) return;
+  st.sibuk = true; tkLayar(true);
+  try {
+    const j = await Api.call('tugasRapikanMapel', {});
+    UI.toast(I18N.p(`${j.diubah} tugas dirapikan mapelnya.`, `${j.diubah} task subjects tidied.`), 'ok', 7000);
+    st.data = await Api.call('tugasKlasifikasi', {});
+    await Store.ensure('_Tugas', true);
+    tkLayar(true);
+    App.refresh();
+  } catch (e) {
+    UI.toast(I18N.p('Gagal merapikan: ', 'Could not tidy: ') + e.message, 'err', 9000);
+  } finally { st.sibuk = false; }
+};
+
+ACT.tkKosongkan = () => {
+  const st = tkSt();
+  tkDaftar().forEach((t) => { st.pilih[t.id] = ''; });
+  tkLayar(true);
+};
+
+ACT.tkSimpan = async () => {
+  const st = tkSt();
+  if (st.sibuk) return;
+  const set = {}, mapel = {};
+  tkDaftar().forEach((t) => {
+    const v = tkSel(t);
+    if (v && v !== t.component) set[t.id] = v;
+    const m = st.mapel[t.id] !== undefined ? st.mapel[t.id] : (t.mapelUsul || '');
+    if (m && m !== t.subject) mapel[t.id] = m;
+  });
+  const n = Object.keys(set).length;
+  if (!n && !Object.keys(mapel).length) {
+    UI.toast(I18N.p('Belum ada yang diubah.', 'Nothing changed yet.'), 'warn');
+    return;
+  }
+  const ya = await UI.confirm(I18N.p(
+    `${n} tugas akan diberi sel ledgernya, lalu nilai yang sudah ada langsung ditarik ke ledger. Sel yang sudah berisi angka tidak ditimpa.`,
+    `${n} tasks will get their ledger cell, then existing grades are pulled into the ledger. Cells that already hold a number are left alone.`),
+  { ok: I18N.p('Simpan & tarik', 'Save & pull') });
+  if (!ya) return;
+
+  st.sibuk = true;
+  tkLayar(true);
+  try {
+    const j = await Api.call('tugasSetKomponen', { set, mapel, mode: 'kosong' });
+    const diisi = (j.tarik && (Number(j.tarik.baru || 0) + Number(j.tarik.diisi || 0))) || 0;
+    UI.toast(I18N.p(
+      `${j.diubah} tugas berkelas, ${diisi} sel ledger terisi.`,
+      `${j.diubah} tasks classified, ${diisi} ledger cells filled.`), 'ok', 8000);
+    st.pilih = {}; st.mapel = {};
+    st.data = await Api.call('tugasKlasifikasi', {});
+    await Store.ensure('_Tugas', true);
+    await Store.ensure('_Ledger', true);
+    tkLayar(true);
+    App.refresh();
+  } catch (e) {
+    UI.toast(I18N.p('Gagal menyimpan: ', 'Could not save: ') + e.message, 'err', 9000);
+  } finally {
+    st.sibuk = false;
+  }
+};
+
+/** Menggambar layarnya. `ulang` berarti isinya saja yang digambar ulang. */
+function tkLayar(ulang) {
+  const st = tkSt();
+  const d = st.data || {};
+  const list = tkDaftar();
+  const pilihan = d.pilihan || [];
+
+  const strip = `<div class="grid g4 mb">
+    <div class="stat accent"><small>${I18N.p('Tugas', 'Tasks')}</small><b>${d.total || 0}</b></div>
+    <div class="stat"><small>${I18N.p('Belum berkelas', 'Unclassified')}</small>
+      <b class="${d.belum ? 'warn' : 'pos'}">${d.belum || 0}</b>
+      <span class="sub">${I18N.p('nilainya tidak masuk ledger', 'grades cannot reach the ledger')}</span></div>
+    <div class="stat"><small>${I18N.p('Sudah ada nilainya', 'Already graded')}</small><b>${d.adaNilai || 0}</b>
+      <span class="sub">${I18N.p('tugas yang nilainya menunggu', 'tasks with grades waiting')}</span></div>
+    <div class="stat"><small>${I18N.p('Judulnya tanggal saja', 'Date-named only')}</small><b>${d.kosongan || 0}</b>
+      <span class="sub">${I18N.p('dibuat otomatis oleh impor lama', 'auto-created by an old import')}</span></div>
+  </div>
+  ${d.mapelBeda ? `<div class="note warn mb">${I18N.p(
+    `${d.mapelBeda} tugas mata pelajarannya tertulis berbeda dari mata pelajaran kelasnya — misalnya "EW (X.4)" padahal kelasnya "English Wajib". Nilainya akan jatuh ke kolom ledger yang tidak pernah terlihat di layar. Kolom Mapel di bawah memperbaikinya sekalian.`,
+    `${d.mapelBeda} tasks have a subject different from their class subject — "EW (X.4)" where the class is "English Wajib", for instance. Their scores land in a ledger column that is never shown. The Subject column below fixes that along the way.`)}</div>` : ''}`;
+
+  const saring = `<div class="seg mb">${TK_SARING.map(([k, id, en]) => `<button
+    class="seg-b ${st.saring === k ? 'on' : ''}" data-act="tkSaring" data-s="${k}">${esc(I18N.p(id, en))}</button>`).join('')}</div>`;
+
+  const tabel = UI.table([
+    { h: I18N.p('Tugas', 'Task'), f: (t) => `<b>${esc(t.title)}</b>
+      <span class="mini muted">${esc(t.className)}${t.dueDate ? ' · ' + esc(t.dueDate) : ''}</span>` },
+    { h: I18N.p('Nilai', 'Grades'), cls: 'num', f: (t) => t.kumpul
+      ? `${t.dinilai}/${t.kumpul}` : '<span class="mini muted">—</span>' },
+    { h: I18N.p('Usul', 'Suggestion'), f: tkBarisUsul },
+    { h: I18N.p('Sel ledger', 'Ledger cell'), f: (t) => {
+      const v = tkSel(t);
+      return `<select class="input" style="min-width:200px" data-chg="tkSel" data-id="${esc(t.id)}">
+        <option value="">— ${I18N.p('belum dipilih', 'not chosen')} —</option>
+        ${pilihan.map((c) => `<option value="${esc(c)}"${c === v ? ' selected' : ''}>${esc(c)}</option>`).join('')}
+      </select>`;
+    } },
+    { h: I18N.p('Mapel', 'Subject'), f: (t) => {
+      if (!t.mapelUsul) return `<span class="mini muted">${esc(t.subject || '—')}</span>`;
+      const v = st.mapel[t.id] !== undefined ? st.mapel[t.id] : t.mapelUsul;
+      return `<select class="input" style="min-width:160px" data-chg="tkMapel" data-id="${esc(t.id)}">
+        <option value="${esc(t.mapelUsul)}"${v === t.mapelUsul ? ' selected' : ''}>${esc(t.mapelUsul)}</option>
+        <option value=""${v ? '' : ' selected'}>${esc(t.subject || '—')} ${I18N.p('(biarkan)', '(keep)')}</option>
+      </select>`;
+    } }
+  ], list, {
+    emptyMsg: st.saring === 'belum'
+      ? I18N.p('Tidak ada lagi yang perlu dibereskan.', 'Nothing left to sort out.')
+      : I18N.p('Tidak ada tugas pada saringan ini.', 'No tasks under this filter.')
+  });
+
+  const isi = `<div class="note mb">${I18N.p(
+    'Nilai tugas baru bisa masuk ke ledger kalau tugasnya tahu dirinya mengisi sel yang mana. Usul di bawah dibaca dari judul tugasnya — yang bertanda <b>pasti</b> sudah menyebut unit dan komponennya sendiri, yang bertanda <b>usul</b> unitnya masih tebakan (bawaannya UNIT 1), jadi mohon diperiksa dulu. Sesudah disimpan, nilai yang sudah ada langsung ditarik ke ledger dan sel yang sudah berisi angka tidak ditimpa.',
+    'A task score can only reach the ledger once the task knows which cell it fills. The suggestions below are read from each task title — <b>certain</b> means the title names its own unit and component, <b>suggested</b> means the unit is still a guess (UNIT 1 by default), so please check those. After saving, existing grades are pulled into the ledger and cells that already hold a number are left alone.')}</div>
+    ${strip}${saring}${tabel}`;
+
+  const kaki = `${d.mapelBeda ? `<button class="btn" data-act="tkRapiMapel">${I18N.p('Rapikan mapel', 'Tidy subjects')} (${d.mapelBeda})</button>` : ''}
+    <button class="btn" data-act="tkPakaiPasti">${I18N.p('Pakai usul yang pasti', 'Use certain suggestions')}</button>
+    <button class="btn" data-act="tkKosongkan">${I18N.p('Kosongkan pilihan', 'Clear choices')}</button>
+    <button class="btn primary" data-act="tkSimpan"${st.sibuk ? ' disabled' : ''}>
+      ${st.sibuk ? I18N.p('Menyimpan…', 'Saving…') : I18N.p('Simpan & tarik ke ledger', 'Save & pull to ledger')}</button>`;
+
+  if (ulang && tkLayar._m && tkLayar._m.box) {
+    const body = tkLayar._m.box.querySelector('.modal-body');
+    const foot = tkLayar._m.box.querySelector('.modal-foot');
+    if (body) body.innerHTML = isi;
+    if (foot) foot.innerHTML = kaki;
+    I18N.apply(tkLayar._m.box);
+    return;
+  }
+  tkLayar._m = UI.modal({
+    title: I18N.p('Klasifikasi tugas ke sel ledger', 'Classify tasks into ledger cells'),
+    size: 'wide', body: isi, foot: kaki,
+    onClose: () => { tkLayar._m = null; }
+  });
+}
+
+/* Tombolnya dipasang di halaman Tugas Siswa — tempat Ustadz memang
+   mengurus tugas — tanpa menghapus tombol yang sudah ada di sana. */
+(function () {
+  const asli = VIEWS.school.tugassiswa.actions;
+  VIEWS.school.tugassiswa.actions = function () {
+    /* Yang dihitung bukan cuma komponen yang kosong, tetapi juga komponen
+       yang terisi di luar daftar sel ledger: "Writing" tanpa unit tidak
+       pernah sampai ke ledger, dan kalau tidak ikut dihitung maka
+       lencananya kosong justru ketika ada 45 tugas yang perlu dibereskan. */
+    const belum = Store.all('_Tugas').filter((t) => !tkSelSah(t.component)).length;
+    const tanda = belum ? `<span class="badge b-amber">${belum}</span>` : '';
+    return `<button class="btn mod" data-act="tkBuka">${ic('table')}${I18N.p('Klasifikasi ke ledger', 'Classify into ledger')}${tanda}</button>`
+      + (typeof asli === 'function' ? asli.apply(this, arguments) : '');
+  };
+})();
+
+/* ====================================================================
+   v25 — PEMELIHARAAN DATA: PERIKSA, BERESKAN, PULIHKAN, TARIK
+
+   Tiga hal yang selama ini hanya bisa dikerjakan dari luar aplikasi,
+   sekarang ada di dalamnya:
+
+   • Periksa & bereskan — 14 pemeriksaan atas cacat yang pernah benar-benar
+     ketemu di database ini. Yang jawabannya PASTI dibereskan sendiri; yang
+     memerlukan keputusan guru hanya dilaporkan beserta tempat
+     membereskannya.
+   • Pulihkan — daftar cadangan di Drive, memulihkan sheet pilihan dari
+     salah satunya, dan mengurungkan sekumpulan perubahan terakhir.
+   • Tarik semua — daftar siswa, Score List, dan nilai ke ledger dalam satu
+     perintah, dengan laporan per langkah.
+
+   Letaknya di Pengaturan > Data & Cadangan, bersama ekspor dan backup.
+   ==================================================================== */
+
+const PD_BERAT = { tinggi: ['b-rose', 'perlu segera'], sedang: ['b-amber', 'sebaiknya dibereskan'] };
+
+function pdSt() {
+  const s = App.s('school');
+  s.pd = s.pd || { lap: null, pilih: {}, sibuk: false, cadangan: null, sheetPilih: {} };
+  return s.pd;
+}
+
+/* ---------------------------------------------------------- periksa */
+
+ACT.pdPeriksa = async () => {
+  const st = pdSt();
+  if (st.sibuk) return;
+  st.sibuk = true;
+  UI.toast(I18N.p('Memeriksa seluruh data…', 'Checking all data…'), '', 4000);
+  try {
+    st.lap = await Api.call('dataPeriksa', {});
+    st.pilih = {};
+    (st.lap.temuan || []).forEach((t) => { if (t.jumlah && t.otomatis) st.pilih[t.kode] = true; });
+    /* sibuk dilepas SEBELUM menggambar: kalau tidak, tombol "bereskan"
+       tergambar dalam keadaan mati tepat sesudah pemeriksaan selesai. */
+    st.sibuk = false;
+    pdLayar();
+  } catch (e) {
+    UI.toast(I18N.p('Gagal memeriksa: ', 'Check failed: ') + e.message, 'err', 9000);
+  } finally { st.sibuk = false; }
+};
+
+CHG.pdPilih = (v, el) => { pdSt().pilih[el.dataset.kode] = el.checked; };
+
+ACT.pdBereskan = async () => {
+  const st = pdSt();
+  if (st.sibuk) return;
+  const kode = Object.keys(st.pilih).filter((k) => st.pilih[k]);
+  if (!kode.length) {
+    UI.toast(I18N.p('Belum ada yang dicentang.', 'Nothing ticked yet.'), 'warn');
+    return;
+  }
+  const jml = (st.lap.temuan || []).filter((t) => kode.indexOf(t.kode) >= 0)
+    .reduce((n, t) => n + t.jumlah, 0);
+  const ya = await UI.confirm(I18N.p(
+    `${jml} baris akan dibereskan. Sebelum diubah, salinan seluruh spreadsheet dibuat dulu ke folder cadangan di Drive — jadi selalu ada jalan kembali.`,
+    `${jml} rows will be sorted out. A full copy of the spreadsheet is saved to the backup folder in Drive first, so there is always a way back.`),
+  { ok: I18N.p('Cadangkan & bereskan', 'Back up & fix') });
+  if (!ya) return;
+
+  st.sibuk = true; pdLayar(true);
+  try {
+    const j = await Api.call('dataBereskan', { kode, cadangkan: true });
+    const pesan = (j.hasil || []).filter((h) => h.dibereskan)
+      .map((h) => `${pdJudul(h.kode)}: ${h.dibereskan}`).join(' · ');
+    UI.toast(I18N.p(`${j.total} baris dibereskan. ${pesan}`, `${j.total} rows fixed. ${pesan}`), 'ok', 10000);
+    if (j.cadangan && j.cadangan.ok === false) {
+      UI.toast(I18N.p('Catatan: cadangan gagal dibuat — ', 'Note: the backup failed — ') + (j.cadangan.error || ''), 'warn', 9000);
+    }
+    st.lap = await Api.call('dataPeriksa', {});
+    st.pilih = {};
+    (st.lap.temuan || []).forEach((t) => { if (t.jumlah && t.otomatis) st.pilih[t.kode] = true; });
+    await Store.pull({ force: true });
+    pdLayar(true);
+    App.refresh();
+  } catch (e) {
+    UI.toast(I18N.p('Gagal membereskan: ', 'Could not fix: ') + e.message, 'err', 9000);
+  } finally { st.sibuk = false; }
+};
+
+function pdJudul(kode) {
+  const t = ((pdSt().lap || {}).temuan || []).filter((x) => x.kode === kode)[0];
+  return t ? t.judul : kode;
+}
+
+/* --------------------------------------------------------- pulihkan */
+
+ACT.pdCadangan = async () => {
+  const st = pdSt();
+  UI.toast(I18N.p('Membaca folder cadangan…', 'Reading the backup folder…'), '', 3000);
+  try {
+    const j = await Api.call('cadanganDaftar', {});
+    st.cadangan = j;
+    pdPulihLayar();
+  } catch (e) {
+    UI.toast(I18N.p('Gagal membaca cadangan: ', 'Could not read backups: ') + e.message, 'err', 9000);
+  }
+};
+
+CHG.pdSheet = (v, el) => { pdSt().sheetPilih[el.dataset.sheet] = el.checked; };
+
+ACT.pdPulih = async (d) => {
+  const st = pdSt();
+  const sheets = Object.keys(st.sheetPilih).filter((k) => st.sheetPilih[k]);
+  if (!sheets.length) {
+    UI.toast(I18N.p('Pilih dulu sheet yang mau dipulihkan.', 'Pick the sheets to restore first.'), 'warn');
+    return;
+  }
+  const ya = await UI.confirm(I18N.p(
+    `Isi ${sheets.length} sheet (<b>${sheets.map(esc).join(', ')}</b>) akan diganti dengan isi cadangan ini. Data yang sekarang dicadangkan dulu otomatis, tetapi perubahan sesudah cadangan itu dibuat akan hilang dari sheet tersebut.`,
+    `${sheets.length} sheets (<b>${sheets.map(esc).join(', ')}</b>) will be replaced with this backup's contents. Today's data is backed up first, but changes made after that backup will be gone from those sheets.`),
+  { ok: I18N.p('Pulihkan', 'Restore'), danger: true });
+  if (!ya) return;
+
+  st.sibuk = true;
+  UI.toast(I18N.p('Memulihkan…', 'Restoring…'), '', 6000);
+  try {
+    const j = await Api.call('cadanganPulih', { fileId: d.id, sheets });
+    const baik = (j.hasil || []).filter((x) => x.ok);
+    const buruk = (j.hasil || []).filter((x) => !x.ok);
+    UI.toast(I18N.p(`${baik.length} sheet dipulihkan.`, `${baik.length} sheets restored.`), 'ok', 8000);
+    if (buruk.length) {
+      UI.toast(buruk.map((x) => `${x.sheet}: ${x.sebab}`).join(' · '), 'err', 10000);
+    }
+    await Store.pull({ force: true });
+    UI.closeAll();
+    App.refresh();
+  } catch (e) {
+    UI.toast(I18N.p('Gagal memulihkan: ', 'Restore failed: ') + e.message, 'err', 9000);
+  } finally { st.sibuk = false; }
+};
+
+ACT.pdUndo = async () => {
+  let pra;
+  try { pra = await Api.call('undoMassal', { jumlah: 50, pratinjau: true }); }
+  catch (e) { UI.toast(e.message, 'err', 8000); return; }
+  if (!pra.jumlah) {
+    UI.toast(I18N.p('Tidak ada perubahan yang bisa diurungkan.', 'No changes to undo.'), 'ok');
+    return;
+  }
+  const daftar = (pra.daftar || []).slice(0, 8)
+    .map((l) => `<li><span class="mini muted">${esc(String(l.at || '').slice(0, 16))}</span> ${esc(l.action)} ${esc(l.sheet)}</li>`).join('');
+  const ya = await UI.confirm(I18N.p(
+    `${pra.jumlah} perubahan terakhir akan diurungkan, dari yang paling baru:<ul class="list mt">${daftar}</ul>`,
+    `The ${pra.jumlah} most recent changes will be undone, newest first:<ul class="list mt">${daftar}</ul>`),
+  { ok: I18N.p('Urungkan', 'Undo'), danger: true });
+  if (!ya) return;
+  try {
+    const j = await Api.call('undoMassal', { jumlah: 50 });
+    UI.toast(I18N.p(`${j.berhasil} perubahan diurungkan.`, `${j.berhasil} changes undone.`), 'ok', 8000);
+    if ((j.gagal || []).length) {
+      UI.toast(I18N.p(`${j.gagal.length} tidak bisa diurungkan: `, `${j.gagal.length} could not be undone: `)
+        + j.gagal.map((g) => g.sebab).slice(0, 2).join(' · '), 'warn', 9000);
+    }
+    await Store.pull({ force: true });
+    App.refresh();
+  } catch (e) {
+    UI.toast(I18N.p('Gagal mengurungkan: ', 'Undo failed: ') + e.message, 'err', 9000);
+  }
+};
+
+/* ------------------------------------------------------------- tarik */
+
+ACT.pdTarik = async () => {
+  const st = pdSt();
+  if (st.sibuk) return;
+  const ya = await UI.confirm(I18N.p(
+    'Menarik daftar siswa, lalu Score List, lalu nilai ke ledger — berurutan. Sel ledger yang sudah berisi angka tidak ditimpa. Bisa memakan waktu satu-dua menit.',
+    'Pulls the student roster, then the Score List, then scores into the ledger — in that order. Ledger cells that already hold a number are left alone. May take a minute or two.'),
+  { ok: I18N.p('Tarik semua', 'Pull everything') });
+  if (!ya) return;
+  st.sibuk = true;
+  UI.toast(I18N.p('Menarik data…', 'Pulling data…'), '', 12000);
+  try {
+    const j = await Api.call('tarikSemua', {});
+    const rinci = (j.langkah || []).map((l) => {
+      if (!l.ok) return `<li class="neg">${esc(l.nama)}: ${esc(l.sebab)}</li>`;
+      const h = l.hasil || {};
+      const ringkas = h.baru !== undefined
+        ? I18N.p(`${h.baru} baru, ${h.diisi || 0} terisi, ${h.sama || 0} dijaga`, `${h.baru} new, ${h.diisi || 0} filled, ${h.sama || 0} kept`)
+        : h.added !== undefined ? `${h.added} ditambah`
+          : h.rows !== undefined ? `${h.rows} baris` : I18N.p('selesai', 'done');
+      return `<li><b>${esc(l.nama)}</b> — ${esc(ringkas)} <span class="mini muted">${Math.round(l.ms / 100) / 10}s</span></li>`;
+    }).join('');
+    UI.modal({
+      title: I18N.p('Hasil tarik data', 'Pull results'), size: 'narrow',
+      body: `<ul class="list">${rinci}</ul>${j.gagal
+        ? `<div class="note warn mt">${I18N.p(`${j.gagal} langkah gagal — yang lain tetap dikerjakan.`, `${j.gagal} step(s) failed — the rest still ran.`)}</div>` : ''}`
+    });
+    await Store.pull({ force: true });
+    await Store.ensure('_Ledger', true);
+    App.refresh();
+  } catch (e) {
+    UI.toast(I18N.p('Gagal menarik data: ', 'Pull failed: ') + e.message, 'err', 9000);
+  } finally { st.sibuk = false; }
+};
+
+/* ------------------------------------------------------------ layar */
+
+function pdLayar(ulang) {
+  const st = pdSt();
+  const d = st.lap || {};
+  const temuan = (d.temuan || []).filter((t) => t.jumlah);
+  const bisa = temuan.filter((t) => t.otomatis);
+  const perlu = temuan.filter((t) => !t.otomatis);
+
+  const kartu = (t) => {
+    const [kelas, label] = PD_BERAT[t.berat] || ['', ''];
+    return `<div class="card soft">
+      <div class="flex between">
+        <h4 style="margin:0">${t.otomatis ? `<label class="check"><input type="checkbox" data-chg="pdPilih" data-kode="${esc(t.kode)}"${st.pilih[t.kode] ? ' checked' : ''}> </label>` : ''}${esc(t.judul)}</h4>
+        <span class="badge ${kelas}">${t.jumlah} ${esc(label)}</span>
+      </div>
+      <p class="mini muted" style="margin:6px 0 0">${esc(t.jelas)}</p>
+      ${(t.contoh || []).length ? `<p class="mini" style="margin:6px 0 0">${I18N.p('Contoh', 'Examples')}: ${t.contoh.map((c) =>
+      `<span class="badge">${esc(c.kelas ? c.kelas + ' · ' : '')}${esc(c.teks)}</span>`).join(' ')}</p>` : ''}
+    </div>`;
+  };
+
+  const isi = !st.lap
+    ? UI.empty(I18N.p('Belum diperiksa', 'Not checked yet'),
+      I18N.p('Tekan "Periksa sekarang" untuk memindai seluruh data.', 'Press "Check now" to scan all data.'))
+    : `<div class="grid g4 mb">
+        <div class="stat accent"><small>${I18N.p('Jenis diperiksa', 'Checks run')}</small><b>${d.diperiksa || 0}</b></div>
+        <div class="stat"><small>${I18N.p('Ada temuannya', 'With findings')}</small>
+          <b class="${temuan.length ? 'warn' : 'pos'}">${temuan.length}</b></div>
+        <div class="stat"><small>${I18N.p('Bisa dibereskan sendiri', 'Fixable here')}</small><b class="pos">${bisa.length}</b></div>
+        <div class="stat"><small>${I18N.p('Baris terdampak', 'Rows affected')}</small><b>${d.barisTerdampak || 0}</b></div>
+      </div>
+      ${!temuan.length ? `<div class="note ok mb">${I18N.p('Datanya bersih — tidak ada satu pun temuan dari 14 pemeriksaan.', 'The data is clean — not one finding from 14 checks.')}</div>` : ''}
+      ${bisa.length ? `<h4>${I18N.p('Bisa dibereskan sekarang', 'Can be fixed now')}</h4>
+        <div class="grid g2 mb">${bisa.map(kartu).join('')}</div>` : ''}
+      ${perlu.length ? `<h4>${I18N.p('Perlu keputusan Ustadz', 'Needs your decision')}</h4>
+        <div class="note mb">${I18N.p('Yang di bawah ini tidak dibereskan sendiri — menebak di sini berarti menebak nilai siswa.',
+      'These are not fixed automatically — guessing here means guessing a grade.')}</div>
+        <div class="grid g2">${perlu.map(kartu).join('')}</div>` : ''}`;
+
+  const kaki = `<button class="btn" data-act="pdPeriksa">${ic('refresh')}${I18N.p('Periksa ulang', 'Check again')}</button>
+    ${bisa.length ? `<button class="btn primary" data-act="pdBereskan"${st.sibuk ? ' disabled' : ''}>
+      ${st.sibuk ? I18N.p('Membereskan…', 'Fixing…') : I18N.p('Cadangkan & bereskan yang dicentang', 'Back up & fix ticked')}</button>` : ''}`;
+
+  if (ulang && pdLayar._m && pdLayar._m.box) {
+    const body = pdLayar._m.box.querySelector('.modal-body');
+    const foot = pdLayar._m.box.querySelector('.modal-foot');
+    if (body) body.innerHTML = isi;
+    if (foot) foot.innerHTML = kaki;
+    I18N.apply(pdLayar._m.box);
+    return;
+  }
+  pdLayar._m = UI.modal({
+    title: I18N.p('Periksa & bereskan data', 'Check & fix data'),
+    size: 'wide', body: isi, foot: kaki,
+    onClose: () => { pdLayar._m = null; }
+  });
+}
+
+const PD_SHEET_PULIH = ['_Siswa', '_Ledger', '_Nilai', '_Pengumpulan', '_Tugas', '_Kelas', '_Absen', '_Pertemuan'];
+
+function pdPulihLayar() {
+  const st = pdSt();
+  const c = st.cadangan || {};
+  const list = c.cadangan || [];
+  const body = !list.length
+    ? UI.empty(I18N.p('Belum ada cadangan', 'No backups yet'),
+      c.ok === false ? String(c.error || '')
+        : I18N.p('Cadangan dibuat lewat tombol "Backup sekarang" atau otomatis tiap pekan.',
+          'Backups come from the "Back up now" button or the weekly schedule.'))
+    : `<div class="note mb">${I18N.p(
+      'Pilih sheet yang mau dipulihkan, lalu tekan Pulihkan pada cadangan yang diinginkan. Isi sheet itu diganti dengan isi cadangan; data yang sekarang dicadangkan dulu secara otomatis. Sheet lain tidak disentuh.',
+      'Tick the sheets to restore, then press Restore on the backup you want. Those sheets are replaced with the backup\'s contents; today\'s data is backed up first. Other sheets are untouched.')}</div>
+      <div class="btn-row mb">${PD_SHEET_PULIH.map((s) => `<label class="check">
+        <input type="checkbox" data-chg="pdSheet" data-sheet="${esc(s)}"${st.sheetPilih[s] ? ' checked' : ''}> ${esc(s)}</label>`).join('')}</div>
+      ${UI.table([
+      { h: I18N.p('Cadangan', 'Backup'), f: (b) => `<b>${esc(b.nama)}</b>` },
+      { h: I18N.p('Dibuat', 'Created'), f: (b) => esc(b.dibuat) },
+      { h: '', f: (b) => `<a class="btn xs" href="${esc(b.url)}" target="_blank" rel="noopener">${I18N.p('Buka', 'Open')}</a>
+        <button class="btn xs danger" data-act="pdPulih" data-id="${esc(b.id)}">${I18N.p('Pulihkan', 'Restore')}</button>` }
+    ], list, { emptyMsg: I18N.p('Belum ada cadangan.', 'No backups yet.') })}`;
+
+  UI.modal({
+    title: I18N.p('Pulihkan dari cadangan', 'Restore from a backup'),
+    size: 'wide', body,
+    foot: `<button class="btn" data-act="pdUndo">${ic('refresh')}${I18N.p('Urungkan perubahan terakhir', 'Undo recent changes')}</button>`
+  });
+}
+
+/* Tiga kartu baru di Pengaturan > Data & Cadangan, tanpa mengubah yang
+   sudah ada di sana. */
+(function () {
+  const asli = Settings.open.bind(Settings);
+  Settings.open = function (tab) {
+    const m = asli(tab);
+    try {
+      /* Settings.open tidak mengembalikan modalnya, jadi diambil dari
+         tumpukan modal UI — yang paling atas pasti yang baru dibuka. */
+      const atas = UI.modals[UI.modals.length - 1];
+      const box = (m && m.box) || (atas && atas.box);
+      const pane = box && box.querySelector('[data-spane="data"] .grid');
+      if (!pane || pane.querySelector('[data-act="pdPeriksa"]')) return m;
+      const tambah = document.createElement('div');
+      tambah.innerHTML = `
+        <div class="card soft"><h4>${ic('search')}${I18N.p('Periksa &amp; bereskan data', 'Check &amp; fix data')}</h4>
+          <p class="mini muted" style="margin-top:0">${I18N.p(
+        '14 pemeriksaan atas cacat yang pernah benar-benar ketemu: nama kelompok, baris ringkasan, sel ledger kembar, pengumpulan yatim, ejaan mapel. Yang jawabannya pasti dibereskan sendiri sesudah dicadangkan.',
+        '14 checks for defects that have actually occurred: group names, summary rows, twin ledger cells, orphan submissions, subject spelling. The certain ones are fixed here after a backup.')}</p>
+          <button class="btn sm" data-act="pdPeriksa">${I18N.p('Periksa sekarang', 'Check now')}</button></div>
+        <div class="card soft"><h4>${ic('refresh')}${I18N.p('Pulihkan data', 'Restore data')}</h4>
+          <p class="mini muted" style="margin-top:0">${I18N.p(
+        'Memulihkan sheet pilihan dari salah satu cadangan di Drive, atau mengurungkan sekumpulan perubahan terakhir sekaligus.',
+        'Restore selected sheets from one of the Drive backups, or undo a batch of recent changes.')}</p>
+          <button class="btn sm" data-act="pdCadangan">${I18N.p('Lihat cadangan', 'See backups')}</button></div>
+        <div class="card soft"><h4>${ic('download')}${I18N.p('Tarik semua data', 'Pull everything')}</h4>
+          <p class="mini muted" style="margin-top:0">${I18N.p(
+        'Daftar siswa, Score List, lalu nilai ke ledger — berurutan dalam satu perintah, dengan laporan per langkah.',
+        'Student roster, Score List, then scores into the ledger — one command, with a per-step report.')}</p>
+          <button class="btn sm" data-act="pdTarik">${I18N.p('Tarik semua', 'Pull everything')}</button></div>`;
+      while (tambah.firstElementChild) pane.appendChild(tambah.firstElementChild);
+      I18N.apply(pane);
+    } catch (e) { /* tombol tambahan tidak boleh merusak Pengaturan */ }
+    return m;
+  };
+})();
 
 /* Mulai aplikasi */
 boot();
