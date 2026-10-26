@@ -1603,7 +1603,7 @@ span.rs-pill { cursor: default; }
 const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbyV8s3_yYClutUiPfF7Jam_Tww6QFJkoZKABIFBEvEV_jdR6fRASdixXHGxjj043WDsJw/exec';
 const DEFAULT_API_KEY = 'mph_86556476be2b4bdcbc46ae435d41f2cc';
 
-const APP_VERSION = '5.5.0';
+const APP_VERSION = '5.5.2';
 
 /* Deteksi: dibuka langsung dari URL Apps Script (HtmlService) atau dari hosting statis. */
 const BOOT = (() => {
@@ -2140,7 +2140,16 @@ const Store = {
     this.data = d;
   },
 
-  /** Memuat tabel berat (_Nilai, _Log) hanya saat modulnya dibuka. */
+  /** Memuat satu tabel dari server.
+   *
+   *  Halaman di bagian nilai meminta beberapa tabel sekaligus lewat
+   *  ensureThen, termasuk tabel yang baru ditambahkan seperti _Kelas. Di
+   *  sambungan yang skrip Google-nya belum diperbarui, tabel itu belum
+   *  dikenal di sana, jadi jawabannya galat — dan karena tiga halaman
+   *  sama-sama memintanya, peringatan merah "Tabel tidak dikenal: _Kelas"
+   *  muncul tiga kali. Galat SEMACAM ITU sekarang ditelan di sini (datanya
+   *  memang belum ada di sana, tidak ada yang bisa Ustadz lakukan dari
+   *  layar), sementara galat lain tetap dilaporkan apa adanya. */
   async ensure(name, force) {
     if (!this.isRemote()) return this.all(name);
     const stale = !this.loadedAt[name] || Date.now() - this.loadedAt[name] > 45000;
@@ -2151,7 +2160,16 @@ const Store = {
       this.loaded[name] = true;
       this.loadedAt[name] = Date.now();
       this.saveCache();
-    } catch (e) { UI.toast(e.message, 'err', 6000); }
+    } catch (e) {
+      /* Skrip di Google yang belum diperbarui tidak mengenal tabel yang baru.
+         Itu bukan kesalahan yang perlu dibacakan ke Ustadz — datanya sudah ada
+         dari bootstrap; cukup dicatat di konsol. */
+      if (/Tabel tidak dikenal/i.test(String(e.message || ''))) {
+        this.loaded[name] = true;
+        this.loadedAt[name] = Date.now();
+        try { console.warn('Tabel ' + name + ' belum ada di skrip Google — dilewati.'); } catch (e2) { }
+      } else UI.toast(e.message, 'err', 6000);
+    }
     return this.all(name);
   },
 
@@ -2250,6 +2268,10 @@ const Store = {
   applyLocal(ops) {
     const now = new Date().toISOString().slice(0, 19);
     ops.forEach((op) => {
+      /* Tabel yang dikenal skema tetapi wadahnya belum ada — misalnya cache
+         lama yang dibuat sebelum tabel itu ditambahkan — disiapkan di sini.
+         Yang benar-benar tidak dikenal tetap ditolak. */
+      if (!this.data[op.sheet] && SCHEMA[op.sheet]) this.data[op.sheet] = [];
       const list = this.data[op.sheet];
       if (!list) throw new Error('Tabel tidak dikenal: ' + op.sheet);
       if (op.op === 'create') {
@@ -8631,7 +8653,17 @@ Object.assign(ACT, {
       title: I18N.p('Tambah siswa', 'Add student'), values: {},
       fields: [{ k: 'names', l: I18N.p('Nama siswa (satu per baris)', 'Student names (one per line)'), t: 'textarea', rows: 6, req: 1, full: 1 }],
       onSubmit: async (v) => {
-        const names = String(v.names).split(/\n+/).map((x) => x.trim()).filter(Boolean);
+        /* Satu baris yang berisi beberapa nama — "Dhella, Hania, Afifah" —
+           dipecah jadi satu siswa per nama, bukan satu siswa bernama tiga
+           orang. Baris ringkasan Score List dilewati. */
+        const names = [];
+        String(v.names).split(/\n+/).forEach((baris) => {
+          const x = baris.trim();
+          if (!x || namaStatistik(x)) return;
+          const orang = namaAnggota(x);
+          (orang.length > 1 ? orang : [namaBersih(x) || x]).forEach((n) => { if (n) names.push(n); });
+        });
+        if (!names.length) { UI.toast(I18N.p('Tidak ada nama yang bisa ditambahkan.', 'No names to add.'), 'warn'); return; }
         await Store.commit(names.map((n) => ({ op: 'create', sheet: '_Siswa', row: { id: uid(), className: b.className, name: n, gender: '', nis: '', note: '' } })));
         UI.closeAll();
         Rapor.open(b.id);
@@ -9321,13 +9353,29 @@ Tugas.form = function (id) {
   const t = id ? Store.get('_Tugas', id) : null;
   const books = Rapor.books();
   const tps = Store.all('TP');
+  /* Komponen tujuan HARUS berupa sel ledger yang sungguhan — "UNIT 1 — Writing",
+     bukan "Writing" apalagi "Tugas". Kalau bukan, nilai tugasnya berhenti di
+     tugas itu saja dan tidak pernah sampai ke ledger; itulah sebabnya 38 tugas
+     lama tidak pernah menambah apa pun ke rekap nilai.
+     Maka daftar sel ledger selalu ditawarkan, dan komponen milik daftar nilai
+     ikut ditampilkan terpisah supaya yang lama tetap bisa dipilih. */
   const compBox = (bookId, cur) => {
-    const comps = Tugas.compsOf(bookId);
-    if (!bookId) return `<p class="mini muted">${I18N.p('Pilih daftar nilai dulu agar komponen tujuannya bisa dipilih.', 'Choose a gradebook first so the target component can be picked.')}</p>`;
-    if (!comps.length) return `<input class="input" id="tg-comp" value="${esc(cur || '')}" placeholder="${I18N.p('Nama komponen', 'Component name')}">
-      <div class="hint">${I18N.p('Daftar nilai ini belum punya komponen — ketik nama kolomnya.', 'This gradebook has no components yet — type the column name.')}</div>`;
-    return `<select class="select" id="tg-comp">${comps.map((c) => `<option ${c === cur ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
-      <div class="hint">${I18N.p('Nilai tugas akan masuk ke kolom ini.', 'Task scores land in this column.')}</div>`;
+    const sel = Tugas.selLedger();
+    const comps = Tugas.compsOf(bookId).filter((c) => sel.indexOf(c) < 0);
+    const kini = String(cur || '');
+    const sah = !kini || sel.indexOf(kini) >= 0;
+    const opt = (v, l) => `<option value="${esc(v)}" ${v === kini ? 'selected' : ''}>${esc(l || v)}</option>`;
+    return `<select class="select" id="tg-comp">
+        ${opt('', I18N.p('— belum dipilih —', '— not chosen —'))}
+        <optgroup label="${I18N.p('Sel ledger', 'Ledger cells')}">${sel.map((c) => opt(c)).join('')}</optgroup>
+        ${comps.length ? `<optgroup label="${I18N.p('Komponen daftar nilai ini', 'This gradebook\u2019s own components')}">${comps.map((c) => opt(c)).join('')}</optgroup>` : ''}
+        ${kini && sel.indexOf(kini) < 0 && comps.indexOf(kini) < 0 ? opt(kini, kini + ' ' + I18N.p('(lama)', '(old)')) : ''}
+      </select>
+      <div class="hint ${sah ? '' : 'warn'}">${sah
+        ? I18N.p('Begitu tugas ini dinilai, nilainya mengalir sendiri ke sel ledger itu.',
+          'Once this task is graded, the score flows into that ledger cell by itself.')
+        : I18N.p('"' + kini + '" bukan nama sel ledger, jadi nilainya TIDAK akan masuk ledger. Pilih salah satu sel di atas.',
+          '"' + kini + '" is not a ledger cell, so the score will NOT reach the ledger. Pick one of the cells above.')}</div>`;
   };
   UI.form({
     title: t ? I18N.p('Ubah tugas', 'Edit task') : I18N.p('Tugas baru untuk siswa', 'New student task'), size: 'wide',
@@ -12180,10 +12228,55 @@ Object.assign(ACT, {
 /** Kunci kelas yang sama dengan di server: "X 1", "X.1", "EW (X.1)" → "X1".
  *  Dipakai di seluruh aplikasi agar satu kelas tetap satu kelas walau
  *  ejaannya berbeda di jadwal, database nilai, dan database siswa. */
-function clsKey(s) {
+/* Kelas yang ditulis tanpa nomor rombel. Di berkas nilai, kelas sepuluh
+   kadang hanya ditulis "X" — itu rombel X 4, satu-satunya kelas sepuluh yang
+   Ustadz ajar. Dipadankan di sini, di kunci pembandingnya, supaya seluruh
+   aplikasi — daftar, ledger, rapor — melihatnya sebagai kelas yang sama. */
+const KELAS_ALIAS = { X: 'X4' };           // kunci apa adanya -> kunci tujuan
+const KELAS_NAMA = { X4: 'X 4' };          // kunci tujuan -> nama yang ditulis
+function clsKeyKasar(s) {
   return String(s == null ? '' : s).toUpperCase()
     .replace(/\b(ENGLISH\s+WAJIB|ENGLISH\s+LANJUT|BAHASA\s+INGGRIS|B\.?\s*ING(GRIS)?|EW|EL)\b/g, ' ')
     .replace(/[^A-Z0-9]/g, '');
+}
+function clsKey(s) {
+  const k = clsKeyKasar(s);
+  return KELAS_ALIAS[k] || k;
+}
+/** Nama kelas yang dipakai saat menyimpan — "X" ditulis utuh "X 4". */
+function kelasRapi(s) {
+  const k = clsKeyKasar(s);
+  const tuju = KELAS_ALIAS[k];
+  return tuju && KELAS_NAMA[tuju] ? KELAS_NAMA[tuju] : String(s == null ? '' : s).trim();
+}
+
+/* ---- tulisan yang bukan satu nama siswa ----------------------------
+   Dua hal pernah ikut masuk dari berkas nilai lalu jadi "siswa" sendiri:
+   baris ringkasan ("Average score /100") dan satu sel yang berisi seluruh
+   anggota kelompok ("vania rahmani,kirana nareswari,…"). Aturannya sama
+   persis dengan namaStatistik_/namaAnggota_ di Code.gs — kalau yang satu
+   diubah, yang lain ikut. */
+function namaStatistik(n) {
+  return /^\s*(average|highest|lowest|mean|median|rata[\s-]*rata|nilai\s+(tertinggi|terendah))\b/i.test(String(n || ''));
+}
+function namaBersih(n) {
+  return String(n || '')
+    .replace(/^\s*\d{1,3}\s*[.)\-]\s*/, '')
+    .replace(/^\s*(kelompok|kel\.?|group|grup|team|tim)\s*\d*\s*[:.\-]?\s*/i, '')
+    .trim();
+}
+function namaAnggota(n) {
+  if (namaStatistik(n)) return [];
+  return namaBersih(n)
+    .split(/\s*[,;/]\s*|\s*&\s*|\s*\+\s*|\s+dan\s+|\s*\.?\s*\b\d{1,2}\s*[.)]\s*/i)
+    .map((x) => String(x || '').trim())
+    .filter((x) => nameKey(x).length >= 3);
+}
+function namaGabungan(n) { return namaAnggota(n).length > 1; }
+/** Boleh jadi baris siswa? */
+function namaSiswaSah(n) {
+  const x = namaBersih(n);
+  return !!x && x.length >= 2 && !namaStatistik(x) && !namaGabungan(x);
 }
 function sameCls(a, b) { const ka = clsKey(a), kb = clsKey(b); return !!ka && !!kb && ka === kb; }
 
@@ -12302,8 +12395,11 @@ const Roster = {
       if (s.nis) byNis['n:' + String(s.nis).trim()] = s;
       byName[this.key(s.name) + '|' + this.clsKey(s.className)] = s;
     });
-    const add = [], upd = [], same = [];
+    const add = [], upd = [], same = [], ditolak = [];
     list.forEach((s) => {
+      /* Baris yang bukan nama siswa — ringkasan Score List atau satu sel
+         berisi seluruh anggota kelompok — tidak boleh jadi siswa baru. */
+      if (!namaSiswaSah(s.name)) { ditolak.push(s.name); return; }
       const ex = (s.nis && byNis['n:' + s.nis]) || byName[this.key(s.name) + '|' + this.clsKey(s.className)];
       const row = {
         className: s.className, name: s.name, gender: s.gender, nis: s.nis, nisn: s.nisn,
@@ -12313,7 +12409,7 @@ const Roster = {
       const changed = Object.keys(row).some((k) => String(ex[k] || '') !== String(row[k] || ''));
       if (changed) upd.push({ id: ex.id, row }); else same.push(row);
     });
-    return { add, upd, same };
+    return { add, upd, same, ditolak };
   },
 
   /** Dialog impor. */
@@ -12370,6 +12466,9 @@ const Roster = {
               noSex ? I18N.p(`${noSex} siswa tanpa jenis kelamin`, `${noSex} students with no gender`) : ''
             ].filter(Boolean).join(' · ')}</p>` : ''}
             ${spell.length ? `<p class="mini warn mt">${I18N.p('Ejaan kelas tidak seragam di file ini, tetapi tetap dihitung sebagai satu kelas', 'A class is spelled inconsistently in this file, but is still counted as one class')}: ${spell.map((g) => esc(g.join(' / '))).join(' · ')}</p>` : ''}
+            ${(plan.ditolak || []).length ? `<p class="mini warn mt">${I18N.p(
+              `${plan.ditolak.length} baris dilewati karena isinya bukan satu nama siswa (baris ringkasan atau berisi beberapa nama sekaligus)`,
+              `${plan.ditolak.length} rows skipped: not a single student name (a summary row, or several names in one cell)`)}: ${plan.ditolak.slice(0, 3).map((n) => esc(String(n))).join(' · ')}</p>` : ''}
             <p class="mini muted mt">${I18N.p('Contoh baris pertama', 'First rows')}: ${list.slice(0, 3).map((s) => `${esc(s.name)} (${esc(s.className)}${s.nis ? ', ' + esc(s.nis) : ''})`).join(' · ')}</p>`;
           go.disabled = !(plan.add.length || plan.upd.length);
         });
@@ -20133,6 +20232,435 @@ function sgBagianIsi(st) {
       ${(j.takDikenal || []).map((t) => esc(t.komponen) + ' (' + t.n + ')').join(', ')}</div>` : ''}` : ''}
   </div>`;
 }
+
+/* Daftar sel ledger yang sah, untuk dipilih sebagai tujuan nilai tugas.
+   Sumbernya UNIT_KOMP & UNIT_MAX, jadi kalau format ledgernya berubah,
+   daftar ini ikut berubah dengan sendirinya. */
+Tugas.selLedger = function () {
+  const out = [];
+  for (let u = 1; u <= UNIT_MAX; u++) UNIT_KOMP.forEach((k) => out.push(komponenUnit(u, k)));
+  return out.concat(['MID TEST', 'FINAL TEST']);
+};
+
+/* ====================================================================
+   v23 — PUSAT KELAS
+   Satu halaman per kelas. Yang dulu tersebar di delapan halaman —
+   jadwal, riwayat pembelajaran, TP, tugas, ledger, gradebook, daftar
+   siswa, absen — di sini dikumpulkan untuk SATU kelas, lalu tiap
+   bagiannya menautkan ke halaman penuhnya dengan kelas yang sama sudah
+   terpilih. Jadi tidak ada lagi memilih kelas berulang kali di delapan
+   tempat, dan tidak ada data baru: semuanya dibaca dari tabel yang sudah
+   ada.
+   ==================================================================== */
+
+SEKOLAH_JUDUL.kelas = 'Pusat Kelas';
+(function () {
+  const akt = SEKOLAH_GRUP.filter((g) => g[0] === 'aktivitas')[0];
+  if (akt && akt[2].indexOf('kelas') < 0) akt[2].unshift('kelas');
+  SEKOLAH_INDUK.kelas = 'aktivitas';
+})();
+
+const KH_BAGIAN = [
+  ['ringkas', 'Ringkas', 'Overview'],
+  ['jadwal', 'Jadwal', 'Schedule'],
+  ['materi', 'Materi & TP', 'Lessons & objectives'],
+  ['tugas', 'Tugas', 'Tasks'],
+  ['nilai', 'Nilai', 'Scores'],
+  ['siswa', 'Siswa', 'Students']
+];
+
+function khSt() {
+  const s = App.s('school');
+  s.kh = s.kh || { cls: '', mapel: '', bagian: 'ringkas' };
+  return s.kh;
+}
+
+/** Kelas yang sedang dibuka. Kalau belum ada, kelas pertama yang dipakai. */
+function khKelas() {
+  const st = khSt();
+  const daftar = khDaftarKelas();
+  if (!st.cls || !daftar.some((k) => sameCls(k.cls, st.cls))) st.cls = (daftar[0] || {}).cls || '';
+  return st.cls;
+}
+
+/** Mapel yang sedang dibuka untuk kelas itu. */
+function khMapel(cls) {
+  const st = khSt();
+  const list = Kelas.mapel(cls);
+  if (!st.mapel || list.indexOf(st.mapel) < 0) st.mapel = list[0] || '';
+  return st.mapel;
+}
+
+/** Seluruh kelas beserta hitungan ringkasnya, satu baris per rombel. */
+function khDaftarKelas() {
+  const by = {};
+  const tam = (nama) => {
+    const n = String(nama || '').trim();
+    if (!n) return null;
+    const k = clsKey(n);
+    if (!k) return null;
+    by[k] = by[k] || { cls: n, siswa: 0, L: 0, P: 0, jp: 0, tugas: 0, nilai: 0, pertemuan: 0 };
+    return by[k];
+  };
+  Kelas.rows().forEach((r) => tam(r.className));
+  Roster.classes().forEach((c) => {
+    const g = tam(c.className);
+    if (g) { g.siswa = c.n; g.L = c.L; g.P = c.P; }
+  });
+  const jpMin = Number(Store.settings().jpMinutes) || 40;
+  Store.all('Schedule').forEach((r) => {
+    if (School.isDuty(r)) return;
+    const g = tam(r.className);
+    if (g && r.start) g.jp += School.jpOf(r, jpMin);
+  });
+  Store.all('_Tugas').forEach((r) => { const g = tam(r.className); if (g) g.tugas++; });
+  Store.all('_Ledger').forEach((r) => { const g = tam(r.className); if (g) g.nilai++; });
+  Store.all('_Pertemuan').forEach((r) => { const g = tam(r.className); if (g) g.pertemuan++; });
+  return Object.keys(by).sort().map((k) => by[k]);
+}
+
+/* ---------------------------------------------------------------- bahan */
+
+/** Semua angka satu kelas, dibaca sekali. Dipakai bersama oleh setiap
+ *  bagian supaya tabel yang sama tidak dibaca ulang per bagian. */
+function khBahan(cls, mapel) {
+  const d = Ledger2.st();
+  const jpMin = Number(Store.settings().jpMinutes) || 40;
+
+  const jadwal = Store.all('Schedule')
+    .filter((r) => sameCls(r.className, cls) && !School.isDuty(r))
+    .sort((a, b) => (Number(a.day) || 9) - (Number(b.day) || 9)
+      || String(a.start || '').localeCompare(String(b.start || '')));
+
+  const pertemuan = Ajar.rows().filter((m) => sameCls(m.className, cls));
+  const maju = Ajar.progress().filter((g) => sameCls(g.className, cls))[0] || null;
+
+  const tugas = Tugas.tasks().filter((t) => sameCls(t.className, cls))
+    .map((t) => {
+      const subs = Tugas.subs(t.id);
+      return {
+        t, kumpul: subs.length,
+        dinilai: subs.filter((x) => x.score !== '' && x.score != null).length,
+        kelompok: new Set(subs.map((x) => String(x.groupId || '')).filter(Boolean)).size
+      };
+    })
+    .sort((a, b) => String(b.t.dueDate || '').localeCompare(String(a.t.dueDate || '')));
+
+  const nilai = mapel ? Ledger2.rows(cls, mapel, d.tahun, d.semester) : [];
+  const ringkas = mapel ? Ledger2.ringkas(nilai) : null;
+
+  let absen = { dates: [], rows: [] };
+  try { absen = Absen.perStudent(cls); } catch (e) { }
+  const absenOf = {};
+  absen.rows.forEach((r) => { absenOf[nameKey(r.name)] = r; });
+
+  const kirimOf = {};
+  Store.all('_Pengumpulan').forEach((s) => {
+    const t = Store.get('_Tugas', s.taskId);
+    if (!t || !sameCls(t.className, cls)) return;
+    const k = nameKey(s.studentName);
+    kirimOf[k] = kirimOf[k] || { kumpul: 0, dinilai: 0 };
+    kirimOf[k].kumpul++;
+    if (s.score !== '' && s.score != null) kirimOf[k].dinilai++;
+  });
+
+  return {
+    cls, mapel, tahun: d.tahun, semester: d.semester,
+    jpMin, jadwal, pertemuan, maju, tugas, nilai, ringkas, absen, absenOf, kirimOf,
+    jp: jadwal.reduce((n, r) => n + (r.start ? School.jpOf(r, jpMin) : 0), 0),
+    siswa: Store.where('_Siswa', (r) => sameCls(r.className, cls)),
+    kkm: Kelas.kkm(cls, mapel, d.tahun),
+    wali: Kelas.wali(cls, mapel, d.tahun),
+    mapelList: Kelas.mapel(cls)
+  };
+}
+
+/* ---------------------------------------------------------------- aksi */
+
+/** Buka halaman penuh dengan kelas ini SUDAH terpilih di sana.
+ *  Tiap halaman menyimpan pilihan kelasnya di kunci yang berbeda, jadi
+ *  dipasang satu per satu di sini — kalau tidak, halamannya terbuka pada
+ *  kelas lain dan pilihan tadi terasa hilang. */
+ACT.khBuka = (d) => {
+  const st = khSt();
+  const cls = st.cls || '';
+  const s = App.s('school');
+  const sub = String(d.sub || '');
+  if (sub === 'ledger' || sub === 'gradebook' || sub === 'rapor') {
+    const lg = Ledger2.st();
+    lg.kelas = cls;
+    const list = Ledger2.mapelList(cls);
+    if (list.indexOf(st.mapel) >= 0) lg.mapel = st.mapel;
+    else if (list.length) lg.mapel = list[0];
+  }
+  if (sub === 'absen') s.absenCls = cls;
+  if (sub === 'ajar') s.ajarCls = cls;
+  if (sub === 'siswa') s.rsCls = cls;
+  if (sub === 'tugassiswa') s.tCls = cls;
+  App.open('school', sub);
+};
+
+CHG.khKelas = (v) => { const st = khSt(); st.cls = v; st.mapel = ''; App.refresh(); };
+CHG.khMapel = (v) => { khSt().mapel = v; App.refresh(); };
+ACT.khBagian = (d) => { khSt().bagian = String(d.b || 'ringkas'); App.refresh(); };
+ACT.khPilih = (d) => { const st = khSt(); st.cls = String(d.cls || ''); st.mapel = ''; App.refresh(); };
+
+/* -------------------------------------------------------------- bagian */
+
+function khTombol(sub, label) {
+  return `<button class="btn xs" data-act="khBuka" data-sub="${esc(sub)}">${esc(label)}${ic('chevR')}</button>`;
+}
+
+function khRingkas(b) {
+  const hariIni = new Date().getDay() || 7;
+  const esok = b.jadwal.filter((r) => Number(r.day) === hariIni);
+  const belumDinilai = b.tugas.filter((x) => x.kumpul > x.dinilai);
+  const belumKumpul = b.tugas.filter((x) => x.t.status !== 'Tutup' && x.kumpul < b.siswa.length);
+  const absenRendah = (b.absen.rows || []).filter((r) => r.isi >= 3 && r.pct < 80)
+    .sort((a, c) => a.pct - c.pct).slice(0, 5);
+  const belumLengkap = (b.nilai || []).filter((r) => r.report === '').slice(0, 8);
+
+  const kartu = (judul, isi, tombol) => `<div class="card soft">
+    <h4>${esc(judul)}</h4>${isi}${tombol ? `<div class="btn-row mt">${tombol}</div>` : ''}</div>`;
+
+  return `<div class="grid g2">
+    ${kartu(I18N.p('Pelajaran hari ini', 'Today\'s lessons'),
+      esok.length
+        ? `<ul class="list">${esok.map((r) => `<li><b>${esc(r.start || '')}–${esc(r.end || '')}</b>
+            <span class="grow">${esc(r.subject || '')}${r.room ? ' · ' + esc(r.room) : ''}</span></li>`).join('')}</ul>`
+        : `<p class="mini muted">${I18N.p('Tidak ada jam pelajaran kelas ini hari ini.', 'No lessons for this class today.')}</p>`,
+      khTombol('jadwal', I18N.p('Jadwal', 'Schedule')))}
+
+    ${kartu(I18N.p('Materi berikutnya', 'Next lesson'),
+      b.maju
+        ? `<p>${b.maju.next
+          ? `<b>${esc(b.maju.next.date)}</b> — ${esc(b.maju.next.topic || b.maju.next.title || '')}`
+          : I18N.p('Belum ada pertemuan terjadwal.', 'No scheduled meeting yet.')}</p>
+           <p class="mini muted">${I18N.p('TP tercapai', 'Objectives covered')}: <b>${b.maju.tpCovered}</b> / ${b.maju.tpTotal}
+           ${b.maju.pct == null ? '' : ` (${b.maju.pct}%)`}${b.maju.tpNext
+            ? ` · ${I18N.p('berikutnya', 'next')}: ${esc(b.maju.tpNext.code)}` : ''}</p>`
+        : `<p class="mini muted">${I18N.p('Belum ada riwayat pembelajaran untuk kelas ini.', 'No lesson history for this class yet.')}</p>`,
+      khTombol('ajar', I18N.p('Riwayat', 'History')))}
+
+    ${kartu(I18N.p('Tugas yang menunggu dinilai', 'Tasks awaiting grading'),
+      belumDinilai.length
+        ? `<ul class="list">${belumDinilai.slice(0, 5).map((x) => `<li><span class="grow">${esc(x.t.title)}</span>
+            <span class="mini muted">${x.dinilai}/${x.kumpul} ${I18N.p('dinilai', 'graded')}</span></li>`).join('')}</ul>
+           ${belumKumpul.length ? `<p class="mini warn mt">${I18N.p(
+            `${belumKumpul.length} tugas belum dikumpulkan seluruh siswa`,
+            `${belumKumpul.length} tasks not yet submitted by everyone`)}</p>` : ''}`
+        : `<p class="mini pos">${I18N.p('Semua yang masuk sudah dinilai.', 'Everything submitted has been graded.')}</p>`,
+      khTombol('tugassiswa', I18N.p('Tugas', 'Tasks')))}
+
+    ${kartu(I18N.p('Perlu diperhatikan', 'Needs attention'),
+      `${absenRendah.length ? `<p class="mini"><b>${I18N.p('Kehadiran di bawah 80%', 'Attendance under 80%')}:</b>
+          ${absenRendah.map((r) => `${esc(r.name)} (${r.pct}%)`).join(', ')}</p>` : ''}
+       ${belumLengkap.length ? `<p class="mini mt"><b>${I18N.p('Nilai rapor belum bisa dihitung', 'Report score not computable')}:</b>
+          ${belumLengkap.map((r) => esc(r.name)).join(', ')}${(b.nilai || []).filter((r) => r.report === '').length > 8 ? ' …' : ''}</p>` : ''}
+       ${!absenRendah.length && !belumLengkap.length
+        ? `<p class="mini pos">${I18N.p('Tidak ada yang tertinggal.', 'Nothing is lagging.')}</p>` : ''}`,
+      khTombol('gradebook', I18N.p('Gradebook', 'Gradebook')))}
+  </div>`;
+}
+
+function khJadwal(b) {
+  /* Sheet Schedule berbentuk grid: satu sel hanya memuat nama kelas, jadi
+     mata pelajaran dan ruang memang tidak tersimpan di sana. Daripada
+     menampilkan dua kolom kosong, mapelnya diambil dari daftar kelas dan
+     kolom ruang hanya muncul kalau ada yang mengisinya. */
+  const adaRuang = b.jadwal.some((r) => String(r.room || '').trim());
+  const adaCatatan = b.jadwal.some((r) => String(r.note || '').trim());
+  const kol = [
+    { h: I18N.p('Hari', 'Day'), f: (r) => esc(HARI[Number(r.day) % 7] || r.day || '') },
+    { h: I18N.p('Jam', 'Time'), f: (r) => esc([r.start, r.end].filter(Boolean).join('–')) },
+    { h: I18N.p('Mata pelajaran', 'Subject'), f: (r) => r.subject
+      ? esc(r.subject)
+      : (b.mapel ? `${esc(b.mapel)} <span class="mini muted">${I18N.p('(dari daftar kelas)', '(from the class list)')}</span>` : '') },
+    { h: 'JP', cls: 'num', f: (r) => (r.start ? School.jpOf(r, b.jpMin) : '') }
+  ];
+  if (adaRuang) kol.splice(3, 0, { h: I18N.p('Ruang', 'Room'), f: (r) => esc(r.room || '') });
+  if (adaCatatan) kol.push({ h: I18N.p('Catatan', 'Note'), f: (r) => esc(r.note || '') });
+  return UI.table(kol, b.jadwal, {
+    emptyMsg: I18N.p('Kelas ini belum ada di jadwal mengajar.', 'This class is not in the teaching schedule yet.'),
+    foot: b.jadwal.length ? `<tr><th colspan="${kol.length - 1 - (adaCatatan ? 1 : 0)}">${I18N.p('Total per minggu', 'Weekly total')}</th>
+      <th class="num">${b.jp} JP</th>${adaCatatan ? '<th></th>' : ''}</tr>` : ''
+  }) + `<div class="btn-row mt">${khTombol('jadwal', I18N.p('Buka jadwal & kalender', 'Open schedule & calendar'))}</div>`;
+}
+
+function khMateri(b) {
+  const warna = { Terlaksana: 'ok', Terjadwal: 'slate', Ditunda: 'warn', Libur: 'danger' };
+  const tabel = UI.table([
+    { h: I18N.p('Tanggal', 'Date'), f: (m) => esc(m.date || '') },
+    { h: I18N.p('Materi', 'Topic'), f: (m) => esc(m.topic || m.title || '') },
+    { h: 'TP', f: (m) => Ajar.codesOf(m).map((c) => `<span class="badge">${esc(c)}</span>`).join(' ') || '<span class="mini muted">—</span>' },
+    { h: 'Status', f: (m) => `<span class="badge b-${warna[m.status] || 'slate'}">${esc(m.status || '')}</span>` },
+    { h: I18N.p('Tautan', 'Links'), f: (m) => (typeof Ajar.links === 'function' ? Ajar.links(m) : '') || '<span class="mini muted">—</span>' }
+  ], b.pertemuan.slice(0, 60), {
+    emptyMsg: I18N.p('Belum ada pertemuan tercatat untuk kelas ini.', 'No meetings recorded for this class yet.')
+  });
+  const maju = b.maju;
+  const bar = maju && maju.tpTotal
+    ? `<div class="note mb"><b>${I18N.p('Capaian TP', 'Objective coverage')}: ${maju.tpCovered}/${maju.tpTotal}
+        ${maju.pct == null ? '' : `(${maju.pct}%)`}</b>
+       <div class="lg-bar mt"><span style="width:${Math.min(100, maju.pct || 0)}%"></span></div>
+       <p class="mini muted mt">${I18N.p('Pertemuan terlaksana', 'Meetings held')}: ${maju.done} ·
+        ${I18N.p('terjadwal', 'scheduled')}: ${maju.planned}</p></div>`
+    : '';
+  return bar + tabel
+    + `<div class="btn-row mt">${khTombol('ajar', I18N.p('Buka riwayat pembelajaran', 'Open lesson history'))}
+       ${khTombol('kehadiran', I18N.p('Kehadiran & TP', 'Attendance & objectives'))}</div>`;
+}
+
+function khTugas(b) {
+  const n = b.siswa.length;
+  return UI.table([
+    { h: I18N.p('Tugas', 'Task'), f: (x) => `<b>${esc(x.t.title)}</b>${x.t.component
+      ? `<span class="mini muted"> · ${esc(x.t.component)}</span>` : ''}` },
+    { h: I18N.p('Tenggat', 'Due'), f: (x) => esc(x.t.dueDate || '') },
+    { h: I18N.p('Terkumpul', 'Submitted'), cls: 'num', f: (x) => `${x.kumpul}${n ? ' / ' + n : ''}` },
+    { h: I18N.p('Dinilai', 'Graded'), cls: 'num', f: (x) => x.dinilai },
+    { h: I18N.p('Kelompok', 'Groups'), cls: 'num', f: (x) => x.kelompok || '' },
+    { h: 'Status', f: (x) => `<span class="badge b-${x.t.status === 'Tutup' ? 'slate' : 'ok'}">${esc(x.t.status || 'Aktif')}</span>` },
+    { h: '', f: (x) => `<button class="btn xs" data-act="taskOpen" data-id="${esc(x.t.id)}">${I18N.p('Buka', 'Open')}</button>` }
+  ], b.tugas, { emptyMsg: I18N.p('Belum ada tugas untuk kelas ini.', 'No tasks for this class yet.') })
+    + `<div class="btn-row mt">${khTombol('tugassiswa', I18N.p('Buka daftar tugas', 'Open task list'))}</div>`;
+}
+
+function khNilai(b) {
+  if (!b.mapel) {
+    return UI.empty(I18N.p('Belum ada mata pelajaran', 'No subject yet'),
+      I18N.p('Isi daftar kelas di halaman Ledger supaya KKM dan mata pelajarannya terbaca.',
+        'Fill the class list on the Ledger page so the KKM and subject are known.'));
+  }
+  const r = b.ringkas || {};
+  const strip = `<div class="grid g4 mb">
+    <div class="stat accent"><small>${I18N.p('Rata nilai rapor', 'Average report score')}</small>
+      <b>${r.rata === '' || r.rata == null ? '—' : r.rata}</b>
+      <span class="sub">KKM ${b.kkm}</span></div>
+    <div class="stat"><small>${I18N.p('Sudah dinilai', 'Scored')}</small><b>${r.dinilai || 0}</b>
+      <span class="sub">${I18N.p('dari', 'of')} ${r.siswa || 0} ${I18N.p('siswa', 'students')}</span></div>
+    <div class="stat"><small>${I18N.p('Tuntas', 'Passing')}</small>
+      <b class="${(r.tuntas || 0) < (r.dinilai || 0) ? 'warn' : 'ok'}">${r.tuntas || 0}</b>
+      <span class="sub">${r.dinilai ? Math.round((r.tuntas || 0) / r.dinilai * 100) + '%' : '—'}</span></div>
+    <div class="stat"><small>${I18N.p('Tertinggi / terendah', 'Highest / lowest')}</small>
+      <b>${r.tertinggi === '' || r.tertinggi == null ? '—' : r.tertinggi}
+        <span class="mini muted">/ ${r.terendah === '' || r.terendah == null ? '—' : r.terendah}</span></b></div>
+  </div>`;
+  const tabel = UI.table([
+    { h: I18N.p('Nama', 'Name'), f: (x) => esc(x.name) },
+    { h: 'U1', cls: 'num', f: (x) => (x.unit[0] || {}).score === '' ? '' : (x.unit[0] || {}).score },
+    { h: 'U2', cls: 'num', f: (x) => (x.unit[1] || {}).score === '' ? '' : (x.unit[1] || {}).score },
+    { h: 'U3', cls: 'num', f: (x) => (x.unit[2] || {}).score === '' ? '' : (x.unit[2] || {}).score },
+    { h: 'Mid', cls: 'num', f: (x) => x.mid === '' ? '' : x.mid },
+    { h: 'Final', cls: 'num', f: (x) => x.final === '' ? '' : x.final },
+    { h: 'Report', cls: 'num', f: (x) => x.report === '' ? '<span class="mini muted">—</span>' : `<b>${x.report}</b>` },
+    { h: 'Grade', f: (x) => x.grade ? `<span class="badge b-${x.tuntas ? 'ok' : 'warn'}">${esc(x.grade)}</span>` : '' }
+  ], b.nilai, { emptyMsg: I18N.p('Belum ada nilai di kelas ini.', 'No scores in this class yet.') });
+  return strip + tabel + `<div class="btn-row mt">
+    ${khTombol('ledger', I18N.p('Buka ledger', 'Open ledger'))}
+    ${khTombol('gradebook', 'Gradebook')}
+    ${khTombol('rapor', I18N.p('Rapor PTS', 'Mid-term report'))}</div>`;
+}
+
+function khSiswa(b) {
+  const nilaiOf = {};
+  (b.nilai || []).forEach((r) => { nilaiOf[nameKey(r.name)] = r; });
+  const rows = b.siswa.slice().sort((a, c) => String(a.name).localeCompare(String(c.name)));
+  return UI.table([
+    { h: I18N.p('Nama', 'Name'), f: (r) => `<b>${esc(r.name)}</b>` },
+    { h: 'NIS', f: (r) => esc(r.nis || '') },
+    { h: 'L/P', f: (r) => esc(r.gender || '') },
+    { h: I18N.p('Hadir', 'Attendance'), cls: 'num', f: (r) => {
+      const a = b.absenOf[nameKey(r.name)];
+      if (!a || !a.isi) return '<span class="mini muted">—</span>';
+      return `<span class="${a.pct < 80 ? 'warn' : ''}">${a.pct}%</span>`;
+    } },
+    { h: I18N.p('Tugas', 'Tasks'), cls: 'num', f: (r) => {
+      const k = b.kirimOf[nameKey(r.name)];
+      return k ? `${k.dinilai}/${k.kumpul}` : '<span class="mini muted">—</span>';
+    } },
+    { h: 'Report', cls: 'num', f: (r) => {
+      const n = nilaiOf[nameKey(r.name)];
+      return n && n.report !== '' ? `<b>${n.report}</b>` : '<span class="mini muted">—</span>';
+    } },
+    { h: '', f: (r) => `<button class="btn xs" data-act="rsDetail" data-n="${esc(r.name)}" data-c="${esc(r.className)}">${I18N.p('Rincian', 'Details')}</button>` }
+  ], rows, { emptyMsg: I18N.p('Belum ada siswa terdaftar di kelas ini.', 'No students registered in this class yet.') })
+    + `<div class="btn-row mt">${khTombol('siswa', I18N.p('Buka data siswa', 'Open student data'))}
+       ${khTombol('absen', I18N.p('Absen siswa', 'Attendance'))}</div>`;
+}
+
+/* --------------------------------------------------------------- layar */
+
+VIEWS.school.kelas = {
+  after: () => Store.ensureThen(['_Ledger', '_Nilai', '_NilaiSiswa', '_Pengumpulan']),
+  actions() {
+    const st = khSt();
+    if (!st.cls) return '';
+    return `<button class="btn" data-act="khBuka" data-sub="ledger">${ic('table')}${I18N.p('Ledger kelas ini', 'This class\'s ledger')}</button>
+      <button class="btn" data-act="khBuka" data-sub="absen">${ic('check')}${I18N.p('Absen', 'Attendance')}</button>`;
+  },
+
+  render() {
+    const daftar = khDaftarKelas();
+    if (!daftar.length) {
+      return UI.empty(I18N.p('Belum ada kelas', 'No classes yet'),
+        I18N.p('Kelas terbaca dari jadwal mengajar, daftar siswa, dan data nilai. Isi salah satunya dulu.',
+          'Classes are read from the teaching schedule, the student roster and the score data. Fill one of them first.'),
+        `<button class="btn sm" data-act="khBuka" data-sub="jadwal">${ic('calendar')}${I18N.p('Jadwal', 'Schedule')}</button>`);
+    }
+    const cls = khKelas();
+    const mapel = khMapel(cls);
+    const b = khBahan(cls, mapel);
+    const st = khSt();
+
+    const pilihKelas = `<div class="rs-cls mb">${daftar.map((k) => `<button
+      class="rs-pill ${sameCls(k.cls, cls) ? 'on' : ''}" data-act="khPilih" data-cls="${esc(k.cls)}">
+      <b>${esc(k.cls)}</b> <span class="muted">${k.siswa}</span></button>`).join('')}</div>`;
+
+    const kepala = `<div class="card soft mb">
+      <div class="flex between">
+        <div class="grow">
+          <h4>${esc(cls)}</h4>
+          <p class="mini muted">${[
+            b.mapelList.length ? b.mapelList.join(' · ') : I18N.p('mata pelajaran belum diisi', 'no subject yet'),
+            b.wali ? I18N.p('Wali kelas: ', 'Homeroom: ') + b.wali : '',
+            `${b.tahun} ${b.semester}`
+          ].filter(Boolean).map(esc).join(' — ')}</p>
+        </div>
+        ${b.mapelList.length > 1 ? `<label class="field">
+          <span class="mini">${I18N.p('Mata pelajaran', 'Subject')}</span>
+          <select data-chg="khMapel">${b.mapelList.map((m) => `<option value="${esc(m)}"${m === mapel ? ' selected' : ''}>${esc(m)}</option>`).join('')}</select>
+        </label>` : ''}
+      </div>
+      <div class="grid g5 mt">
+        <div class="stat"><small>${I18N.p('Siswa', 'Students')}</small><b>${b.siswa.length}</b>
+          <span class="sub">${(daftar.filter((k) => sameCls(k.cls, cls))[0] || {}).L || 0} L ·
+            ${(daftar.filter((k) => sameCls(k.cls, cls))[0] || {}).P || 0} P</span></div>
+        <div class="stat"><small>JP ${I18N.p('per minggu', 'per week')}</small><b>${b.jp}</b>
+          <span class="sub">${b.jadwal.length} ${I18N.p('jam pelajaran', 'slots')}</span></div>
+        <div class="stat"><small>${I18N.p('Pertemuan', 'Meetings')}</small><b>${b.maju ? b.maju.done : 0}</b>
+          <span class="sub">${b.maju && b.maju.tpTotal ? `TP ${b.maju.tpCovered}/${b.maju.tpTotal}` : I18N.p('belum ada TP', 'no objectives')}</span></div>
+        <div class="stat"><small>${I18N.p('Tugas', 'Tasks')}</small><b>${b.tugas.length}</b>
+          <span class="sub">${b.tugas.filter((x) => x.kumpul > x.dinilai).length} ${I18N.p('menunggu nilai', 'awaiting grades')}</span></div>
+        <div class="stat"><small>${I18N.p('Rata nilai', 'Average')}</small>
+          <b>${b.ringkas && b.ringkas.rata !== '' ? b.ringkas.rata : '—'}</b>
+          <span class="sub">${b.ringkas ? `${b.ringkas.tuntas}/${b.ringkas.dinilai} ${I18N.p('tuntas', 'passing')}` : '—'}</span></div>
+      </div>
+    </div>`;
+
+    const tab = `<div class="seg mb">${KH_BAGIAN.map(([k, id, en]) => `<button
+      class="seg-b ${st.bagian === k ? 'on' : ''}" data-act="khBagian" data-b="${k}">${esc(I18N.p(id, en))}</button>`).join('')}</div>`;
+
+    const isi = st.bagian === 'jadwal' ? khJadwal(b)
+      : st.bagian === 'materi' ? khMateri(b)
+        : st.bagian === 'tugas' ? khTugas(b)
+          : st.bagian === 'nilai' ? khNilai(b)
+            : st.bagian === 'siswa' ? khSiswa(b)
+              : khRingkas(b);
+
+    return pilihKelas + kepala + tab + isi;
+  }
+};
 
 /* Mulai aplikasi */
 boot();
