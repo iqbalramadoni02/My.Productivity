@@ -1583,7 +1583,7 @@ span.rs-pill { cursor: default; }
   <div id="modal-root"></div>
   <div id="toast-root" class="toasts" aria-live="polite"></div>
   <!-- Diisi otomatis oleh Apps Script (doGet). Bila file ini di-hosting statis, isinya diabaikan. -->
-  <script type="application/json" id="mph-boot"><?!= boot ?></script>
+  <script type="application/json" id="mph-boot">{}</script>
   <script>
     /* Service worker hanya aktif saat file ini di-hosting sendiri (GitHub Pages / Netlify / APK). */
     if ('serviceWorker' in navigator && location.protocol === 'https:' && !location.host.includes('googleusercontent')) {
@@ -1603,7 +1603,7 @@ span.rs-pill { cursor: default; }
 const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbyV8s3_yYClutUiPfF7Jam_Tww6QFJkoZKABIFBEvEV_jdR6fRASdixXHGxjj043WDsJw/exec';
 const DEFAULT_API_KEY = 'mph_86556476be2b4bdcbc46ae435d41f2cc';
 
-const APP_VERSION = '5.5.4';
+const APP_VERSION = '5.7.0';
 
 /* Deteksi: dibuka langsung dari URL Apps Script (HtmlService) atau dari hosting statis. */
 const BOOT = (() => {
@@ -1661,6 +1661,7 @@ const SCHEMA = {
   Links: ['id', 'title', 'label', 'url', 'status', 'division'],
   _Catatan: ['id', 'title', 'body', 'items', 'color', 'label', 'pinned', 'status', 'refKind', 'refId', 'remindDate', 'createdAt', 'updatedAt'],
   _Workbook: ['id', 'name', 'ssId', 'url', 'tabs', 'icon', 'color', 'note', 'createdAt', 'updatedAt'],
+  _Pengumuman: ['id', 'className', 'subject', 'jenis', 'judul', 'tanggal', 'jam', 'sampai', 'isi', 'tpCodes', 'status', 'kirimAt', 'kirimKe', 'createdAt', 'updatedAt'],
   _Pertemuan: ['id', 'no', 'date', 'day', 'start', 'end', 'className', 'subject', 'program', 'scheduleId', 'tpCodes', 'topic', 'material', 'method', 'links', 'taskId', 'status', 'note', 'createdAt', 'updatedAt'],
   _Absen: ['id', 'date', 'className', 'studentName', 'status', 'at', 'meetingId', 'note', 'createdAt', 'updatedAt'],
   _Ledger: ['id', 'className', 'studentName', 'nis', 'subject', 'program', 'tahun', 'semester', 'assessType', 'component', 'tpCode', 'title', 'score', 'maxScore', 'scale100', 'letter', 'kkm', 'date', 'source', 'refId', 'teacher', 'note', 'createdAt', 'updatedAt'],
@@ -6479,7 +6480,9 @@ async function boot() {
   const params = new URLSearchParams(location.search);
   const portalTok = EMBEDDED ? BOOT.portal : params.get('portal');
   if (portalTok) { Config.load(); return Portal.render(portalTok, EMBEDDED ? 'embedded' : (params.get('api') || Config.data.url)); }
-  const studentMode = EMBEDDED ? !!BOOT.student : params.get('p') === 'siswa';
+  const halaman = (location.pathname.match(/([^\/]*)$/) || ['', ''])[1].toLowerCase();
+  const studentMode = EMBEDDED ? !!BOOT.student
+    : (params.get('p') === 'siswa' || /^siswa\.html?$/.test(halaman));
   if (studentMode) {                                   // halaman pengumpulan tugas untuk siswa
     Config.load();
     I18N.init();
@@ -20975,7 +20978,7 @@ function tkLayar(ulang) {
    Tiga hal yang selama ini hanya bisa dikerjakan dari luar aplikasi,
    sekarang ada di dalamnya:
 
-   • Periksa & bereskan — 14 pemeriksaan atas cacat yang pernah benar-benar
+   • Periksa & bereskan — pemeriksaan atas cacat yang pernah benar-benar
      ketemu di database ini. Yang jawabannya PASTI dibereskan sendiri; yang
      memerlukan keputusan guru hanya dilaporkan beserta tempat
      membereskannya.
@@ -21202,7 +21205,7 @@ function pdLayar(ulang) {
         <div class="stat"><small>${I18N.p('Bisa dibereskan sendiri', 'Fixable here')}</small><b class="pos">${bisa.length}</b></div>
         <div class="stat"><small>${I18N.p('Baris terdampak', 'Rows affected')}</small><b>${d.barisTerdampak || 0}</b></div>
       </div>
-      ${!temuan.length ? `<div class="note ok mb">${I18N.p('Datanya bersih — tidak ada satu pun temuan dari 14 pemeriksaan.', 'The data is clean — not one finding from 14 checks.')}</div>` : ''}
+      ${!temuan.length ? `<div class="note ok mb">${I18N.p(`Datanya bersih — tidak ada satu pun temuan dari ${d.diperiksa || 0} pemeriksaan.`, `The data is clean — not one finding from ${d.diperiksa || 0} checks.`)}</div>` : ''}
       ${bisa.length ? `<h4>${I18N.p('Bisa dibereskan sekarang', 'Can be fixed now')}</h4>
         <div class="grid g2 mb">${bisa.map(kartu).join('')}</div>` : ''}
       ${perlu.length ? `<h4>${I18N.p('Perlu keputusan Ustadz', 'Needs your decision')}</h4>
@@ -21276,8 +21279,8 @@ function pdPulihLayar() {
       tambah.innerHTML = `
         <div class="card soft"><h4>${ic('search')}${I18N.p('Periksa &amp; bereskan data', 'Check &amp; fix data')}</h4>
           <p class="mini muted" style="margin-top:0">${I18N.p(
-        '14 pemeriksaan atas cacat yang pernah benar-benar ketemu: nama kelompok, baris ringkasan, sel ledger kembar, pengumpulan yatim, ejaan mapel. Yang jawabannya pasti dibereskan sendiri sesudah dicadangkan.',
-        '14 checks for defects that have actually occurred: group names, summary rows, twin ledger cells, orphan submissions, subject spelling. The certain ones are fixed here after a backup.')}</p>
+        'Pemeriksaan atas cacat yang pernah benar-benar ketemu: nama kelompok, baris ringkasan, sel ledger kembar, id kembar, ejaan kelas, ejaan mapel. Yang jawabannya pasti dibereskan sendiri sesudah dicadangkan.',
+        'Checks for defects that have actually occurred: group names, summary rows, twin ledger cells, duplicate ids, class spelling, subject spelling. The certain ones are fixed here after a backup.')}</p>
           <button class="btn sm" data-act="pdPeriksa">${I18N.p('Periksa sekarang', 'Check now')}</button></div>
         <div class="card soft"><h4>${ic('refresh')}${I18N.p('Pulihkan data', 'Restore data')}</h4>
           <p class="mini muted" style="margin-top:0">${I18N.p(
@@ -21293,6 +21296,1384 @@ function pdPulihLayar() {
       I18N.apply(pane);
     } catch (e) { /* tombol tambahan tidak boleh merusak Pengaturan */ }
     return m;
+  };
+})();
+
+/* ------------------------------------------------------------------ *
+ *  47 — KELAS AMPU DI PILIHAN LEDGER
+ *
+ *  Daftar siswa memuat 18 rombel, padahal yang Ustadz ajar hanya 8. Selama
+ *  pemilih ledger menawarkan semuanya, setiap kali membuka nilai harus
+ *  melewati sepuluh rombel yang bukan urusannya — dan satu salah pilih
+ *  berarti nilai masuk ke kelas orang lain.
+ *
+ *  Yang ditawarkan sekarang adalah kelas ampu: pasangan rombel + mapel yang
+ *  dibaca dari sheet Schedule, dengan label seragam "EW (X 4)" / "EL (XII
+ *  PA)". Satu pilihan sekaligus menetapkan rombel DAN mapelnya, jadi tidak
+ *  ada lagi kemungkinan memilih rombel XI 2 dengan mapel yang tidak diajar
+ *  di sana.
+ *
+ *  Kalau jadwalnya belum bisa dibaca — misalnya sheet Schedule belum berisi
+ *  apa pun — daftar lama dipakai kembali apa adanya. Fitur ini membantu
+ *  memilih; ia tidak boleh membuat halaman nilai mati.
+ * ------------------------------------------------------------------ */
+
+const Ampu = {
+  /** null = belum pernah dimuat; [] = sudah dimuat dan memang kosong. */
+  data: null,
+  sibuk: false,
+  /* Sudah pernah dicoba, berhasil atau tidak. Tanpa penanda ini, kegagalan
+     membaca jadwal membuat `data` tetap null, lalu pembungkus halaman
+     memanggil App.refresh() yang memicu pembacaan lagi — dan aplikasinya
+     berputar tanpa henti. Dicoba sekali per sesi; Ustadz bisa memaksa
+     pembacaan ulang dengan muat(true). */
+  dicoba: false,
+
+  async muat(paksa) {
+    if (this.sibuk) return this.data;
+    if (!paksa && (this.data || this.dicoba)) return this.data;
+    this.sibuk = true;
+    this.dicoba = true;
+    try {
+      const j = await Api.call('ampuDaftar', {});
+      this.data = (j && j.ok && Array.isArray(j.ampu)) ? j.ampu : [];
+      this.jp = (j && j.jpTotal) || 0;
+    } catch (e) {
+      /* Dibiarkan null supaya daftar lama yang dipakai, bukan daftar kosong:
+         gagal membaca jadwal tidak boleh terbaca sebagai "tidak mengajar
+         kelas apa pun". */
+      this.data = null;
+    } finally { this.sibuk = false; }
+    return this.data;
+  },
+
+  /** Kelas ampu, atau daftar kosong kalau jadwalnya belum terbaca. */
+  list() { return Array.isArray(this.data) ? this.data : []; },
+  ada() { return this.list().length > 0; },
+
+  /** Kelas ampu yang cocok dengan satu pasangan rombel + mapel. */
+  cari(kelas, mapel) {
+    const l = this.list();
+    const k = clsKey(kelas);
+    const sama = l.filter((a) => clsKey(a.rombel) === k);
+    if (!sama.length) return null;
+    if (!mapel) return sama[0];
+    const m = String(mapel).trim().toUpperCase();
+    return sama.filter((a) => String(a.mapel).trim().toUpperCase() === m)[0] || sama[0];
+  },
+
+  /** Label seragam untuk satu pasangan; kalau bukan kelas ampu, apa adanya. */
+  kode(kelas, mapel) {
+    const a = this.cari(kelas, mapel);
+    return a ? a.kode : String(kelas || '');
+  },
+
+  /** Kelas ampu dari labelnya. */
+  dariKode(kode) {
+    return this.list().filter((a) => a.kode === kode)[0] || null;
+  }
+};
+
+/* ---- pemilih ledger: satu pilihan untuk rombel + mapel sekaligus ---- */
+
+CHG.lg2Ampu = (v) => {
+  const a = Ampu.dariKode(v);
+  if (!a) return;
+  const d = Ledger2.st();
+  d.kelas = a.rombel;
+  d.mapel = a.mapel;
+  App.refresh();
+};
+
+/** Pemilih kelas ampu. Mengembalikan '' kalau jadwalnya belum terbaca, dan
+ *  pemanggilnya kembali memakai dua pemilih lama.
+ *
+ *  Kelas yang sedang dibuka tetapi BUKAN kelas ampu ikut dimasukkan ke
+ *  daftarnya, diberi keterangan. Itu perlu karena halaman nilai bisa dibuka
+ *  dari tempat lain — Pusat Kelas, rapor, atau tautan — dengan kelas yang
+ *  sudah ditentukan. Mengalihkannya ke kelas ampu pertama berarti Ustadz
+ *  menekan satu kelas lalu melihat nilai kelas yang lain, tanpa diberi tahu. */
+function lgPemilihAmpu(d) {
+  const l = Ampu.list();
+  if (!l.length) return '';
+  const a = Ampu.cari(d.kelas, d.mapel);
+  const kode = a ? a.kode : '';
+  const luar = !a && String(d.kelas || '').trim()
+    ? `<option value="" selected>${esc(String(d.kelas))}${d.mapel ? ' · ' + esc(String(d.mapel)) : ''} — ${I18N.p('bukan kelas ampu', 'not one of your classes')}</option>`
+    : '';
+  return `<select class="select" data-chg="lg2Ampu" aria-label="${I18N.p('Kelas yang diampu', 'Classes you teach')}">
+    ${luar}${l.map((x) => `<option value="${esc(x.kode)}" ${x.kode === kode ? 'selected' : ''}>${esc(x.kode)}</option>`).join('')}
+  </select>`;
+}
+
+(function () {
+  const asli = lgPemilih;
+  /* eslint-disable no-global-assign */
+  lgPemilih = function (d, kelasList, mapelList) {
+    const pemilih = lgPemilihAmpu(d);
+    if (!pemilih) return asli.call(this, d, kelasList, mapelList);
+    const a = Ampu.cari(d.kelas, d.mapel);
+    return `<div class="toolbar mb">
+      ${pemilih}
+      <select class="select" data-chg="lg2Tahun">${Kelas.tahunList().map((t) => `<option ${t === d.tahun ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
+      <select class="select" data-chg="lg2Semester">${SEMESTER.map((x) => `<option ${x === d.semester ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
+      <span class="grow"></span>
+      ${a ? `<span class="badge">${esc(a.rombel)} · ${esc(a.mapel)}</span>` : ''}
+      <span class="badge">KKM ${esc(String(Kelas.kkm(d.kelas, d.mapel, d.tahun)))}</span>
+    </div>`;
+  };
+})();
+
+/* Kelas ampu yang dipakai lebih dulu sebagai kelas awal, supaya halaman
+   nilai langsung terbuka di kelas yang memang diajar — bukan di rombel
+   pertama menurut abjad yang bisa jadi bukan kelasnya. */
+(function () {
+  const asli = Ledger2.kelasList.bind(Ledger2);
+  Ledger2.kelasList = function () {
+    const l = Ampu.list();
+    if (!l.length) return asli();
+    const k = {};
+    l.forEach((a) => { k[clsKey(a.rombel)] = a.rombel; });
+    return Object.keys(k).sort().map((x) => k[x]);
+  };
+  const asliMapel = Ledger2.mapelList.bind(Ledger2);
+  Ledger2.mapelList = function (cls) {
+    const l = Ampu.list().filter((a) => clsKey(a.rombel) === clsKey(cls));
+    return l.length ? l.map((a) => a.mapel) : asliMapel(cls);
+  };
+})();
+
+/* Jadwalnya dibaca sekali saat halaman nilai dibuka. Dipasang di `after`
+   halaman yang memakai pemilih itu, bukan saat aplikasi mulai: membaca
+   jadwal perlu satu permintaan ke server, dan halaman lain tidak
+   membutuhkannya. */
+['ledger', 'gradebook', 'rapor'].forEach((hal) => {
+  const v = VIEWS.school[hal];
+  if (!v) return;
+  const asli = v.after;
+  v.after = async function () {
+    const hasil = typeof asli === 'function' ? await asli.apply(this, arguments) : undefined;
+    if (!Ampu.dicoba) {
+      await Ampu.muat();
+      /* Kelas yang sedang dibuka TIDAK diubah di sini. Dulu kelas yang bukan
+         kelas ampu dialihkan ke kelas ampu pertama, dan akibatnya membuka
+         nilai satu kelas dari Pusat Kelas bisa menampilkan nilai kelas yang
+         lain tanpa pemberitahuan. Sekarang kelas itu tetap dibuka dan ikut
+         tampil di pemilihnya dengan keterangan. */
+      App.refresh();
+    }
+    return hasil;
+  };
+});
+
+/* ------------------------------------------------------------------ *
+ *  48 — BATAS MATERI DIATUR SENDIRI
+ *
+ *  Batas materi dihitung dari baris pertemuan, dan baris itu dibuat otomatis
+ *  dari jadwal dengan TP diisi berurutan dari sheet TP. Masalahnya, urutan di
+ *  sheet bukan selalu urutan yang benar-benar diajarkan: ada unit yang
+ *  ditukar, ada yang diulang, ada yang dilewati. Selama baris itu hanya bisa
+ *  dibuat dan diubah satu-satu, batas materinya mengikuti sheet, bukan
+ *  mengikuti kenyataan.
+ *
+ *  Yang ditambahkan di sini membuat barisnya sepenuhnya milik Ustadz:
+ *    • hapus satu pertemuan,
+ *    • kosongkan TP-nya — melepas tebakan otomatis tanpa membuang
+ *      pertemuannya,
+ *    • geser naik/turun, yang MENUKAR isi materi dengan pertemuan tetangga di
+ *      kelas yang sama. Yang ditukar isinya, bukan tanggalnya: tanggal
+ *      terikat pada jadwal pelajaran dan tidak boleh ikut bergeser, sementara
+ *      yang Ustadz ingin urutkan memang materinya.
+ *
+ *  Pembuatan dari jadwal pun sekarang bisa diminta TANPA mengisi TP sama
+ *  sekali, jadi pertemuan lahir kosong dan Ustadz yang menentukan isinya.
+ * ------------------------------------------------------------------ */
+
+/** Pertemuan satu kelas, urut maju menurut tanggal lalu jam. Dipakai untuk
+ *  mencari tetangga saat menggeser. */
+function ajarUrutKelas(cls) {
+  return Store.where('_Pertemuan', (m) => sameCls(m.className, cls))
+    .slice()
+    .sort((a, b) => String(a.date).localeCompare(String(b.date))
+      || String(a.start || '').localeCompare(String(b.start || '')));
+}
+
+/** Kolom isi materi — inilah yang ditukar saat digeser. Tanggal, jam, kelas,
+ *  dan nomor pertemuan tidak termasuk: itu milik jadwal. */
+const AJAR_ISI = ['tpCodes', 'topic', 'material', 'method', 'links', 'taskId', 'note'];
+
+ACT.ajarHapus = async (d) => {
+  const m = Store.get('_Pertemuan', d.id);
+  if (!m) return;
+  const ya = await UI.confirm(I18N.p(
+    `Hapus pertemuan ${fmtDate(m.date)} — ${m.className}? Absensi yang sudah tercatat pada tanggal itu TIDAK ikut terhapus.`,
+    `Delete the meeting on ${fmtDate(m.date)} — ${m.className}? Attendance already recorded on that date is NOT deleted.`),
+  { ok: I18N.p('Hapus', 'Delete'), danger: true });
+  if (!ya) return;
+  await Store.commit([{ op: 'delete', sheet: '_Pertemuan', id: d.id }]);
+  UI.toast(I18N.p('Pertemuan dihapus.', 'Meeting deleted.'), 'ok');
+  App.refresh();
+};
+
+ACT.ajarKosongkan = async (d) => {
+  const m = Store.get('_Pertemuan', d.id);
+  if (!m) return;
+  const ya = await UI.confirm(I18N.p(
+    'Kosongkan TP, topik, dan materi pertemuan ini? Tanggal, jam, dan statusnya tetap.',
+    'Clear the objectives, topic, and material of this meeting? Its date, time, and status stay.'),
+  { ok: I18N.p('Kosongkan', 'Clear') });
+  if (!ya) return;
+  const kosong = {};
+  AJAR_ISI.forEach((k) => { kosong[k] = ''; });
+  await Store.commit([{ op: 'update', sheet: '_Pertemuan', id: d.id, row: kosong }]);
+  UI.toast(I18N.p('TP pertemuan ini dikosongkan.', 'This meeting is now empty.'), 'ok');
+  App.refresh();
+};
+
+ACT.ajarGeser = async (d) => {
+  const m = Store.get('_Pertemuan', d.id);
+  if (!m) return;
+  const urut = ajarUrutKelas(m.className);
+  const i = urut.findIndex((x) => String(x.id) === String(d.id));
+  const j = String(d.arah) === 'naik' ? i - 1 : i + 1;
+  if (i < 0 || j < 0 || j >= urut.length) {
+    UI.toast(I18N.p('Sudah di ujung urutan.', 'Already at the end of the sequence.'), 'warn');
+    return;
+  }
+  const lain = urut[j];
+  /* Isinya ditukar, tanggalnya tidak. Dengan begitu "materi minggu ini"
+     dan "materi minggu depan" bertukar tempat, sementara jadwal
+     pelajarannya tetap seperti di sheet Schedule. */
+  const a = {}, b = {};
+  AJAR_ISI.forEach((k) => { a[k] = lain[k] === undefined ? '' : lain[k]; b[k] = m[k] === undefined ? '' : m[k]; });
+  await Store.commit([
+    { op: 'update', sheet: '_Pertemuan', id: String(m.id), row: a },
+    { op: 'update', sheet: '_Pertemuan', id: String(lain.id), row: b }
+  ]);
+  UI.toast(I18N.p('Materinya ditukar dengan pertemuan tetangga.', 'Material swapped with the neighbouring meeting.'), 'ok');
+  App.refresh();
+};
+
+/* Tombolnya dipasang di tiap baris pertemuan, di samping tombol ubah yang
+   sudah ada. Dibungkus, bukan ditulis ulang, supaya kolom lain di halaman
+   itu tetap seperti semula. */
+(function () {
+  const v = VIEWS.school.ajar;
+  /* Halaman ini memakai kunci `render`, bukan `body` — membungkus kunci yang
+     salah membuat tombolnya tidak pernah muncul meski aksinya berfungsi. */
+  if (!v || typeof v.render !== 'function') return;
+  const asli = v.render;
+  v.render = function () {
+    const html = asli.apply(this, arguments);
+    /* Tombol ubah tiap baris dijadikan satu kelompok bersama tombol baru,
+       dengan mencocokkan tombolnya sendiri — bukan menebak susunan tabel. */
+    return String(html).replace(
+      /<button class="btn xs" data-act="ajarEdit" data-id="([^"]+)">([\s\S]*?)<\/button>/g,
+      (cocok, id, isi) => `${cocok}
+        <button class="btn xs" data-act="ajarGeser" data-arah="naik" data-id="${id}" title="${I18N.p('Materinya naik satu pertemuan', 'Move material one meeting earlier')}">${ic('arrowUp')}</button>
+        <button class="btn xs" data-act="ajarGeser" data-arah="turun" data-id="${id}" title="${I18N.p('Materinya turun satu pertemuan', 'Move material one meeting later')}">${ic('arrowDown')}</button>
+        <button class="btn xs" data-act="ajarKosongkan" data-id="${id}" title="${I18N.p('Kosongkan TP & materinya', 'Clear its objectives and material')}">${ic('refresh')}</button>
+        <button class="btn xs danger" data-act="ajarHapus" data-id="${id}" title="${I18N.p('Hapus pertemuan', 'Delete meeting')}">${ic('trash')}</button>`
+    );
+  };
+})();
+
+/* Pilihan "jangan isi TP otomatis" di layar pembuatan pertemuan. */
+(function () {
+  const asli = Ajar.generate.bind(Ajar);
+  Ajar.generate = function () {
+    const t = todayISO();
+    const mon = addDays(t, -((parseISO(t).getDay() + 6) % 7));
+    UI.form({
+      title: I18N.p('Buat pertemuan dari jadwal mengajar', 'Generate meetings from the timetable'), size: 'wide',
+      note: I18N.p('Setiap slot di sheet <b>Schedule</b> pada rentang tanggal ini dijadikan satu pertemuan. Menjalankan ulang tidak menggandakan: slot yang sudah ada akan dilewati. Centang <b>biarkan TP kosong</b> bila urutan Tujuan Pembelajaran ingin Ustadz tentukan sendiri — pertemuannya dibuat kosong, lalu diisi dari halaman Batas Materi.',
+        'Every slot in the <b>Schedule</b> sheet within this date range becomes one meeting. Re-running never duplicates: existing slots are skipped. Tick <b>leave objectives empty</b> to set the teaching sequence yourself — the meetings are created empty and filled from the Progress page.'),
+      values: { from: mon, to: addDays(mon, 27), tpPerMeeting: 1, kosong: true },
+      fields: [
+        { k: 'from', l: I18N.p('Dari tanggal', 'From'), t: 'date', req: 1 },
+        { k: 'to', l: I18N.p('Sampai tanggal', 'To'), t: 'date', req: 1 },
+        { k: 'kosong', l: I18N.p('Biarkan TP kosong — saya atur sendiri', 'Leave objectives empty — I will set them'), t: 'checkbox', full: 1 },
+        { k: 'tpPerMeeting', l: I18N.p('TP per pertemuan (bila diisi otomatis)', 'Objectives per meeting (if filled automatically)'), t: 'number', min: 1, max: 4 }
+      ],
+      submit: I18N.p('Buat pertemuan', 'Generate'),
+      onSubmit: async (v) => {
+        if (v.to < v.from) { UI.toast(I18N.p('Tanggal akhir harus setelah tanggal mulai.', 'The end date must be after the start date.'), 'err'); return false; }
+        UI.toast(I18N.p('Menyusun pertemuan…', 'Building the meetings…'), '', 4000);
+        const per = v.kosong ? 0 : (Number(v.tpPerMeeting) || 1);
+        const j = await Api.call('genMeetings', { from: v.from, to: v.to, tpPerMeeting: per });
+        await Store.pull({ force: true });
+        UI.toast(I18N.p(`${j.created} pertemuan dibuat${j.skipped ? `, ${j.skipped} sudah ada dan dilewati` : ''}${v.kosong ? ', TP dibiarkan kosong' : ''}.`,
+          `${j.created} meetings created${j.skipped ? `, ${j.skipped} already existed and were skipped` : ''}${v.kosong ? ', objectives left empty' : ''}.`), 'ok', 7000);
+        App.refresh();
+        return true;
+      }
+    });
+  };
+  Ajar.generateAsli = asli;
+})();
+
+/* ------------------------------------------------------------------ *
+ *  49 — NILAI LATIHAN & LAPORAN PERKEMBANGAN PESERTA DIDIK
+ *
+ *  Dua layar yang menutup dua lubang berbeda.
+ *
+ *  (A) Nilai latihan. Latihan IELTS atau latihan buku tidak punya tempat:
+ *      satu-satunya jalan sebelumnya adalah membuat tugas siswa dulu,
+ *      padahal tidak ada yang dikumpulkan — Ustadz hanya punya angkanya.
+ *      Di sini judulnya diketik, selnya dipilih, lalu nilainya diisi: satu
+ *      kotak per anak, atau ditempel sekaligus dari JSON. Nama dipadankan ke
+ *      daftar siswa, jadi ejaan berbeda tidak melahirkan siswa kedua.
+ *
+ *  (B) Laporan perkembangan. Tiga pertanyaan yang tadinya butuh tiga halaman
+ *      dan pencocokan nama manual: absensi mana yang belum dijalankan, siapa
+ *      yang belum mengumpulkan tiap tugas, dan bagaimana perkembangan tiap
+ *      anak. Semuanya dihitung dari DAFTAR SISWA, bukan dari daftar
+ *      pengumpulan — anak yang tidak pernah mengumpulkan apa pun tidak
+ *      muncul di daftar pengumpulan, dan justru dialah yang perlu dilihat.
+ * ------------------------------------------------------------------ */
+
+function latSt() {
+  const s = App.s('school');
+  s.lat = s.lat || { kode: '', judul: '', komponen: '', maks: 100, mode: 'timpa', nilai: {}, sibuk: false, hasil: null };
+  return s.lat;
+}
+
+function latKelas() {
+  const l = Ampu.list();
+  const st = latSt();
+  if (!st.kode && l.length) st.kode = l[0].kode;
+  return l;
+}
+
+function latRoster() {
+  const a = Ampu.dariKode(latSt().kode);
+  return a ? Ledger2.roster(a.rombel).map((x) => (typeof x === 'string' ? x : x.name)) : [];
+}
+
+CHG.latKode = (v) => { const st = latSt(); st.kode = v; st.nilai = {}; st.hasil = null; latLayar(true); };
+CHG.latJudul = (v) => { latSt().judul = v; };
+CHG.latKomponen = (v) => { latSt().komponen = v; };
+CHG.latMaks = (v) => { latSt().maks = Number(v) || 100; };
+CHG.latMode = (v) => { latSt().mode = v; };
+CHG.latNilai = (v, el) => { latSt().nilai[el.dataset.n] = v; };
+
+ACT.latTempel = () => {
+  const st = latSt();
+  UI.form({
+    title: I18N.p('Tempel nilai dari JSON', 'Paste scores from JSON'),
+    note: I18N.p('Bentuk yang diterima: <code>{"NAMA": 90, "NAMA LAIN": 85}</code> atau <code>[{"nama":"NAMA","nilai":90}]</code> atau <code>[["NAMA",90]]</code>. Nama yang ejaannya berbeda tetap dipadankan ke daftar siswa; yang benar-benar tidak ada akan dilaporkan, bukan disimpan diam-diam.',
+      'Accepted shapes: <code>{"NAME": 90}</code>, <code>[{"nama":"NAME","nilai":90}]</code>, or <code>[["NAME",90]]</code>. Differently spelled names are still matched to the roster; ones that truly are not found get reported, never saved silently.'),
+    size: 'wide',
+    fields: [{ k: 'json', l: I18N.p('Tempel di sini', 'Paste here'), t: 'textarea', rows: 10, full: 1, req: 1 }],
+    submit: I18N.p('Masukkan ke kotak nilai', 'Fill the score boxes'),
+    onSubmit: (v) => {
+      let data;
+      try { data = JSON.parse(v.json); } catch (e) {
+        UI.toast(I18N.p('JSON-nya belum benar — periksa tanda kutip dan kurungnya.', 'That JSON is not valid — check the quotes and brackets.'), 'err', 6000);
+        return false;
+      }
+      const roster = latRoster();
+      const pasang = (nama, nilai) => {
+        const n = String(nama || '').trim();
+        if (!n) return 0;
+        /* Dipadankan ke nama di daftar supaya kotaknya yang benar terisi.
+           Pencocokan penuh tetap dilakukan server; di sini hanya agar
+           Ustadz bisa melihat hasilnya sebelum menyimpan. */
+        const kena = roster.filter((r) => String(r).toUpperCase().replace(/\s+/g, ' ').trim()
+          === n.toUpperCase().replace(/\s+/g, ' ').trim())[0]
+          || roster.filter((r) => String(r).toUpperCase().replace(/[^A-Z]/g, '')
+            === n.toUpperCase().replace(/[^A-Z]/g, ''))[0];
+        if (!kena) return 0;
+        latSt().nilai[kena] = String(nilai === undefined || nilai === null ? '' : nilai);
+        return 1;
+      };
+      let n = 0, total = 0;
+      if (Array.isArray(data)) {
+        data.forEach((x) => {
+          total++;
+          if (Array.isArray(x)) n += pasang(x[0], x[1]);
+          else if (x && typeof x === 'object') n += pasang(x.nama !== undefined ? x.nama : x.name, x.nilai !== undefined ? x.nilai : x.score);
+        });
+      } else if (data && typeof data === 'object') {
+        Object.keys(data).forEach((k) => { total++; n += pasang(k, data[k]); });
+      }
+      UI.toast(I18N.p(`${n} dari ${total} nama cocok dan nilainya terisi.`, `${n} of ${total} names matched and were filled in.`),
+        n === total ? 'ok' : 'warn', 6000);
+      latLayar(true);
+      return true;
+    }
+  });
+};
+
+ACT.latKosongkan = () => { latSt().nilai = {}; latSt().hasil = null; latLayar(true); };
+
+ACT.latSimpan = async () => {
+  const st = latSt();
+  if (st.sibuk) return;
+  if (!String(st.judul || '').trim()) {
+    UI.toast(I18N.p('Judul latihannya diisi dulu.', 'Give the exercise a title first.'), 'warn');
+    return;
+  }
+  const isi = Object.keys(st.nilai).filter((k) => String(st.nilai[k]).trim() !== '')
+    .map((k) => ({ nama: k, nilai: st.nilai[k] }));
+  if (!isi.length) {
+    UI.toast(I18N.p('Belum ada nilai yang diisi.', 'No scores filled in yet.'), 'warn');
+    return;
+  }
+  const a = Ampu.dariKode(st.kode);
+  const ya = await UI.confirm(I18N.p(
+    `${isi.length} nilai untuk "${st.judul}" disimpan ke ${a ? a.kode : st.kode}${st.komponen ? ` dan mengisi sel ${st.komponen}` : ', tanpa mengisi sel ledger'}.`,
+    `${isi.length} scores for "${st.judul}" will be saved to ${a ? a.kode : st.kode}${st.komponen ? ` and fill the ${st.komponen} cell` : ', without filling a ledger cell'}.`),
+  { ok: I18N.p('Simpan', 'Save') });
+  if (!ya) return;
+  st.sibuk = true;
+  latLayar(true);
+  try {
+    const j = await Api.call('latihanSimpan', {
+      kode: st.kode, judul: st.judul, komponen: st.komponen,
+      maxScore: st.maks, mode: st.mode, nilai: isi
+    });
+    st.hasil = j;
+    if (j && j.ok) {
+      await Store.ensure('_Ledger', true);
+      UI.toast(I18N.p(`${j.tersimpan} nilai tersimpan, ${j.keLedger} sel ledger terisi${j.dijaga ? `, ${j.dijaga} dijaga` : ''}${(j.takDikenal || []).length ? `, ${j.takDikenal.length} nama tidak ketemu` : ''}.`,
+        `${j.tersimpan} scores saved, ${j.keLedger} ledger cells filled${j.dijaga ? `, ${j.dijaga} kept` : ''}${(j.takDikenal || []).length ? `, ${j.takDikenal.length} names not found` : ''}.`),
+      (j.takDikenal || []).length ? 'warn' : 'ok', 8000);
+    } else {
+      UI.toast((j && j.error) || I18N.p('Gagal menyimpan.', 'Could not save.'), 'err', 7000);
+    }
+  } catch (e) {
+    UI.toast(String(e.message || e), 'err', 7000);
+  } finally {
+    st.sibuk = false;
+    latLayar(true);
+  }
+};
+
+function latLayar(perbarui) {
+  const st = latSt();
+  const l = latKelas();
+  if (!l.length) {
+    UI.modal({
+      title: I18N.p('Nilai latihan', 'Practice scores'),
+      body: UI.empty(I18N.p('Jadwal mengajar belum terbaca', 'The timetable is not readable yet'),
+        I18N.p('Daftar kelas diambil dari sheet Schedule. Isi jadwalnya dulu, lalu buka kembali layar ini.',
+          'The class list is read from the Schedule sheet. Fill the timetable first, then reopen this screen.'))
+    });
+    return;
+  }
+  const roster = latRoster();
+  const sel = (st.hasil && st.hasil.pilihanSel) || latSelDaftar();
+  const terisi = Object.keys(st.nilai).filter((k) => String(st.nilai[k]).trim() !== '').length;
+
+  const isi = `
+    <div class="grid g4 mb">
+      <div class="field"><label>${I18N.p('Kelas', 'Class')}</label>
+        <select class="select" data-chg="latKode">${l.map((a) => `<option value="${esc(a.kode)}" ${a.kode === st.kode ? 'selected' : ''}>${esc(a.kode)}</option>`).join('')}</select></div>
+      <div class="field"><label>${I18N.p('Judul latihan', 'Exercise title')}</label>
+        <input class="input" data-chg="latJudul" value="${esc(st.judul || '')}" placeholder="IELTS Listening Test 2"></div>
+      <div class="field"><label>${I18N.p('Sel ledger', 'Ledger cell')}</label>
+        <select class="select" data-chg="latKomponen">
+          <option value="">— ${I18N.p('simpan sebagai latihan saja', 'keep as practice only')} —</option>
+          ${sel.map((s) => `<option ${s === st.komponen ? 'selected' : ''}>${esc(s)}</option>`).join('')}
+        </select></div>
+      <div class="field"><label>${I18N.p('Nilai maksimum', 'Maximum score')}</label>
+        <input class="input" type="number" min="1" data-chg="latMaks" value="${esc(String(st.maks || 100))}"></div>
+    </div>
+    <div class="toolbar mb">
+      <select class="select" data-chg="latMode">
+        <option value="timpa" ${st.mode === 'timpa' ? 'selected' : ''}>${I18N.p('Sel ledger ditimpa nilai ini', 'Overwrite the ledger cell')}</option>
+        <option value="tinggi" ${st.mode === 'tinggi' ? 'selected' : ''}>${I18N.p('Hanya bila lebih tinggi', 'Only if higher')}</option>
+        <option value="kosong" ${st.mode === 'kosong' ? 'selected' : ''}>${I18N.p('Hanya sel yang masih kosong', 'Only empty cells')}</option>
+      </select>
+      <button class="btn" data-act="latTempel">${ic('upload')}${I18N.p('Tempel JSON', 'Paste JSON')}</button>
+      <button class="btn" data-act="latKosongkan">${ic('refresh')}${I18N.p('Kosongkan', 'Clear')}</button>
+      <span class="grow"></span>
+      <span class="badge ${terisi ? 'b-ok' : ''}">${terisi} / ${roster.length} ${I18N.p('terisi', 'filled')}</span>
+    </div>
+    ${st.komponen ? '' : `<div class="note mb">${I18N.p('Tanpa sel ledger, nilainya tersimpan sebagai catatan latihan saja dan tidak masuk rapor. Pilih selnya bila ingin ikut terhitung.', 'Without a ledger cell the scores are kept as a practice record only and do not reach the report. Pick a cell to make them count.')}</div>`}
+    ${UI.table(
+    [{ h: I18N.p('Nama', 'Name'), f: (nm) => esc(nm) },
+      { h: I18N.p('Nilai', 'Score'), f: (nm) => `<input class="input" inputmode="decimal" data-chg="latNilai" data-n="${esc(nm)}" value="${esc(String(st.nilai[nm] === undefined ? '' : st.nilai[nm]))}" aria-label="${esc(nm)}">` }],
+    roster,
+    { emptyMsg: I18N.p('Daftar siswa kelas ini masih kosong.', 'This class has no students yet.') }
+  )}
+    ${st.hasil && (st.hasil.takDikenal || []).length ? `<div class="note warn mt">${I18N.p('Nama berikut tidak ada di daftar kelas ini, jadi nilainya TIDAK disimpan: ', 'These names are not in this class, so their scores were NOT saved: ')}<b>${esc((st.hasil.takDikenal || []).join(', '))}</b></div>` : ''}
+  `;
+
+  const kaki = `<button class="btn primary" data-act="latSimpan" ${st.sibuk ? 'disabled' : ''}>${ic('check')}${st.sibuk ? I18N.p('Menyimpan…', 'Saving…') : I18N.p('Simpan nilai', 'Save scores')}</button>`;
+
+  /* Isi modal diganti di tempat, bukan dibuka ulang: membuka ulang membuat
+     posisi gulir kembali ke atas dan kotak yang sedang diisi kehilangan
+     fokusnya di tengah pengetikan. */
+  if (perbarui && latLayar._m && latLayar._m.box) {
+    const body = latLayar._m.box.querySelector('.modal-body');
+    const foot = latLayar._m.box.querySelector('.modal-foot');
+    if (body) body.innerHTML = isi;
+    if (foot) foot.innerHTML = kaki;
+    I18N.apply(latLayar._m.box);
+    return;
+  }
+  latLayar._m = UI.modal({
+    title: I18N.p('Nilai latihan', 'Practice scores'),
+    size: 'wide', body: isi, foot: kaki,
+    onClose: () => { latLayar._m = null; }
+  });
+}
+
+/** Daftar sel ledger di sisi aplikasi — sama dengan yang dipakai server. */
+function latSelDaftar() {
+  const out = [];
+  for (let u = 1; u <= 3; u++) UNIT_KOMP.forEach((k) => out.push('UNIT ' + u + ' — ' + k));
+  LEDGER_LAIN.forEach((k) => out.push(k));
+  return out;
+}
+
+ACT.latBuka = async () => {
+  if (!Ampu.dicoba) await Ampu.muat();
+  latSt().hasil = null;
+  latLayar();
+};
+
+/* ---------------- (B) LAPORAN PERKEMBANGAN ---------------- */
+
+function lapSt() {
+  const s = App.s('school');
+  s.lap = s.lap || { data: null, kode: '', bagian: 'tugas', sibuk: false };
+  return s.lap;
+}
+
+const LAP_BAGIAN = [
+  ['tugas', 'Belum mengumpulkan', 'Not submitted'],
+  ['absen', 'Proyeksi absensi', 'Attendance projection'],
+  ['siswa', 'Per siswa', 'Per student']
+];
+
+ACT.lapBuka = async () => {
+  const st = lapSt();
+  st.sibuk = true;
+  UI.toast(I18N.p('Menyusun laporan…', 'Building the report…'), '', 4000);
+  try {
+    const j = await Api.call('laporanKelas', {});
+    st.data = (j && j.ok) ? j.kelas : [];
+    if (!st.kode && st.data.length) st.kode = st.data[0].kode;
+  } catch (e) {
+    UI.toast(String(e.message || e), 'err', 7000);
+    st.data = [];
+  } finally { st.sibuk = false; }
+  lapLayar();
+};
+
+CHG.lapKode = (v) => { lapSt().kode = v; lapLayar(true); };
+ACT.lapBagian = (d) => { lapSt().bagian = String(d.s || 'tugas'); lapLayar(true); };
+
+function lapKelasTerpilih() {
+  const st = lapSt();
+  return (st.data || []).filter((k) => k.kode === st.kode)[0] || (st.data || [])[0] || null;
+}
+
+function lapPersen(v) {
+  if (v === null || v === undefined) return '—';
+  const kelas = v >= 80 ? 'pos' : v >= 50 ? 'warn' : 'neg';
+  return `<b class="${kelas}">${v}%</b>`;
+}
+
+function lapLayar(perbarui) {
+  const st = lapSt();
+  const k = lapKelasTerpilih();
+  if (!k) {
+    UI.modal({
+      title: I18N.p('Laporan perkembangan peserta didik', 'Student progress report'),
+      body: UI.empty(I18N.p('Belum ada kelas untuk dilaporkan', 'No classes to report on yet'),
+        I18N.p('Daftar kelas diambil dari sheet Schedule.', 'The class list is read from the Schedule sheet.'))
+    });
+    return;
+  }
+
+  const kepala = `
+    <div class="toolbar mb">
+      <select class="select" data-chg="lapKode">${(st.data || []).map((x) => `<option value="${esc(x.kode)}" ${x.kode === st.kode ? 'selected' : ''}>${esc(x.kode)}</option>`).join('')}</select>
+      <span class="seg">${LAP_BAGIAN.map(([kode, id, en]) => `<button class="seg-b ${st.bagian === kode ? 'on' : ''}" data-act="lapBagian" data-s="${kode}">${I18N.p(id, en)}</button>`).join('')}</span>
+    </div>
+    <div class="grid g4 mb">
+      <div class="stat"><small>${I18N.p('Siswa', 'Students')}</small><b>${k.siswa}</b></div>
+      <div class="stat accent"><small>${I18N.p('Pengumpulan tugas', 'Task submission')}</small><b>${k.ringkasTugas.persenKumpul === null ? '—' : k.ringkasTugas.persenKumpul + '%'}</b><span class="sub">${k.ringkasTugas.jumlah} ${I18N.p('tugas', 'tasks')}</span></div>
+      <div class="stat"><small>${I18N.p('Pertemuan terabsen', 'Meetings with attendance')}</small><b>${k.absen.persenDiabsen === null ? '—' : k.absen.persenDiabsen + '%'}</b><span class="sub">${k.absen.sudahDiabsen} / ${k.absen.terlaksana}</span></div>
+      <div class="stat"><small>${I18N.p('TP tercapai', 'Objectives covered')}</small><b>${k.tp.persen === null ? '—' : k.tp.persen + '%'}</b><span class="sub">${k.tp.tercapai} / ${k.tp.total}</span></div>
+    </div>`;
+
+  let badan = '';
+  if (st.bagian === 'tugas') {
+    badan = `${k.ringkasTugas.belumSamaSekali ? `<div class="note warn mb">${I18N.p(`${k.ringkasTugas.belumSamaSekali} anak belum mengumpulkan satu tugas pun di kelas ini.`, `${k.ringkasTugas.belumSamaSekali} students have not submitted a single task in this class.`)}</div>` : ''}
+      ${UI.table(
+      [{ h: I18N.p('Tugas', 'Task'), f: (t) => `<div class="t">${esc(t.judul)}</div>${t.komponen ? `<div class="mini muted">${esc(t.komponen)}</div>` : `<div class="mini warn">${I18N.p('belum punya sel ledger', 'no ledger cell yet')}</div>`}` },
+        { h: I18N.p('Batas', 'Due'), f: (t) => esc(t.batas || '—') },
+        { h: I18N.p('Kumpul', 'Submitted'), f: (t) => `${t.kumpul}/${t.siswa} ${lapPersen(t.persenKumpul)}` },
+        { h: I18N.p('Dinilai', 'Graded'), f: (t) => `${t.dinilai} ${lapPersen(t.persenDinilai)}` },
+        { h: I18N.p('Belum mengumpulkan', 'Who has not submitted'),
+          f: (t) => (t.belum || []).length
+            ? `<div class="mini">${t.belum.map((n) => `<span class="rs-pill">${esc(n)}</span>`).join(' ')}</div>`
+            : `<span class="badge b-ok">${I18N.p('lengkap', 'complete')}</span>` }],
+      k.tugas || [],
+      { emptyMsg: I18N.p('Belum ada tugas di kelas ini.', 'No tasks in this class yet.') }
+    )}`;
+  } else if (st.bagian === 'absen') {
+    const a = k.absen;
+    badan = `
+      <div class="grid g4 mb">
+        <div class="stat"><small>${I18N.p('Pertemuan tercatat', 'Meetings recorded')}</small><b>${a.pertemuan}</b></div>
+        <div class="stat"><small>${I18N.p('Terlaksana', 'Held')}</small><b>${a.terlaksana}</b></div>
+        <div class="stat"><small>${I18N.p('Terjadwal', 'Scheduled')}</small><b>${a.terjadwal}</b></div>
+        <div class="stat ${a.belumDiabsen ? 'accent' : ''}"><small>${I18N.p('Belum diabsen', 'Attendance missing')}</small><b class="${a.belumDiabsen ? 'neg' : 'pos'}">${a.belumDiabsen}</b></div>
+      </div>
+      <h4>${I18N.p('Pertemuan yang sudah terlaksana tetapi belum ada absensinya', 'Meetings held with no attendance recorded')}</h4>
+      ${UI.table(
+      [{ h: I18N.p('Tanggal', 'Date'), f: (m) => esc(m.tanggal) },
+        { h: 'TP', f: (m) => esc(m.tp || '—') },
+        { h: I18N.p('Topik', 'Topic'), f: (m) => esc(m.topik || '—') }],
+      a.daftarBelum || [],
+      { emptyMsg: I18N.p('Semua pertemuan yang terlaksana sudah ada absensinya.', 'Every meeting held already has attendance.') }
+    )}
+      <h4 class="mt">${I18N.p('Absensi yang tanggalnya tidak punya catatan pertemuan', 'Attendance on dates with no meeting record')}</h4>
+      ${(a.tanpaPertemuan || []).length ? `<div class="note warn mb">${I18N.p('Kehadiran ini tidak terhitung di pertemuan mana pun. Buat pertemuannya pada tanggal itu, atau betulkan tanggal absensinya.', 'This attendance is not counted against any meeting. Create the meeting for that date, or correct the attendance date.')}</div>` : ''}
+      ${UI.table(
+      [{ h: I18N.p('Tanggal', 'Date'), f: (x) => esc(x.tanggal) },
+        { h: I18N.p('Jumlah anak terabsen', 'Students recorded'), f: (x) => String(x.siswa) }],
+      a.tanpaPertemuan || [],
+      { emptyMsg: I18N.p('Tidak ada.', 'None.') }
+    )}`;
+  } else {
+    badan = UI.table(
+      [{ h: I18N.p('Nama', 'Name'), f: (s) => esc(s.nama) },
+        { h: I18N.p('Tugas dikumpulkan', 'Tasks submitted'), f: (s) => `${s.kumpul}/${s.tugas} ${lapPersen(s.persenKumpul)}` },
+        { h: I18N.p('Kehadiran', 'Attendance'),
+          f: (s) => s.absenTercatat ? `${s.hadir}/${s.absenTercatat} ${lapPersen(s.persenHadir)}` : `<span class="mini muted">${I18N.p('belum ada absensi', 'no attendance yet')}</span>` },
+        { h: I18N.p('Sel nilai', 'Score cells'), f: (s) => String(s.selNilai) },
+        { h: I18N.p('Rata-rata', 'Average'), f: (s) => s.rataNilai === null ? '—' : `<b>${s.rataNilai}</b>` }],
+      k.perSiswa || [],
+      { emptyMsg: I18N.p('Daftar siswa kelas ini masih kosong.', 'This class has no students yet.') }
+    );
+  }
+
+  const isi = kepala + badan;
+  if (perbarui && lapLayar._m && lapLayar._m.box) {
+    const body = lapLayar._m.box.querySelector('.modal-body');
+    if (body) body.innerHTML = isi;
+    I18N.apply(lapLayar._m.box);
+    return;
+  }
+  lapLayar._m = UI.modal({
+    title: I18N.p('Laporan perkembangan peserta didik', 'Student progress report'),
+    size: 'wide', body: isi,
+    onClose: () => { lapLayar._m = null; }
+  });
+}
+
+/* Tombolnya dipasang di halaman Tugas Siswa dan Ledger — tempat Ustadz
+   memang mengurus keduanya. */
+(function () {
+  const pasang = (hal, tombol) => {
+    const v = VIEWS.school[hal];
+    if (!v) return;
+    const asli = v.actions;
+    v.actions = function () {
+      return tombol + (typeof asli === 'function' ? asli.apply(this, arguments) : '');
+    };
+  };
+  pasang('tugassiswa', `<button class="btn mod" data-act="lapBuka">${ic('table')}${I18N.p('Laporan perkembangan', 'Progress report')}</button>`);
+  pasang('ledger', `<button class="btn mod" data-act="latBuka">${ic('plus')}${I18N.p('Nilai latihan', 'Practice scores')}</button>`);
+})();
+
+/* ------------------------------------------------------------------ *
+ *  50 — PORTAL SISWA: MASUK DENGAN NOMOR INDUK
+ *
+ *  Yang lama: pilih kelas dari belasan pilihan, lalu pilih nama dari daftar
+ *  sekelas, lalu ketik nama lagi di tiap tugas. Tiga kali memilih untuk satu
+ *  pengumpulan, dan daftar nama satu kelas terbuka bagi siapa pun yang punya
+ *  tautannya.
+ *
+ *  Yang ini: satu kotak nomor induk. Sesudah itu yang terlihat hanya milik
+ *  anak itu — nilainya, kehadirannya, tugasnya beserta batas waktu, dan
+ *  pengumuman kelasnya. Namanya tidak perlu diketik lagi, jadi tidak ada
+ *  lagi "khansa sakhi nailah" yang masuk sebagai siswa kedua.
+ *
+ *  Nomor induk BUKAN kata sandi — teman sekelas bisa mengetahuinya. Ini
+ *  lebih tertutup daripada daftar nama yang terbuka, tetapi bukan
+ *  pengamanan kuat, dan karena itu yang dibalas server pun hanya milik anak
+ *  itu sendiri.
+ *
+ *  Jalan lama tetap ada sebagai cadangan: selama kolom NIS di database
+ *  belum terisi, anak yang nomornya belum ada tidak boleh terkunci di luar.
+ * ------------------------------------------------------------------ */
+
+const SiswaBaru = {
+  nomor: '',
+  data: null,
+  bagian: 'tugas',
+  sibuk: false,
+
+  /* Nomornya disimpan di sessionStorage, bukan localStorage: menutup tab
+     berarti keluar, dan ponsel yang dipinjam tidak meninggalkan sesi
+     siapa pun. */
+  ingat(n) {
+    this.nomor = String(n || '');
+    try { sessionStorage.setItem('mph.siswa.nomor', this.nomor); } catch (e) { }
+  },
+  ingatan() {
+    try { return sessionStorage.getItem('mph.siswa.nomor') || ''; } catch (e) { return ''; }
+  },
+  lupakan() {
+    this.nomor = ''; this.data = null;
+    try { sessionStorage.removeItem('mph.siswa.nomor'); } catch (e) { }
+  },
+
+  async muat(nomor) {
+    const j = await Api.call('siswaRingkas', { nomor: nomor });
+    if (!j || !j.ok) throw new Error((j && j.error) || 'Nomor induknya tidak ditemukan.');
+    this.data = j;
+    this.ingat(nomor);
+    return j;
+  },
+
+  kerangka() {
+    const root = $('#app') || document.body;
+    if (!$('#toast-root')) document.body.insertAdjacentHTML('beforeend', '<div id="toast-root"></div><div id="modal-root"></div>');
+    document.body.classList.add('student-mode');
+    bindGlobalEvents();
+    root.innerHTML = `<div class="student-wrap">
+      <div class="student-head">${logoSVG(42, 'stu')}
+        <div><h1>Portal Siswa</h1><p class="mini muted">SMAIT Al-Ittihad — nilai, tugas, dan agenda kelasmu</p></div></div>
+      <div id="stu-body"></div></div>`;
+  },
+
+  layarMasuk(pesan) {
+    $('#stu-body').innerHTML = `
+      <div class="card">
+        <h3>${ic('lock')}Masuk dengan Nomor Induk</h3>
+        <p class="mini muted" style="margin-top:0">Ketik NIS atau NISN-mu. Tidak perlu memilih kelas dan nama.</p>
+        ${pesan ? `<div class="note warn mb">${esc(pesan)}</div>` : ''}
+        <div class="form">
+          <div class="field full"><label>Nomor Induk (NIS / NISN)</label>
+            <input class="input" id="stu-nis" inputmode="numeric" autocomplete="off" placeholder="contoh: 252610054"></div>
+        </div>
+        <button class="btn primary mt" data-act="stuMasuk">${ic('check')}Masuk</button>
+        <div class="mini muted mt">Belum punya nomor induk atau lupa?
+          <button class="btn xs" data-act="stuJalanLama">Pilih kelas dan nama</button></div>
+      </div>`;
+    const inp = $('#stu-nis');
+    if (inp) {
+      inp.focus();
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') ACT.stuMasuk(); });
+    }
+  },
+
+  tab() {
+    const b = [['tugas', 'Tugas'], ['nilai', 'Nilai'], ['agenda', 'Agenda'], ['akun', 'Akun']];
+    return `<span class="seg">${b.map(([k, l]) => `<button class="seg-b ${this.bagian === k ? 'on' : ''}" data-act="stuBagian" data-s="${k}">${l}</button>`).join('')}</span>`;
+  },
+
+  layar() {
+    const d = this.data;
+    if (!d) return;
+    const r = d.ringkas || {};
+    const nilaiSemua = [].concat.apply([], (d.perKelas || []).map((k) => k.nilai || []));
+    const rata = nilaiSemua.length
+      ? Math.round(nilaiSemua.reduce((n, x) => n + (Number(x.nilai) / (Number(x.maks) || 100) * 100), 0) / nilaiSemua.length * 10) / 10
+      : null;
+
+    let badan = '';
+    if (this.bagian === 'tugas') {
+      const semua = [].concat.apply([], (d.perKelas || []).map((k) => (k.tugas || []).map((t) => Object.assign({ kelas: k.kelas }, t))));
+      const belum = semua.filter((t) => !t.sudah);
+      const sudah = semua.filter((t) => t.sudah);
+      const kartu = (t) => `<div class="card soft mb">
+        <div class="flex between"><div class="grow">
+          <div class="t">${esc(t.judul)}</div>
+          <div class="mini muted">${esc([t.kelas, t.mapel].filter(Boolean).join(' · '))}${t.batas ? ` · batas ${esc(t.batas)}` : ''}</div>
+        </div>
+        ${t.sudah
+    ? `<span class="badge b-ok">sudah dikumpulkan</span>`
+    : `<span class="badge b-rose">belum</span>`}</div>
+        ${t.sudah ? `<div class="mini mt">Dikumpulkan ${esc(t.tanggal || '-')}${t.nilai !== null && t.nilai !== undefined ? ` · nilai <b>${esc(String(t.nilai))}</b>/${esc(String(t.maxScore))}` : ' · belum dinilai'}</div>` : ''}
+      </div>`;
+      badan = `
+        ${belum.length ? `<h4>Belum dikumpulkan (${belum.length})</h4>${belum.map(kartu).join('')}` : `<div class="note ok mb">Semua tugasmu sudah dikumpulkan. Alhamdulillah.</div>`}
+        ${sudah.length ? `<h4 class="mt">Sudah dikumpulkan (${sudah.length})</h4>${sudah.map(kartu).join('')}` : ''}
+        <div class="note mt">Untuk mengumpulkan tugas, buka halaman pengumpulan:
+          <button class="btn sm mt" data-act="stuKumpul">${ic('upload')}Kumpulkan tugas</button></div>`;
+    } else if (this.bagian === 'nilai') {
+      badan = (d.perKelas || []).map((k) => `
+        <h4>${esc(k.kelas)}</h4>
+        ${(k.nilai || []).length
+    ? UI.table([{ h: 'Mata pelajaran', f: (x) => esc(x.mapel) },
+      { h: 'Komponen', f: (x) => esc(x.komponen) },
+      { h: 'Nilai', f: (x) => `<b>${esc(String(x.nilai))}</b><span class="mini muted"> / ${esc(String(x.maks))}</span>` }],
+    k.nilai || [])
+    : `<div class="note mb">Belum ada nilai yang keluar untuk kelas ini.</div>`}`).join('')
+        || `<div class="note">Belum ada nilai.</div>`;
+    } else if (this.bagian === 'agenda') {
+      const p = d.pengumuman || [];
+      const warna = { 'Ulangan Harian': 'b-amber', Ujian: 'b-rose', Praktek: 'b-ok', Tugas: '', Pengumuman: '' };
+      badan = p.length
+        ? p.map((x) => `<div class="card soft mb">
+            <div class="flex between"><div class="grow"><div class="t">${esc(x.judul)}</div>
+              <div class="mini muted">${esc([x.kelas, x.mapel].filter(Boolean).join(' · '))}${x.tanggal ? ` · ${esc(x.tanggal)}` : ''}${x.jam ? ` pukul ${esc(x.jam)}` : ''}</div></div>
+              <span class="badge ${warna[x.jenis] || ''}">${esc(x.jenis)}</span></div>
+            ${x.isi ? `<p class="mini mt" style="white-space:pre-wrap">${esc(x.isi)}</p>` : ''}
+          </div>`).join('')
+        : `<div class="note">Belum ada agenda atau pengumuman untuk kelasmu.</div>`;
+    } else {
+      badan = `
+        <div class="card soft">
+          <h4>${ic('mail')}Sematkan emailmu</h4>
+          <p class="mini muted" style="margin-top:0">Pengumuman ulangan, ujian, praktek, dan tugas akan dikirim ke email ini,
+            beserta undangan kalender. Tekan terima pada undangan itu supaya masuk ke Google Calendar-mu beserta pengingatnya.</p>
+          <div class="form">
+            <div class="field full"><label>Email</label>
+              <input class="input" id="stu-email" type="email" inputmode="email" placeholder="nama@gmail.com" value="${esc(d.email || '')}"></div>
+          </div>
+          <button class="btn primary mt" data-act="stuEmail">${ic('check')}Simpan email</button>
+          ${d.email ? `<div class="mini pos mt">Email tersimpan: <b>${esc(d.email)}</b></div>` : `<div class="mini warn mt">Belum ada email tersimpan — kamu belum akan menerima pengumuman lewat email.</div>`}
+        </div>
+        <div class="card soft mt">
+          <h4>${ic('eye')}Datamu</h4>
+          <ul class="list">
+            <li><div class="grow"><div class="t">${esc(d.nama || '')}</div><div class="s">${esc((d.kelas || []).join(' · '))}</div></div></li>
+            <li><div class="grow"><div class="t">NIS ${esc(d.nis || '—')}</div><div class="s">NISN ${esc(d.nisn || '—')}</div></div></li>
+          </ul>
+          <button class="btn mt" data-act="stuKeluar">${ic('x')}Keluar</button>
+        </div>`;
+    }
+
+    $('#stu-body').innerHTML = `
+      <div class="card mb">
+        <div class="flex between"><div class="grow">
+          <h3 style="margin-bottom:2px">${esc(d.nama || '')}</h3>
+          <div class="mini muted">${esc((d.kelas || []).join(' · '))}</div>
+        </div><button class="btn xs" data-act="stuSegar">${ic('refresh')}</button></div>
+        <div class="grid g3 mt">
+          <div class="stat accent"><small>Tugas dikumpulkan</small><b>${r.sudah || 0}/${r.tugas || 0}</b><span class="sub">${r.persenKumpul === null || r.persenKumpul === undefined ? '—' : r.persenKumpul + '%'}</span></div>
+          <div class="stat"><small>Kehadiran</small><b>${r.absenTercatat ? r.hadir + '/' + r.absenTercatat : '—'}</b><span class="sub">${r.persenHadir === null || r.persenHadir === undefined ? 'belum ada catatan' : r.persenHadir + '%'}</span></div>
+          <div class="stat"><small>Rata-rata nilai</small><b>${rata === null ? '—' : rata}</b><span class="sub">${nilaiSemua.length} nilai</span></div>
+        </div>
+      </div>
+      <div class="toolbar mb">${this.tab()}</div>
+      ${badan}`;
+  }
+};
+
+ACT.stuMasuk = async () => {
+  const inp = $('#stu-nis');
+  const n = inp ? String(inp.value || '').trim() : '';
+  if (!n) { UI.toast('Nomor induknya diisi dulu.', 'warn'); return; }
+  if (SiswaBaru.sibuk) return;
+  SiswaBaru.sibuk = true;
+  $('#stu-body').innerHTML = UI.empty('Mencari datamu…');
+  try {
+    await SiswaBaru.muat(n);
+    SiswaBaru.bagian = 'tugas';
+    SiswaBaru.layar();
+  } catch (e) {
+    SiswaBaru.layarMasuk(String(e.message || e));
+  } finally { SiswaBaru.sibuk = false; }
+};
+
+ACT.stuBagian = (d) => { SiswaBaru.bagian = String(d.s || 'tugas'); SiswaBaru.layar(); };
+
+ACT.stuSegar = async () => {
+  if (!SiswaBaru.nomor) return;
+  try { await SiswaBaru.muat(SiswaBaru.nomor); SiswaBaru.layar(); UI.toast('Diperbarui.', 'ok'); }
+  catch (e) { UI.toast(String(e.message || e), 'err'); }
+};
+
+ACT.stuKeluar = () => { SiswaBaru.lupakan(); SiswaBaru.layarMasuk(); };
+
+ACT.stuEmail = async () => {
+  const inp = $('#stu-email');
+  const em = inp ? String(inp.value || '').trim() : '';
+  try {
+    const j = await Api.call('siswaEmailSimpan', { nomor: SiswaBaru.nomor, email: em });
+    if (!j || !j.ok) { UI.toast((j && j.error) || 'Gagal menyimpan email.', 'err', 6000); return; }
+    UI.toast(em ? 'Email tersimpan. Pengumuman akan dikirim ke sana.' : 'Email dihapus.', 'ok', 6000);
+    await SiswaBaru.muat(SiswaBaru.nomor);
+    SiswaBaru.layar();
+  } catch (e) { UI.toast(String(e.message || e), 'err', 6000); }
+};
+
+/* Halaman pengumpulan tugas yang lama tetap dipakai untuk mengumpulkan —
+   di sanalah kotak tautan dan unggahannya. Namanya sudah diketahui dari
+   nomor induk, jadi tidak perlu diketik lagi. */
+ACT.stuKumpul = async () => {
+  const d = SiswaBaru.data;
+  const cls = (d && (d.kelas || [])[0]) || '';
+  SiswaBaru.kembaliKe = 'baru';
+  await Siswa.renderAsli(cls);
+  /* Nama diisikan sendiri ke setiap kotak nama, supaya tidak ada ejaan baru
+     yang masuk ke database. */
+  setTimeout(() => {
+    document.querySelectorAll('.stu-name').forEach((el) => {
+      el.value = (d && d.nama) || '';
+      el.setAttribute('readonly', 'readonly');
+    });
+    const wrap = $('#stu-body');
+    if (wrap) {
+      wrap.insertAdjacentHTML('afterbegin',
+        `<div class="note mb">Kamu masuk sebagai <b>${esc((d && d.nama) || '')}</b>.
+          <button class="btn xs" data-act="stuKePortal">${ic('chevL')}Kembali ke portal</button></div>`);
+    }
+  }, 350);
+};
+
+ACT.stuKePortal = () => { SiswaBaru.kerangka(); SiswaBaru.layar(); };
+
+ACT.stuJalanLama = async () => {
+  SiswaBaru.kembaliKe = 'masuk';
+  await Siswa.renderAsli('');
+  const wrap = $('#stu-body');
+  if (wrap) {
+    wrap.insertAdjacentHTML('afterbegin',
+      `<div class="note mb">Cara lama: pilih kelas lalu ketik namamu sesuai absen.
+        <button class="btn xs" data-act="stuKeMasuk">${ic('chevL')}Masuk dengan nomor induk</button></div>`);
+  }
+};
+
+ACT.stuKeMasuk = () => { SiswaBaru.kerangka(); SiswaBaru.layarMasuk(); };
+
+/* Portal baru dipasang sebagai halaman awal siswa; yang lama disimpan
+   sebagai `renderAsli` karena masih dipakai untuk mengumpulkan tugas. */
+(function () {
+  if (typeof Siswa === 'undefined' || typeof Siswa.render !== 'function') return;
+  Siswa.renderAsli = Siswa.render.bind(Siswa);
+  Siswa.render = async function (cls) {
+    SiswaBaru.kerangka();
+    const ingat = SiswaBaru.ingatan();
+    if (!ingat) { SiswaBaru.layarMasuk(); return; }
+    $('#stu-body').innerHTML = UI.empty('Memuat datamu…');
+    try {
+      await SiswaBaru.muat(ingat);
+      SiswaBaru.layar();
+    } catch (e) {
+      SiswaBaru.lupakan();
+      SiswaBaru.layarMasuk();
+    }
+  };
+})();
+
+/* ------------------------------------------------------------------ *
+ *  51 — AGENDA KELAS & REKAP EMAIL SISWA (sisi Ustadz)
+ *
+ *  Tempat Ustadz mencatat ulangan harian, ujian, praktek, tugas, atau
+ *  pengumuman untuk satu kelas ampu — dan anak kelas itu langsung melihatnya
+ *  di portalnya sebagai bahan persiapan.
+ *
+ *  Pengiriman ke email selalu lewat PRATINJAU dulu: berapa anak yang akan
+ *  menerima, dan siapa saja yang belum menyematkan emailnya. Tidak ada email
+ *  yang keluar tanpa Ustadz melihat angkanya lebih dulu, karena email yang
+ *  sudah terkirim tidak bisa ditarik kembali.
+ * ------------------------------------------------------------------ */
+
+function pgSt() {
+  const s = App.s('school');
+  s.pg = s.pg || { data: null, bagian: 'daftar', sibuk: false };
+  return s.pg;
+}
+
+ACT.pgBuka = async () => {
+  const st = pgSt();
+  if (!Ampu.dicoba) await Ampu.muat();
+  st.sibuk = true;
+  try {
+    const j = await Api.call('pengumumanDaftar', {});
+    st.data = (j && j.ok) ? j : null;
+  } catch (e) {
+    UI.toast(String(e.message || e), 'err', 6000);
+    st.data = null;
+  } finally { st.sibuk = false; }
+  pgLayar();
+};
+
+ACT.pgBagian = (d) => { pgSt().bagian = String(d.s || 'daftar'); pgLayar(true); };
+
+ACT.pgBaru = () => pgForm(null);
+ACT.pgUbah = (d) => {
+  const st = pgSt();
+  const p = ((st.data || {}).pengumuman || []).filter((x) => String(x.id) === String(d.id))[0];
+  pgForm(p || null);
+};
+
+function pgForm(p) {
+  const st = pgSt();
+  const jenis = (st.data && st.data.jenis) || ['Ulangan Harian', 'Ujian', 'Praktek', 'Tugas', 'Pengumuman'];
+  const l = Ampu.list();
+  if (!l.length) {
+    UI.toast(I18N.p('Jadwal mengajar belum terbaca, jadi kelasnya belum bisa dipilih.', 'The timetable is not readable yet, so no class can be picked.'), 'warn', 7000);
+    return;
+  }
+  const kode = p ? p.kode : l[0].kode;
+  UI.form({
+    title: p ? I18N.p('Ubah agenda kelas', 'Edit class agenda') : I18N.p('Agenda kelas baru', 'New class agenda'),
+    size: 'wide',
+    note: I18N.p('Yang dicatat di sini langsung terlihat di portal siswa kelas itu. Email baru terkirim bila Ustadz menekan tombol kirim — menyimpan saja tidak mengirim apa pun.',
+      'What you record here appears in that class’s student portal right away. Email is only sent when you press send — saving alone sends nothing.'),
+    values: {
+      kode: kode, jenis: p ? p.jenis : 'Ulangan Harian', judul: p ? p.judul : '',
+      tanggal: p ? p.tanggal : todayISO(), jam: p ? p.jam : '', sampai: p ? p.sampai : '',
+      isi: p ? p.isi : ''
+    },
+    fields: [
+      { k: 'kode', l: I18N.p('Kelas', 'Class'), t: 'select', o: l.map((a) => [a.kode, a.kode]), req: 1 },
+      { k: 'jenis', l: I18N.p('Jenis', 'Kind'), t: 'select', o: jenis.map((x) => [x, x]), req: 1 },
+      { k: 'judul', l: I18N.p('Judul', 'Title'), req: 1, full: 1, hint: I18N.p('Contoh: Ulangan Harian Unit 2 — Survival', 'Example: Unit 2 quiz — Survival') },
+      { k: 'tanggal', l: I18N.p('Tanggal', 'Date'), t: 'date' },
+      { k: 'jam', l: I18N.p('Jam mulai', 'Start time'), t: 'time' },
+      { k: 'sampai', l: I18N.p('Jam selesai', 'End time'), t: 'time' },
+      { k: 'isi', l: I18N.p('Keterangan untuk siswa', 'Notes for students'), t: 'textarea', rows: 4, full: 1,
+        hint: I18N.p('Materi yang diujikan, yang harus dibawa, atau hal lain yang perlu mereka siapkan.', 'What is tested, what to bring, or anything else they should prepare.') }
+    ],
+    submit: I18N.p('Simpan', 'Save'),
+    onSubmit: async (v) => {
+      const j = await Api.call('pengumumanSimpan', Object.assign({ id: p ? p.id : '' }, v));
+      if (!j || !j.ok) {
+        UI.toast((j && j.error) || I18N.p('Gagal menyimpan.', 'Could not save.'), 'err', 6000);
+        return false;
+      }
+      UI.toast(I18N.p('Agenda kelas tersimpan dan sudah terlihat di portal siswa.', 'Class agenda saved and now visible in the student portal.'), 'ok', 6000);
+      await ACT.pgBuka();
+      return true;
+    }
+  });
+}
+
+ACT.pgHapus = async (d) => {
+  const st = pgSt();
+  const p = ((st.data || {}).pengumuman || []).filter((x) => String(x.id) === String(d.id))[0];
+  const ya = await UI.confirm(I18N.p(
+    `Hapus "${p ? p.judul : ''}"? Agenda ini akan hilang dari portal siswa.`,
+    `Delete "${p ? p.judul : ''}"? It will disappear from the student portal.`),
+  { ok: I18N.p('Hapus', 'Delete'), danger: true });
+  if (!ya) return;
+  const j = await Api.call('pengumumanHapus', { id: d.id });
+  if (!j || !j.ok) { UI.toast((j && j.error) || I18N.p('Gagal menghapus.', 'Could not delete.'), 'err'); return; }
+  UI.toast(I18N.p('Agenda dihapus.', 'Agenda deleted.'), 'ok');
+  await ACT.pgBuka();
+};
+
+ACT.pgKirim = async (d) => {
+  const pv = await Api.call('pengumumanKirim', { id: d.id, pratinjau: true });
+  if (!pv || !pv.ok) {
+    /* Pesannya dibuat berguna: bukan sekadar "gagal", tetapi berapa anak yang
+       belum menyematkan email — itulah yang harus dikerjakan dulu. */
+    UI.toast((pv && pv.error) || I18N.p('Belum bisa dikirim.', 'Cannot send yet.'), 'warn', 9000);
+    if (pv && (pv.belum || []).length) {
+      UI.modal({
+        title: I18N.p('Belum ada email siswa', 'No student emails yet'),
+        body: `<div class="note warn mb">${I18N.p(`Dari ${pv.siswa} siswa kelas ini, belum ada satu pun yang menyematkan emailnya di portal. Minta mereka membuka portal siswa, masuk dengan nomor induk, lalu mengisi emailnya di bagian Akun.`,
+          `Of ${pv.siswa} students in this class, none has linked an email in the portal yet. Ask them to open the student portal, sign in with their student number, and fill in their email under Account.`)}</div>
+          <div class="mini muted">${esc((pv.belum || []).join(', '))}</div>`
+      });
+    }
+    return;
+  }
+  const ya = await UI.confirm(I18N.p(
+    `Kirim ke ${pv.akanDikirim} siswa yang sudah menyematkan email${(pv.belum || []).length ? `, dari ${pv.siswa} siswa kelas ini — ${pv.belum.length} belum punya email dan tidak akan menerima` : ''}. Emailnya membawa undangan kalender. Email yang sudah terkirim tidak bisa ditarik kembali.`,
+    `Send to ${pv.akanDikirim} students who have linked an email${(pv.belum || []).length ? `, out of ${pv.siswa} in this class — ${pv.belum.length} have no email and will not receive it` : ''}. The email carries a calendar invitation. Sent email cannot be recalled.`),
+  { ok: I18N.p('Kirim sekarang', 'Send now') });
+  if (!ya) return;
+  UI.toast(I18N.p('Mengirim…', 'Sending…'), '', 5000);
+  const j = await Api.call('pengumumanKirim', { id: d.id });
+  if (!j || !j.ok) { UI.toast((j && j.error) || I18N.p('Gagal mengirim.', 'Could not send.'), 'err', 7000); return; }
+  UI.toast(I18N.p(`${j.terkirim} email terkirim${(j.gagal || []).length ? `, ${j.gagal.length} gagal` : ''}${(j.belum || []).length ? `, ${j.belum.length} belum punya email` : ''}.`,
+    `${j.terkirim} emails sent${(j.gagal || []).length ? `, ${j.gagal.length} failed` : ''}${(j.belum || []).length ? `, ${j.belum.length} have no email` : ''}.`),
+  (j.gagal || []).length ? 'warn' : 'ok', 9000);
+  await ACT.pgBuka();
+};
+
+function pgLayar(perbarui) {
+  const st = pgSt();
+  const d = st.data;
+  const JENIS_WARNA = { 'Ulangan Harian': 'b-amber', Ujian: 'b-rose', Praktek: 'b-ok' };
+
+  let badan;
+  if (!d) {
+    badan = UI.empty(I18N.p('Belum bisa dibaca', 'Could not be read'),
+      I18N.p('Coba buka kembali layar ini.', 'Try reopening this screen.'));
+  } else if (st.bagian === 'email') {
+    badan = `
+      <div class="note mb">${I18N.p('Email disematkan sendiri oleh siswa di portalnya — Ustadz tidak perlu mengisikannya. Daftar di bawah menunjukkan siapa yang belum, supaya bisa diingatkan.',
+    'Students link their own email in the portal — you do not need to fill it in. The list below shows who has not, so they can be reminded.')}</div>
+      ${UI.table(
+    [{ h: I18N.p('Kelas', 'Class'), f: (e) => esc(e.kode) },
+      { h: I18N.p('Sudah menyematkan', 'Linked'),
+        f: (e) => `<b class="${e.persen === null ? '' : e.persen >= 80 ? 'pos' : e.persen >= 40 ? 'warn' : 'neg'}">${e.berEmail}/${e.siswa}</b>${e.persen === null ? '' : ` <span class="mini muted">${e.persen}%</span>`}` },
+      { h: I18N.p('Belum menyematkan', 'Not linked yet'),
+        f: (e) => (e.belum || []).length ? `<div class="mini">${e.belum.map((n) => `<span class="rs-pill">${esc(n)}</span>`).join(' ')}</div>` : `<span class="badge b-ok">${I18N.p('lengkap', 'complete')}</span>` }],
+    d.email || [],
+    { emptyMsg: I18N.p('Belum ada kelas ampu.', 'No classes yet.') }
+  )}`;
+  } else {
+    badan = UI.table(
+      [{ h: I18N.p('Kelas', 'Class'), f: (p) => esc(p.kode) },
+        { h: I18N.p('Jenis', 'Kind'), f: (p) => `<span class="badge ${JENIS_WARNA[p.jenis] || ''}">${esc(p.jenis)}</span>` },
+        { h: I18N.p('Judul', 'Title'),
+          f: (p) => `<div class="t">${esc(p.judul)}</div>${p.isi ? `<div class="mini muted">${esc(String(p.isi).slice(0, 90))}${String(p.isi).length > 90 ? '…' : ''}</div>` : ''}` },
+        { h: I18N.p('Waktu', 'When'),
+          f: (p) => `${esc(p.tanggal || '—')}${p.jam ? `<div class="mini muted">${esc(p.jam)}${p.sampai ? '–' + esc(p.sampai) : ''}</div>` : ''}` },
+        { h: I18N.p('Email', 'Email'),
+          f: (p) => p.kirimAt ? `<span class="badge b-ok">${p.kirimKe} ${I18N.p('terkirim', 'sent')}</span>` : `<span class="mini muted">${I18N.p('belum', 'not sent')}</span>` },
+        { h: '', f: (p) => `<button class="btn xs" data-act="pgUbah" data-id="${esc(p.id)}">${ic('edit')}</button>
+         <button class="btn xs" data-act="pgKirim" data-id="${esc(p.id)}" title="${I18N.p('Kirim ke email siswa', 'Send to student emails')}">${ic('mail')}</button>
+         <button class="btn xs danger" data-act="pgHapus" data-id="${esc(p.id)}">${ic('trash')}</button>` }],
+      d.pengumuman || [],
+      { emptyMsg: I18N.p('Belum ada agenda kelas. Tekan "Agenda baru" untuk mencatat ulangan, ujian, praktek, atau pengumuman.', 'No class agenda yet. Press "New agenda" to record a quiz, exam, practical, or announcement.') }
+    );
+  }
+
+  const isi = `
+    <div class="toolbar mb">
+      <span class="seg">
+        <button class="seg-b ${st.bagian === 'daftar' ? 'on' : ''}" data-act="pgBagian" data-s="daftar">${I18N.p('Agenda kelas', 'Class agenda')}</button>
+        <button class="seg-b ${st.bagian === 'email' ? 'on' : ''}" data-act="pgBagian" data-s="email">${I18N.p('Email siswa', 'Student emails')}</button>
+      </span>
+      <span class="grow"></span>
+      <button class="btn mod" data-act="pgBaru">${ic('plus')}${I18N.p('Agenda baru', 'New agenda')}</button>
+    </div>
+    ${badan}`;
+
+  if (perbarui && pgLayar._m && pgLayar._m.box) {
+    const body = pgLayar._m.box.querySelector('.modal-body');
+    if (body) body.innerHTML = isi;
+    I18N.apply(pgLayar._m.box);
+    return;
+  }
+  pgLayar._m = UI.modal({
+    title: I18N.p('Agenda kelas & pengumuman', 'Class agenda & announcements'),
+    size: 'wide', body: isi,
+    onClose: () => { pgLayar._m = null; }
+  });
+}
+
+/* Tombolnya di halaman Jadwal — tempat Ustadz mengurus agenda. */
+(function () {
+  const v = VIEWS.school.jadwal;
+  if (!v) return;
+  const asli = v.actions;
+  v.actions = function () {
+    return `<button class="btn mod" data-act="pgBuka">${ic('bell')}${I18N.p('Agenda kelas', 'Class agenda')}</button>`
+      + (typeof asli === 'function' ? asli.apply(this, arguments) : '');
+  };
+})();
+
+/* ------------------------------------------------------------------ *
+ *  52 — ABSENSI DIISI SENDIRI OLEH USTADZ
+ *
+ *  Halaman absen yang ada hanya menampilkan matriks kehadiran; satu-satunya
+ *  jalan masuk adalah tautan yang ditekan siswa sendiri. Kalau anak lupa
+ *  menekan Hadir, tidak ada cara membetulkannya — dan di data Ustadz memang
+ *  begitu: 15 pertemuan terlaksana tanpa satu pun absensi.
+ *
+ *  Lembar ini mengisi satu pertemuan sekaligus. Yang dipilih dulu adalah
+ *  PERTEMUANNYA, bukan tanggalnya, karena pertemuan itulah yang dihitung
+ *  laporan — dan begitu absensinya tersimpan, pertemuan itu ikut ditandai
+ *  terlaksana supaya tidak terus-menerus dilaporkan "belum diabsen".
+ *
+ *  Status yang sudah tercatat pada tanggal itu ditampilkan apa adanya, jadi
+ *  mengisi ulang membetulkan — bukan menggandakan.
+ * ------------------------------------------------------------------ */
+
+const ABS_SINGKAT = { Hadir: 'H', Izin: 'I', Sakit: 'S', Alpa: 'A' };
+
+function abSt() {
+  const s = App.s('school');
+  s.ab = s.ab || { kode: '', tanggal: todayISO(), meetingId: '', data: null, pilih: {}, sibuk: false };
+  return s.ab;
+}
+
+ACT.abBuka = async (d) => {
+  const st = abSt();
+  if (!Ampu.dicoba) await Ampu.muat();
+  const l = Ampu.list();
+  if (d && d.kode) st.kode = String(d.kode);
+  if (!st.kode && l.length) st.kode = l[0].kode;
+  if (d && d.tanggal) st.tanggal = String(d.tanggal);
+  if (d && d.id) st.meetingId = String(d.id);
+  await abMuat();
+};
+
+async function abMuat() {
+  const st = abSt();
+  st.sibuk = true;
+  try {
+    const j = await Api.call('absenLembar', { kode: st.kode, date: st.tanggal });
+    if (!j || !j.ok) { UI.toast((j && j.error) || I18N.p('Gagal memuat lembar absensi.', 'Could not load the attendance sheet.'), 'err', 6000); return; }
+    st.data = j;
+    /* Status yang sudah tercatat jadi isian awal, supaya mengisi ulang
+       berarti membetulkan dan yang sudah benar tidak perlu ditekan lagi. */
+    st.pilih = {};
+    (j.siswa || []).forEach((s) => { if (s.status) st.pilih[s.nama] = s.status; });
+  } catch (e) {
+    UI.toast(String(e.message || e), 'err', 6000);
+  } finally { st.sibuk = false; }
+  abLayar();
+}
+
+CHG.abKode = (v) => { abSt().kode = v; abSt().meetingId = ''; abMuat(); };
+CHG.abTanggal = (v) => { abSt().tanggal = v; abSt().meetingId = ''; abMuat(); };
+CHG.abPertemuan = (v) => {
+  const st = abSt();
+  st.meetingId = v;
+  const p = ((st.data || {}).pertemuan || []).filter((x) => String(x.id) === String(v))[0];
+  if (p && p.tanggal && p.tanggal !== st.tanggal) { st.tanggal = p.tanggal; abMuat(); return; }
+  abLayar(true);
+};
+
+ACT.abSet = (d) => { abSt().pilih[d.n] = String(d.s || ''); abLayar(true); };
+ACT.abSemua = (d) => {
+  const st = abSt();
+  ((st.data || {}).siswa || []).forEach((s) => { st.pilih[s.nama] = String(d.s || 'Hadir'); });
+  abLayar(true);
+};
+ACT.abKosongkan = () => { abSt().pilih = {}; abLayar(true); };
+
+ACT.abSimpan = async () => {
+  const st = abSt();
+  if (st.sibuk) return;
+  const daftar = Object.keys(st.pilih).filter((n) => st.pilih[n])
+    .map((n) => ({ nama: n, status: st.pilih[n] }));
+  if (!daftar.length) {
+    UI.toast(I18N.p('Belum ada kehadiran yang ditandai.', 'No attendance marked yet.'), 'warn');
+    return;
+  }
+  const total = ((st.data || {}).siswa || []).length;
+  const ya = await UI.confirm(I18N.p(
+    `Simpan kehadiran ${daftar.length} dari ${total} siswa untuk tanggal ${st.tanggal}?${daftar.length < total ? ' Anak yang belum ditandai dibiarkan tanpa catatan.' : ''}`,
+    `Save attendance for ${daftar.length} of ${total} students on ${st.tanggal}?${daftar.length < total ? ' Students left unmarked get no record.' : ''}`),
+  { ok: I18N.p('Simpan', 'Save') });
+  if (!ya) return;
+  st.sibuk = true;
+  abLayar(true);
+  try {
+    const j = await Api.call('absenSimpan', {
+      className: (st.data || {}).kelas, date: st.tanggal,
+      meetingId: st.meetingId, daftar: daftar
+    });
+    if (!j || !j.ok) { UI.toast((j && j.error) || I18N.p('Gagal menyimpan.', 'Could not save.'), 'err', 6000); return; }
+    await Store.ensure('_Absen', true);
+    UI.toast(I18N.p(`${j.baru} kehadiran baru, ${j.diperbarui} diperbarui${j.pertemuan ? ', pertemuannya ditandai terlaksana' : ''}${(j.takDikenal || []).length ? `, ${j.takDikenal.length} nama tidak ketemu` : ''}.`,
+      `${j.baru} new, ${j.diperbarui} updated${j.pertemuan ? ', the meeting is now marked as held' : ''}${(j.takDikenal || []).length ? `, ${j.takDikenal.length} names not found` : ''}.`),
+    (j.takDikenal || []).length ? 'warn' : 'ok', 8000);
+    await abMuat();
+  } catch (e) {
+    UI.toast(String(e.message || e), 'err', 6000);
+  } finally { st.sibuk = false; }
+};
+
+function abLayar(perbarui) {
+  const st = abSt();
+  const d = st.data;
+  const l = Ampu.list();
+  if (!d) {
+    UI.modal({
+      title: I18N.p('Isi absensi', 'Fill attendance'),
+      body: UI.empty(I18N.p('Belum bisa dimuat', 'Could not load'),
+        I18N.p('Daftar kelas diambil dari sheet Schedule.', 'The class list is read from the Schedule sheet.'))
+    });
+    return;
+  }
+  const status = d.status || ['Hadir', 'Izin', 'Sakit', 'Alpa'];
+  const ditandai = Object.keys(st.pilih).filter((n) => st.pilih[n]).length;
+  const hadir = Object.keys(st.pilih).filter((n) => st.pilih[n] === 'Hadir').length;
+  /* Pertemuan yang terlaksana tapi belum ada absensinya ditandai, supaya
+     Ustadz tahu mana yang memang perlu diisi. */
+  const ptm = (d.pertemuan || []);
+
+  const isi = `
+    <div class="grid g3 mb">
+      <div class="field"><label>${I18N.p('Kelas', 'Class')}</label>
+        <select class="select" data-chg="abKode">${l.map((a) => `<option value="${esc(a.kode)}" ${a.kode === st.kode ? 'selected' : ''}>${esc(a.kode)}</option>`).join('')}</select></div>
+      <div class="field"><label>${I18N.p('Tanggal', 'Date')}</label>
+        <input class="input" type="date" data-chg="abTanggal" value="${esc(st.tanggal)}"></div>
+      <div class="field"><label>${I18N.p('Pertemuan (agar ikut ditandai terlaksana)', 'Meeting (so it is marked as held)')}</label>
+        <select class="select" data-chg="abPertemuan">
+          <option value="">— ${I18N.p('tanpa pertemuan', 'no meeting')} —</option>
+          ${ptm.map((p) => `<option value="${esc(p.id)}" ${String(p.id) === st.meetingId ? 'selected' : ''}>${esc(p.tanggal)} · ${esc(p.status || '-')}${p.tp ? ' · TP ' + esc(p.tp) : ''}</option>`).join('')}
+        </select></div>
+    </div>
+    <div class="toolbar mb">
+      ${status.map((s) => `<button class="btn sm" data-act="abSemua" data-s="${esc(s)}">${I18N.p('Semua', 'All')} ${esc(s)}</button>`).join('')}
+      <button class="btn sm" data-act="abKosongkan">${ic('refresh')}${I18N.p('Kosongkan', 'Clear')}</button>
+      <span class="grow"></span>
+      <span class="badge ${ditandai ? 'b-ok' : ''}">${ditandai}/${(d.siswa || []).length} ${I18N.p('ditandai', 'marked')}</span>
+      <span class="badge">${hadir} ${I18N.p('hadir', 'present')}</span>
+    </div>
+    ${d.sudahTerisi ? `<div class="note mb">${I18N.p(`Tanggal ini sudah punya ${d.sudahTerisi} catatan kehadiran — yang tampil di bawah adalah catatan itu. Menyimpan akan membetulkannya, bukan menggandakan.`, `This date already has ${d.sudahTerisi} records — what you see below is that data. Saving corrects it rather than duplicating.`)}</div>` : ''}
+    ${UI.table(
+    [{ h: I18N.p('Nama', 'Name'), f: (s) => esc(s.nama) },
+      { h: I18N.p('Kehadiran', 'Attendance'),
+        f: (s) => `<span class="seg">${status.map((x) => `<button class="seg-b ${st.pilih[s.nama] === x ? 'on' : ''}" data-act="abSet" data-n="${esc(s.nama)}" data-s="${esc(x)}" title="${esc(x)}">${esc(ABS_SINGKAT[x] || x)}</button>`).join('')}</span>` }],
+    d.siswa || [],
+    { emptyMsg: I18N.p('Daftar siswa kelas ini masih kosong.', 'This class has no students yet.') }
+  )}`;
+
+  const kaki = `<button class="btn primary" data-act="abSimpan" ${st.sibuk ? 'disabled' : ''}>${ic('check')}${st.sibuk ? I18N.p('Menyimpan…', 'Saving…') : I18N.p('Simpan kehadiran', 'Save attendance')}</button>`;
+
+  if (perbarui && abLayar._m && abLayar._m.box) {
+    const body = abLayar._m.box.querySelector('.modal-body');
+    const foot = abLayar._m.box.querySelector('.modal-foot');
+    if (body) body.innerHTML = isi;
+    if (foot) foot.innerHTML = kaki;
+    I18N.apply(abLayar._m.box);
+    return;
+  }
+  abLayar._m = UI.modal({
+    title: I18N.p('Isi absensi', 'Fill attendance'),
+    size: 'wide', body: isi, foot: kaki,
+    onClose: () => { abLayar._m = null; }
+  });
+}
+
+/* Tombolnya di halaman Absen Siswa — tempat Ustadz memang mengurus
+   kehadiran — dan juga langsung dari daftar "belum diabsen" di laporan. */
+(function () {
+  const v = VIEWS.school.absen;
+  if (!v) return;
+  const asli = v.actions;
+  v.actions = function () {
+    return `<button class="btn mod" data-act="abBuka">${ic('check')}${I18N.p('Isi absensi', 'Fill attendance')}</button>`
+      + (typeof asli === 'function' ? asli.apply(this, arguments) : '');
+  };
+})();
+
+/* Di laporan perkembangan, tiap pertemuan yang belum ada absensinya diberi
+   tombol yang membuka lembar ini pada tanggal dan pertemuan itu — jadi dari
+   melihat kekurangannya sampai membetulkannya tidak perlu pindah halaman.
+
+   Tombolnya disisipkan ke DOM sesudah laporannya tergambar, bukan dengan
+   menulis ulang lapLayar: menyalin fungsi itu berarti dua salinan yang harus
+   dijaga tetap sama, dan satu hari salah satunya akan tertinggal. */
+(function () {
+  if (typeof lapLayar !== 'function') return;
+  const asli = lapLayar;
+  /* eslint-disable no-global-assign */
+  lapLayar = function (perbarui) {
+    asli.call(this, perbarui);
+    const box = lapLayar._m && lapLayar._m.box;
+    if (!box) return;
+    const st = (typeof lapSt === 'function') ? lapSt() : null;
+    if (!st || st.bagian !== 'absen') return;
+    const k = (typeof lapKelasTerpilih === 'function') ? lapKelasTerpilih() : null;
+    if (!k) return;
+    /* Tanggal -> id pertemuan, dari daftar "belum diabsen" itu sendiri. */
+    const peta = {};
+    ((k.absen || {}).daftarBelum || []).forEach((x) => { peta[x.tanggal] = x.id; });
+    box.querySelectorAll('.tbl tbody tr').forEach((tr) => {
+      const sel = tr.querySelector('td');
+      const tgl = sel ? String(sel.textContent || '').trim() : '';
+      if (!peta[tgl] || tr.querySelector('[data-act="abBuka"]')) return;
+      const akhir = tr.lastElementChild;
+      if (!akhir) return;
+      akhir.insertAdjacentHTML('beforeend',
+        ` <button class="btn xs mod" data-act="abBuka" data-kode="${esc(k.kode)}" data-tanggal="${esc(tgl)}" data-id="${esc(peta[tgl])}">${ic('check')}${I18N.p('Isi', 'Fill')}</button>`);
+    });
   };
 })();
 
