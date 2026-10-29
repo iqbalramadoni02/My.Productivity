@@ -1583,7 +1583,7 @@ span.rs-pill { cursor: default; }
   <div id="modal-root"></div>
   <div id="toast-root" class="toasts" aria-live="polite"></div>
   <!-- Diisi otomatis oleh Apps Script (doGet). Bila file ini di-hosting statis, isinya diabaikan. -->
-  <script type="application/json" id="mph-boot">{}</script>
+  <script type="application/json" id="mph-boot"><?!= boot ?></script>
   <script>
     /* Service worker hanya aktif saat file ini di-hosting sendiri (GitHub Pages / Netlify / APK). */
     if ('serviceWorker' in navigator && location.protocol === 'https:' && !location.host.includes('googleusercontent')) {
@@ -2051,10 +2051,37 @@ const Api = {
     });
   },
 
+  /* "Aksi tidak dikenal" hampir selalu berarti satu hal: halaman ini lebih baru
+     daripada kode Apps Script yang sedang BERJALAN. Menempel Code.gs lalu
+     menyimpannya tidak cukup — /exec tetap menjalankan versi lama sampai
+     deployment-nya dibuat versi baru. Pesan mentahnya tidak menolong sama
+     sekali, jadi di sini diterjemahkan menjadi sebab dan jalan keluarnya. */
+  async galatAksi(j, opts) {
+    const aksi = (j && j.action) || '?';
+    let versi = '';
+    try {
+      const p = await Api.call('ping', {}, Object.assign({}, opts, { __takUlang: true }));
+      if (p && p.version) versi = String(p.version);
+    } catch (e) { }
+    const e = new Error(I18N.p(
+      `Aksi "${aksi}" belum ada di Apps Script yang sedang berjalan${versi ? ' (versi ' + versi + ')' : ''}. `
+      + 'Halaman ini dibangun untuk versi yang lebih baru. Tempel Code.gs terbaru, lalu '
+      + 'Deploy → Kelola deployment → Versi baru. Menyimpan saja tidak cukup: alamat /exec '
+      + 'tetap menjalankan versi lama sampai versi barunya dibuat.',
+      `Action "${aksi}" does not exist in the Apps Script currently running${versi ? ' (version ' + versi + ')' : ''}. `
+      + 'This page was built for a newer version. Paste the latest Code.gs, then '
+      + 'Deploy → Manage deployments → New version. Saving alone is not enough: the /exec '
+      + 'URL keeps running the old version until a new one is created.'));
+    e.kind = 'versi';
+    return e;
+  },
   async call(action, payload = {}, opts = {}) {
     const key = opts.key != null ? opts.key : Config.data.key;
+    const takDikenal = (j) => !opts.__takUlang && j && j.action
+      && /aksi tidak dikenal|unknown action/i.test(String(j.error || ''));
     if (EMBEDDED) {
       const j = await this.gsr(Object.assign({ action, key, session: Api.sess() }, payload));
+      if (j && !j.ok && takDikenal(j)) throw await Api.galatAksi(j, opts);
       if (!j || !j.ok) throw Api.err(j);
       return j;
     }
@@ -2076,6 +2103,7 @@ const Api = {
     try { j = JSON.parse(text); } catch (e) {
       throw new Error('Respons server bukan JSON. Pastikan deploy Web App dengan akses "Anyone" dan gunakan URL /exec terbaru.');
     }
+    if (!j.ok && takDikenal(j)) throw await Api.galatAksi(j, opts);
     if (!j.ok) throw Api.err(j);
     return j;
   },
@@ -6480,9 +6508,14 @@ async function boot() {
   const params = new URLSearchParams(location.search);
   const portalTok = EMBEDDED ? BOOT.portal : params.get('portal');
   if (portalTok) { Config.load(); return Portal.render(portalTok, EMBEDDED ? 'embedded' : (params.get('api') || Config.data.url)); }
-  const halaman = (location.pathname.match(/([^\/]*)$/) || ['', ''])[1].toLowerCase();
+  /* Halaman siswa dikenali dari alamatnya sendiri, supaya satu bundel yang
+     sama bisa dipasang sebagai siswa.html maupun sebagai folder siswa/
+     (dua penyebaran yang sudah dipakai), tanpa perlu ?p=siswa di tautan. */
+  const jalur = location.pathname.toLowerCase();
+  const halaman = (jalur.match(/([^\/]*)$/) || ['', ''])[1];
   const studentMode = EMBEDDED ? !!BOOT.student
-    : (params.get('p') === 'siswa' || /^siswa\.html?$/.test(halaman));
+    : (params.get('p') === 'siswa' || /^siswa\.html?$/.test(halaman)
+       || /(^|\/)siswa\/[^\/]*$/.test(jalur));
   if (studentMode) {                                   // halaman pengumpulan tugas untuk siswa
     Config.load();
     I18N.init();
@@ -22006,10 +22039,30 @@ function lapLayar(perbarui) {
  *  belum terisi, anak yang nomornya belum ada tidak boleh terkunci di luar.
  * ------------------------------------------------------------------ */
 
+/* Halaman rekap lengkap (GPA, nilai per unit, TP, jadwal) adalah portal siswa
+   versi lama yang disimpan sebagai rekap.html di sebelah halaman ini. Portal
+   baru sengaja dibuat ringkas, jadi rinciannya ditawarkan sebagai tautan —
+   bukan dihapus. Tautannya hanya muncul kalau berkasnya memang ada di sebelah. */
+let STU_REKAP_ADA = null;
+function stuTautRekap(kelas, nama) {
+  if (STU_REKAP_ADA === false) return '';
+  if (STU_REKAP_ADA === null) {
+    STU_REKAP_ADA = false;
+    try {
+      fetch('rekap.html', { method: 'HEAD' })
+        .then((r) => { if (r.ok) { STU_REKAP_ADA = true; try { SiswaBaru.layar(); } catch (e) { } } })
+        .catch(() => { });
+    } catch (e) { }
+    return '';
+  }
+  const q = 'kelas=' + encodeURIComponent(kelas || '') + '&nama=' + encodeURIComponent(nama || '');
+  return `<a class="btn xs mt" href="rekap.html?${q}&tab=nilai">${ic('table')}Rincian lengkap — GPA, nilai per unit, TP, dan jadwal</a>`;
+}
+
 const SiswaBaru = {
   nomor: '',
   data: null,
-  bagian: 'tugas',
+  bagian: 'beranda',
   sibuk: false,
 
   /* Nomornya disimpan di sessionStorage, bukan localStorage: menutup tab
@@ -22068,21 +22121,107 @@ const SiswaBaru = {
   },
 
   tab() {
-    const b = [['tugas', 'Tugas'], ['nilai', 'Nilai'], ['agenda', 'Agenda'], ['akun', 'Akun']];
+    const b = [['beranda', 'Beranda'], ['tugas', 'Tugas'], ['nilai', 'Nilai'],
+      ['agenda', 'Agenda'], ['akun', 'Akun']];
     return `<span class="seg">${b.map(([k, l]) => `<button class="seg-b ${this.bagian === k ? 'on' : ''}" data-act="stuBagian" data-s="${k}">${l}</button>`).join('')}</span>`;
+  },
+
+  /* Nilai satu kelas = nilai komponen (ledger) DITAMBAH nilai tugas yang sudah
+     dinilai. Tanpa ini, siswa yang nilainya baru masuk lewat pengumpulan tugas
+     melihat "Rata-rata nilai —" padahal tugasnya sudah bernilai — rekap tugas
+     dan rekap nilai jadi tidak sinkron di matanya. */
+  nilaiGabung(k) {
+    const komponen = (k.nilai || []).map((x) => Object.assign({ dariTugas: false }, x));
+    const tugas = (k.tugas || [])
+      .filter((t) => t.nilai !== null && t.nilai !== undefined && t.nilai !== ''
+        && !isNaN(Number(t.nilai)))
+      .map((t) => ({
+        mapel: t.mapel || '', komponen: t.judul || 'Tugas',
+        nilai: Number(t.nilai), maks: Number(t.maxScore) || 100, dariTugas: true
+      }));
+    return komponen.concat(tugas);
+  },
+
+  /** Rata-rata satu daftar nilai, diskalakan ke 100. */
+  rata(nilai) {
+    const n = (nilai || []).filter((x) => x && x.nilai !== '' && x.nilai !== null
+      && !isNaN(Number(x.nilai)));
+    if (!n.length) return null;
+    const j = n.reduce((s, x) => s + (Number(x.nilai) / (Number(x.maks) || 100) * 100), 0);
+    return Math.round(j / n.length * 10) / 10;
+  },
+
+  /* Beranda: satu kartu per jenis kelas, isinya nilai, tugas, dan absensi
+     kelas itu saja. Dipisah per kelas karena satu siswa bisa diampu dua
+     mata pelajaran dengan nilai dan kehadiran yang berbeda. */
+  beranda(d) {
+    const kelasList = d.perKelas || [];
+    if (!kelasList.length) {
+      return `<div class="note">Belum ada kelas yang tercatat untukmu. Hubungi gurumu.</div>`;
+    }
+    const hariIni = todayISO();
+    return kelasList.map((k) => {
+      const rs = k.ringkas || {};
+      const semuaNilai = this.nilaiGabung(k);
+      const rata = this.rata(semuaNilai);
+      const tugas = k.tugas || [];
+      const belum = tugas.filter((t) => !t.sudah);
+      const dekat = belum.filter((t) => t.batas).sort((a, b) =>
+        String(a.batas).localeCompare(String(b.batas))).slice(0, 3);
+      const mapel = [...new Set(semuaNilai.map((x) => x.mapel).filter(Boolean))];
+      const nilaiTampil = semuaNilai.slice(0, 6);
+      return `<div class="card mb">
+        <div class="flex between"><div class="grow">
+          <h4 style="margin:0">${esc(k.kelas)}</h4>
+          ${mapel.length ? `<div class="mini muted">${esc(mapel.join(' · '))}</div>` : ''}
+        </div></div>
+        <div class="grid g3 mt">
+          <div class="stat accent"><small>Rata-rata nilai</small><b>${rata === null ? '—' : rata}</b><span class="sub">${semuaNilai.length} nilai</span></div>
+          <div class="stat"><small>Tugas</small><b>${rs.sudah || 0}/${rs.tugas || 0}</b><span class="sub">${rs.persenKumpul === null || rs.persenKumpul === undefined ? 'belum ada tugas' : rs.persenKumpul + '% terkumpul'}</span></div>
+          <div class="stat"><small>Kehadiran</small><b>${rs.absenTercatat ? (rs.hadir || 0) + '/' + rs.absenTercatat : '—'}</b><span class="sub">${rs.persenHadir === null || rs.persenHadir === undefined ? 'belum diabsen' : rs.persenHadir + '%'}</span></div>
+        </div>
+        ${nilaiTampil.length ? `
+        <div class="mini muted mt">Nilai terakhir</div>
+        ${UI.table([{ h: 'Komponen', f: (x) => esc(x.komponen || '—') + (x.dariTugas ? ' <span class="mini muted">(tugas)</span>' : '') },
+    { h: 'Nilai', f: (x) => `<b>${esc(String(x.nilai))}</b><span class="mini muted"> / ${esc(String(x.maks))}</span>`, cls: 'num' }],
+    nilaiTampil)}
+        ${semuaNilai.length > nilaiTampil.length
+    ? `<div class="mini muted">dan ${semuaNilai.length - nilaiTampil.length} nilai lain — buka tab Nilai</div>` : ''}`
+    : `<div class="note mt">Belum ada nilai yang keluar untuk kelas ini.</div>`}
+        ${belum.length ? `
+        <div class="mini muted mt">Belum dikumpulkan (${belum.length})</div>
+        ${dekat.map((t) => `<div class="todo"><span class="dotc" style="background:var(--line)"></span>
+          <span class="tx">${esc(t.judul)}</span>
+          ${t.batas ? (String(t.batas) < hariIni
+    ? UI.badge('lewat ' + fmtDate(t.batas), 'rose')
+    : UI.badge('batas ' + fmtDate(t.batas), 'amber')) : ''}</div>`).join('')}
+        ${belum.length > dekat.length ? `<div class="mini muted">dan ${belum.length - dekat.length} lagi — buka tab Tugas</div>` : ''}`
+    : `<div class="note ok mt">Semua tugas kelas ini sudah kamu kumpulkan.</div>`}
+        ${stuTautRekap(k.kelas, d.nama)}
+      </div>`;
+    }).join('');
   },
 
   layar() {
     const d = this.data;
     if (!d) return;
     const r = d.ringkas || {};
-    const nilaiSemua = [].concat.apply([], (d.perKelas || []).map((k) => k.nilai || []));
-    const rata = nilaiSemua.length
-      ? Math.round(nilaiSemua.reduce((n, x) => n + (Number(x.nilai) / (Number(x.maks) || 100) * 100), 0) / nilaiSemua.length * 10) / 10
-      : null;
+    /* ikut nilai tugas juga, supaya angka di kepala halaman sama dengan yang
+       terlihat di beranda dan di tab Nilai — tidak ada tiga angka berbeda */
+    const nilaiSemua = [].concat.apply([], (d.perKelas || []).map((k) => this.nilaiGabung(k)));
+    const rata = this.rata(nilaiSemua);
 
     let badan = '';
-    if (this.bagian === 'tugas') {
+    if (this.bagian === 'beranda') {
+      const ag = (d.pengumuman || []).slice(0, 2);
+      badan = this.beranda(d)
+        + (ag.length ? `<div class="card soft mt"><div class="mini muted">Agenda terdekat</div>
+          ${ag.map((x) => `<div class="flex between mt"><div class="grow">
+            <div class="t">${esc(x.judul)}</div>
+            <div class="mini muted">${esc([x.kelas, x.tanggal].filter(Boolean).join(' · '))}${x.jam ? ' pukul ' + esc(x.jam) : ''}</div>
+          </div><span class="badge">${esc(x.jenis)}</span></div>`).join('')}
+          <button class="btn xs mt" data-act="stuBagian" data-s="agenda">Lihat semua agenda</button></div>` : '');
+    } else if (this.bagian === 'tugas') {
       const semua = [].concat.apply([], (d.perKelas || []).map((k) => (k.tugas || []).map((t) => Object.assign({ kelas: k.kelas }, t))));
       const belum = semua.filter((t) => !t.sudah);
       const sudah = semua.filter((t) => t.sudah);
@@ -22102,14 +22241,15 @@ const SiswaBaru = {
         <div class="note mt">Untuk mengumpulkan tugas, buka halaman pengumpulan:
           <button class="btn sm mt" data-act="stuKumpul">${ic('upload')}Kumpulkan tugas</button></div>`;
     } else if (this.bagian === 'nilai') {
-      badan = (d.perKelas || []).map((k) => `
+      badan = (d.perKelas || []).map((k) => { const nk = this.nilaiGabung(k); return `
         <h4>${esc(k.kelas)}</h4>
-        ${(k.nilai || []).length
+        ${nk.length
     ? UI.table([{ h: 'Mata pelajaran', f: (x) => esc(x.mapel) },
-      { h: 'Komponen', f: (x) => esc(x.komponen) },
+      { h: 'Komponen', f: (x) => esc(x.komponen) + (x.dariTugas ? ' <span class="mini muted">(tugas)</span>' : '') },
       { h: 'Nilai', f: (x) => `<b>${esc(String(x.nilai))}</b><span class="mini muted"> / ${esc(String(x.maks))}</span>` }],
-    k.nilai || [])
-    : `<div class="note mb">Belum ada nilai yang keluar untuk kelas ini.</div>`}`).join('')
+    nk)
+    : `<div class="note mb">Belum ada nilai yang keluar untuk kelas ini.</div>`}
+        ${stuTautRekap(k.kelas, d.nama)}`; }).join('')
         || `<div class="note">Belum ada nilai.</div>`;
     } else if (this.bagian === 'agenda') {
       const p = d.pengumuman || [];
@@ -22171,7 +22311,7 @@ ACT.stuMasuk = async () => {
   $('#stu-body').innerHTML = UI.empty('Mencari datamu…');
   try {
     await SiswaBaru.muat(n);
-    SiswaBaru.bagian = 'tugas';
+    SiswaBaru.bagian = 'beranda';   // sesudah masuk, yang pertama terlihat adalah berandanya
     SiswaBaru.layar();
   } catch (e) {
     SiswaBaru.layarMasuk(String(e.message || e));
