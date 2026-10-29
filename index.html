@@ -1583,7 +1583,7 @@ span.rs-pill { cursor: default; }
   <div id="modal-root"></div>
   <div id="toast-root" class="toasts" aria-live="polite"></div>
   <!-- Diisi otomatis oleh Apps Script (doGet). Bila file ini di-hosting statis, isinya diabaikan. -->
-  <script type="application/json" id="mph-boot">{}</script>
+  <script type="application/json" id="mph-boot"><?!= boot ?></script>
   <script>
     /* Service worker hanya aktif saat file ini di-hosting sendiri (GitHub Pages / Netlify / APK). */
     if ('serviceWorker' in navigator && location.protocol === 'https:' && !location.host.includes('googleusercontent')) {
@@ -6519,10 +6519,6 @@ async function boot() {
   if (studentMode) {                                   // halaman pengumpulan tugas untuk siswa
     Config.load();
     I18N.init();
-    /* Judul tabnya harus menandakan halaman siswa. Bundel ini satu berkas
-       untuk guru dan siswa, jadi <title> bawaannya "My Productivity Hub" —
-       di layar anak itu menyesatkan dan membuat tabnya tidak dikenali. */
-    try { document.title = 'Beranda Siswa — SMAIT Al-Ittihad'; } catch (e) { }
     document.documentElement.dataset.theme = Config.data.theme || 'light';
     return Siswa.render(EMBEDDED ? (BOOT.studentClass || '') : (params.get('kelas') || ''));
   }
