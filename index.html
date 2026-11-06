@@ -707,6 +707,16 @@ textarea.input { height: auto; min-height: 76px; padding: 10px 13px; line-height
 .list li .t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .list li .s { font-size: 12px; color: var(--hint); }
 .list li.link { cursor: pointer; }
+/* Baris tagihan membawa judul, keterangan, lencana jatuh tempo, nominal, dan
+   dua tombol sekaligus. Di lebar ponsel itu terlalu banyak untuk satu baris:
+   .grow menyusut sampai judulnya hilang sama sekali dan keterangannya patah
+   satu kata per baris. Jadi di layar sempit judulnya mengambil satu baris
+   penuh dan sisanya turun ke bawahnya. */
+.list.tag-list li { flex-wrap: wrap; row-gap: 6px; }
+@media (max-width: 620px) {
+  .list.tag-list li > .grow { flex: 1 0 calc(100% - 18px); }
+  .list.tag-list li > .badge, .list.tag-list li > b { margin-left: 0; }
+}
 
 .empty {
   text-align: center; color: var(--muted); padding: 26px 16px;
@@ -746,6 +756,13 @@ textarea.input { height: auto; min-height: 76px; padding: 10px 13px; line-height
 .tbl tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--t1-soft) 40%, transparent); }
 .tbl tbody tr:hover td { background: var(--surface-2); }
 .tbl tbody tr.belum td { color: var(--hint); }
+/* Baris tabel yang bisa diklik (mis. transaksi di Buku Kas). Tombol di kolom
+   terakhir mudah terpotong saat tabel bergeser ke samping di layar sempit,
+   jadi barisnya sendiri dibuat bisa ditekan. */
+.tbl tbody tr.link { cursor: pointer; }
+.tbl tbody tr.link:hover td { background: var(--t1-soft); }
+.lbl-wide { display: none; }
+@media (min-width: 861px) { .lbl-wide { display: inline; } }
 .tbl td.r, .tbl th.r { text-align: right; }
 .tbl td.act { white-space: nowrap; text-align: right; }
 .tbl .t { font-weight: 600; }
@@ -1817,6 +1834,12 @@ const SCHEMA = {
   _Pengumuman: ['id', 'className', 'subject', 'jenis', 'judul', 'tanggal', 'jam', 'sampai', 'isi', 'tpCodes', 'status', 'kirimAt', 'kirimKe', 'createdAt', 'updatedAt'],
   _Pertemuan: ['id', 'no', 'date', 'day', 'start', 'end', 'className', 'subject', 'program', 'scheduleId', 'tpCodes', 'topic', 'material', 'method', 'links', 'taskId', 'status', 'note', 'createdAt', 'updatedAt'],
   _Absen: ['id', 'date', 'className', 'studentName', 'status', 'at', 'meetingId', 'note', 'createdAt', 'updatedAt'],
+  /* Jam mengajar DI LUAR jadwal tetap. Harus ada di SCHEMA sisi klien juga,
+     bukan hanya di server: Store.setAll() menyalin tabel dengan menelusuri
+     kunci SCHEMA ini, jadi tabel yang tidak terdaftar di sini akan dikirim
+     server lalu dibuang diam-diam oleh klien. */
+  _Pengganti: ['id', 'date', 'jenis', 'className', 'subject', 'guru', 'start', 'end', 'jp',
+    'alasan', 'status', 'note', 'createdAt', 'updatedAt'],
   _Ledger: ['id', 'className', 'studentName', 'nis', 'subject', 'program', 'tahun', 'semester', 'assessType', 'component', 'tpCode', 'title', 'score', 'maxScore', 'scale100', 'letter', 'kkm', 'date', 'source', 'refId', 'teacher', 'note', 'createdAt', 'updatedAt'],
   /* idJenis/idNomor: NIY, NUPTK, NIP, NRG — dicetak di bawah nama pada
      ledger, rapor, dan surat. lebarMm/tinggiMm/geserX/geserY mengatur
@@ -2085,7 +2108,9 @@ const ICONS = {
   wa: '<path d="M21 11.5a8.4 8.4 0 0 1-12.6 7.3L3 20.5l1.8-5.2A8.5 8.5 0 1 1 21 11.5z"/><path d="M8.6 9.3c.3-.7.6-.7.9-.7h.7c.2 0 .5 0 .7.6l.8 1.9c.1.3 0 .5-.1.7l-.4.5c-.1.2-.3.4-.1.7a7 7 0 0 0 3 2.6c.3.1.5 0 .7-.2l.5-.6c.2-.2.4-.2.6-.1l1.8.9c.3.1.5.3.5.5v.6c0 .4-.3 1-1 1.3a4 4 0 0 1-3.6-.5 11 11 0 0 1-4.6-4.6c-.6-1-.7-2.1-.4-3.1z"/>',
   copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
   lock: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14.5v2.5"/>',
-  pay: '<rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5v5M18 9.5v5"/>'
+  pay: '<rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5v5M18 9.5v5"/>',
+  card: '<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19"/><path d="M6 14.5h4"/><path d="M16 14.5h2"/>',
+  bank: '<path d="M3 9.5 12 4l9 5.5"/><path d="M4.5 9.5V19"/><path d="M19.5 9.5V19"/><path d="M9 19v-6"/><path d="M15 19v-6"/><path d="M2.5 19h19"/>'
 };
 /* Logo My Productivity Hub: tiga baris buku leger dan satu kolom nilai yang
    sudah terisi — pekerjaan yang dicatat, lalu ditutup dengan satu angka.
@@ -2585,7 +2610,7 @@ const MODULES = {
   tutor: { nav: 'Tutor Class', title: 'Tutor Class', short: 'Tutor', icon: 'tutor', desc: 'Bimbel, les privat, workshop',
     subs: [['kelas', 'Kelas & Klien'], ['sesi', 'Sesi & Progres'], ['bayar', 'Pembayaran'], ['file', 'File Kelas']] },
   finance: { nav: 'Personal Finance', title: 'Personal Finance', short: 'Keuangan', icon: 'finance', desc: 'Buku kas pusat, pinjaman, proyeksi',
-    subs: [['ringkasan', 'Ringkasan'], ['kas', 'Buku Kas'], ['pinjaman', 'Pinjaman & Cicilan'], ['proyeksi', 'Rutin & Proyeksi'], ['kelola', 'Isi & Ubah Lembar'], ['file', 'Arsip Keuangan'], ['lembar', 'Lembar Excel']] },
+    subs: [['ringkasan', 'Ringkasan'], ['kas', 'Buku Kas'], ['tagihan', 'Tagihan Bulanan'], ['pinjaman', 'Pinjaman & Cicilan'], ['proyeksi', 'Rutin & Proyeksi'], ['kelola', 'Isi & Ubah Lembar'], ['file', 'Arsip Keuangan'], ['lembar', 'Lembar Excel']] },
   journal: { nav: 'Jurnal & Habit', title: 'Jurnal & Habit', short: 'Jurnal', icon: 'journal', desc: 'Refleksi harian, kebiasaan, to-do',
     subs: [['jurnal', 'Jurnal Harian'], ['habit', 'Habit Tracker'], ['todo', 'To-Do']] },
   files: { nav: 'File Storage', title: 'File Storage', short: 'File', icon: 'files', desc: 'Semua dokumen dari seluruh modul',
@@ -2661,6 +2686,36 @@ const UI = {
         foot: `<button class="btn" data-close>Batal</button><button class="btn ${danger ? 'danger solid' : 'primary'}" data-ok>${esc(ok)}</button>`,
         onClose: () => { if (!done) resolve(false); },
         onMount: (box) => { box.querySelector('[data-ok]').addEventListener('click', () => { done = true; resolve(true); m.close(); }); }
+      });
+    });
+  },
+
+  /**
+   * Meminta satu baris teks. Pasangan UI.confirm: mengembalikan teksnya, atau
+   * null bila dibatalkan — jadi "dikosongkan lalu disimpan" (string kosong)
+   * tetap bisa dibedakan dari "batal".
+   */
+  prompt(label, { value = '', ph = '', hint = '', ok = 'Simpan', title = '', t = 'text' } = {}) {
+    return new Promise((resolve) => {
+      let done = false;
+      const m = UI.modal({
+        title: title || label, size: 'narrow',
+        body: `<div class="form"><div class="field full">
+            <label for="up_v">${esc(label)}</label>
+            <input id="up_v" type="${esc(t)}" value="${esc(value)}" placeholder="${esc(ph)}" autocomplete="off">
+            ${hint ? `<div class="hint">${esc(hint)}</div>` : ''}
+          </div></div>`,
+        foot: `<button class="btn" data-close>Batal</button><button class="btn primary" data-ok>${esc(ok)}</button>`,
+        onClose: () => { if (!done) resolve(null); },
+        onMount: (box) => {
+          const inp = box.querySelector('#up_v');
+          const kirim = () => { done = true; resolve(inp ? String(inp.value) : ''); m.close(); };
+          box.querySelector('[data-ok]').addEventListener('click', kirim);
+          if (inp) {
+            inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); kirim(); } });
+            setTimeout(() => { try { inp.focus(); inp.select(); } catch (e) { } }, 60);
+          }
+        }
       });
     });
   },
@@ -2813,10 +2868,13 @@ const UI = {
 
   empty(title, text = '', btn = '') { return `<div class="empty"><b>${esc(title)}</b>${esc(text)}${btn ? `<div>${btn}</div>` : ''}</div>`; },
 
-  table(cols, rows, { foot = '', emptyMsg = 'Belum ada data.' } = {}) {
+  /** rowAttr: fungsi opsional yang mengembalikan atribut untuk <tr> — dipakai
+   *  supaya satu baris bisa diklik (mis. membuka form ubah), tanpa bergantung
+   *  pada tombol di kolom paling kanan yang mudah terpotong di layar sempit. */
+  table(cols, rows, { foot = '', emptyMsg = 'Belum ada data.', rowAttr = null } = {}) {
     if (!rows.length) return UI.empty(emptyMsg);
     return `<div class="table-wrap"><table class="tbl"><thead><tr>${cols.map((c) => `<th class="${c.cls || ''}">${String(c.h).charAt(0) === '<' ? c.h : esc(c.h)}</th>`).join('')}</tr></thead>
-      <tbody>${rows.map((r) => `<tr>${cols.map((c) => `<td class="${c.cls || ''}">${c.f(r)}</td>`).join('')}</tr>`).join('')}</tbody>${foot ? `<tfoot>${foot}</tfoot>` : ''}</table></div>`;
+      <tbody>${rows.map((r) => `<tr ${rowAttr ? rowAttr(r) : ''}>${cols.map((c) => `<td class="${c.cls || ''}">${c.f(r)}</td>`).join('')}</tr>`).join('')}</tbody>${foot ? `<tfoot>${foot}</tfoot>` : ''}</table></div>`;
   }
 };
 
@@ -3022,9 +3080,22 @@ const Alerts = {
     Store.all('LoanInstallments').forEach((i) => {
       if (i.status === 'Lunas' || !i.dueDate) return;
       const d = diffDays(t, i.dueDate);
-      const name = (loans[i.loanId] || {}).creditor || 'Pinjaman';
-      if (d < 0) push('danger', I18N.p(`Cicilan ${name} ke-${i.no} lewat ${-d} hari`, `Instalment ${i.no} of ${name} is ${-d} days late`), idr(i.amount), 'finance', 'pinjaman', d);
-      else if (d <= 5) push('warn', I18N.p(`Cicilan ${name} ke-${i.no} ${d === 0 ? 'jatuh tempo hari ini' : 'H-' + d}`, `Instalment ${i.no} of ${name} due ${d === 0 ? 'today' : 'in ' + d + ' days'}`), idr(i.amount) + ' — ' + fmtDate(i.dueDate), 'finance', 'pinjaman', d);
+      const loan = loans[i.loanId] || {};
+      const name = loan.creditor || 'Pinjaman';
+      /* Paylater diarahkan ke tab Tagihan Bulanan, tempat ia dikelola. */
+      const spl = Fin.isSpl(loan);
+      const tab = spl ? 'tagihan' : 'pinjaman';
+      const judul = spl ? `Tagihan ${name} ${monthLabel(monthKey(i.dueDate))}` : `Cicilan ${name} ke-${i.no}`;
+      const judulEn = spl ? `${name} bill for ${monthLabel(monthKey(i.dueDate))}` : `Instalment ${i.no} of ${name}`;
+      if (d < 0) push('danger', I18N.p(`${judul} lewat ${-d} hari`, `${judulEn} is ${-d} days late`), idr(i.amount), 'finance', tab, d);
+      else if (d <= 5) push('warn', I18N.p(`${judul} ${d === 0 ? 'jatuh tempo hari ini' : 'H-' + d}`, `${judulEn} due ${d === 0 ? 'today' : 'in ' + d + ' days'}`), idr(i.amount) + ' — ' + fmtDate(i.dueDate), 'finance', tab, d);
+    });
+    /* Tagihan bulanan yang terdaftar tapi belum dibayar bulan ini. */
+    Fin.bills(thisMonth()).forEach((b) => {
+      if (b.paid) return;
+      const d = diffDays(t, b.dueDate);
+      if (d < 0) push('danger', I18N.p(`Tagihan ${b.r.name} lewat ${-d} hari`, `Bill ${b.r.name} is ${-d} days late`), idr(b.amount) + ' — ' + monthLabel(thisMonth()), 'finance', 'tagihan', d);
+      else if (d <= 5) push('warn', I18N.p(`Tagihan ${b.r.name} ${d === 0 ? 'jatuh tempo hari ini' : 'H-' + d}`, `Bill ${b.r.name} due ${d === 0 ? 'today' : 'in ' + d + ' days'}`), idr(b.amount) + ' — ' + fmtDate(b.dueDate), 'finance', 'tagihan', d);
     });
     Store.all('Deadlines').forEach((d) => {
       if (!d.deadline || d.status === 'Done') return;
@@ -3455,8 +3526,11 @@ function bindGlobalEvents() {
 /* ---------------------------------------------------------------------
  * 15. PERHITUNGAN KEUANGAN TERPUSAT
  * ------------------------------------------------------------------- */
-const SOURCE_LABEL = { manual: 'Manual', school: 'Sekolah', project: 'Project', tutor: 'Tutor', loan: 'Pinjaman' };
-const SOURCE_COLOR = { manual: 'slate', school: 'sky', project: 'violet', tutor: 'amber', loan: 'coral' };
+/* 'Tagihan Bulanan', bukan 'Tagihan': kamus Inggris sudah memakai 'Tagihan'
+   untuk nilai tagihan project ('Invoice total'), jadi lencana sumbernya akan
+   salah terjemah. */
+const SOURCE_LABEL = { manual: 'Manual', school: 'Sekolah', project: 'Project', tutor: 'Tutor', loan: 'Pinjaman', bill: 'Tagihan Bulanan' };
+const SOURCE_COLOR = { manual: 'slate', school: 'sky', project: 'violet', tutor: 'amber', loan: 'coral', bill: 'rose' };
 
 const DEFAULT_CATEGORIES = {
   income: ['Gaji Sekolah', 'Honor', 'Tunjangan', 'Fee Project', 'Honor Tutor', 'Pencairan Pinjaman', 'Pemasukan Lain'],
@@ -3520,6 +3594,73 @@ const Fin = {
   dueInMonth(mk) { return Store.where('LoanInstallments', (i) => monthKey(i.dueDate) === mk); },
   recurringIncome() { return sum(Store.where('Recurring', (r) => r.active !== false && r.type === 'income'), (r) => r.amount); },
   recurringExpense() { return sum(Store.where('Recurring', (r) => r.active !== false && r.type === 'expense'), (r) => r.amount); },
+
+  /* ---------- SPayLater & tagihan bulanan ----------
+   * SPayLater disimpan sebagai baris Loans dengan interestType 'spaylater':
+   * nominalnya diisi sendiri per bulan (tidak ada rumus bunga). Karena tetap
+   * memakai Loans + LoanInstallments, tagihannya otomatis ikut ke rasio
+   * cicilan, proyeksi, daftar "perlu perhatian", dan pengingat kalender —
+   * tanpa sheet baru sama sekali. */
+  isSpl(l) { return String((l || {}).interestType || '') === 'spaylater'; },
+  splAll() { return Store.all('Loans').filter((l) => this.isSpl(l)); },
+  loansBiasa() { return Store.all('Loans').filter((l) => !this.isSpl(l)); },
+  splIds() { const o = {}; this.splAll().forEach((l) => { o[l.id] = 1; }); return o; },
+
+  /** Transaksi yang melunasi tagihan rutin r pada bulan mk. Pencocokan utama
+   *  memakai source/refId/kind (tepat); pola lama (nama + nominal sama) tetap
+   *  dibaca agar catatan sebelum fitur ini tidak terbaca sebagai belum bayar. */
+  billTxn(r, mk) {
+    const t = this.txns();
+    return t.find((x) => x.source === 'bill' && x.refId === r.id && String(x.kind) === mk)
+      || t.find((x) => monthKey(x.date) === mk && x.type === r.type && String(x.description || '') === String(r.name || '') && Number(x.amount) === Number(r.amount))
+      || null;
+  },
+  /** Satu baris per tagihan bulanan untuk bulan mk, lengkap dengan status. */
+  bills(mk) {
+    const akhir = new Date(+mk.slice(0, 4), +mk.slice(5), 0).getDate();
+    return Store.where('Recurring', (r) => r.active !== false && r.type === 'expense')
+      .map((r) => {
+        const txn = this.billTxn(r, mk);
+        return {
+          r: r, txn: txn, paid: !!txn,
+          amount: Number(txn ? txn.amount : r.amount) || 0,
+          dueDate: mk + '-' + pad(clamp(Number(r.dayOfMonth) || 1, 1, akhir))
+        };
+      })
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate) || String(a.r.name).localeCompare(String(b.r.name)));
+  },
+  /** Seluruh kewajiban bulan mk: cicilan pinjaman, SPayLater, tagihan bulanan. */
+  tagihanBulan(mk) {
+    const spl = this.splIds();
+    const inst = this.dueInMonth(mk);
+    const belum = (i) => i.status !== 'Lunas';
+    const grup = (list) => ({
+      items: list, due: sum(list, (i) => i.amount),
+      paid: sum(list.filter((i) => !belum(i)), (i) => i.amount),
+      left: sum(list.filter(belum), (i) => i.amount),
+      nLeft: list.filter(belum).length, n: list.length
+    });
+    const cic = grup(inst.filter((i) => !spl[i.loanId]));
+    const pl = grup(inst.filter((i) => spl[i.loanId]));
+    const bl = this.bills(mk);
+    const rut = {
+      items: bl, due: sum(bl, (b) => b.amount), paid: sum(bl.filter((b) => b.paid), (b) => b.amount),
+      left: sum(bl.filter((b) => !b.paid), (b) => b.amount),
+      nLeft: bl.filter((b) => !b.paid).length, n: bl.length
+    };
+    /* Tunggakan bulan-bulan sebelumnya dipisah supaya angka bulan berjalan
+       tidak tercampur dengan sisa bulan lalu. */
+    const telatList = Store.where('LoanInstallments', (i) => i.status !== 'Lunas' && i.dueDate && monthKey(i.dueDate) < mk)
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    return {
+      mk: mk, cicilan: cic, spaylater: pl, rutin: rut,
+      due: cic.due + pl.due + rut.due,
+      paid: cic.paid + pl.paid + rut.paid,
+      left: cic.left + pl.left + rut.left,
+      nLeft: cic.nLeft + pl.nLeft + rut.nLeft,
+      telat: sum(telatList, (i) => i.amount), telatList: telatList
+    };
+  },
   debtRatio(mk) {
     const due = sum(this.dueInMonth(mk), (i) => i.amount);
     const m = this.month(mk);
@@ -3598,7 +3739,13 @@ const Home = {
     // Sekolah
     const dow = new Date().getDay() || 7;
     const jpMin = Number(st.jpMinutes) || 40;
-    const jp = School.jpPerWeek(jpMin);
+    const jpDasar = School.jpPerWeek(jpMin);
+    /* Beban mengajar minggu ini = jadwal tetap + jam menggantikan guru lain,
+       mitigasi tugas, dan jam tambahan yang tercatat minggu ini. Tanpa
+       penjumlahan ini angkanya selalu sama setiap minggu, dan minggu yang
+       benar-benar padat tidak pernah terlihat. */
+    const jpTambah = (typeof Pengganti !== 'undefined' ? Pengganti.jpMinggu(todayISO()) : 0);
+    const jp = round2(jpDasar + jpTambah);
     const todaySched = Store.where('Schedule', (s) => Number(s.day) === dow && !School.isDuty(s)).length;
     const activeTasks = Store.where('Assignments', (a) => !['Selesai', 'Dinilai'].includes(a.status)).length;
     const openDl = Store.where('Deadlines', (d) => d.status !== 'Done').length;
@@ -3617,6 +3764,7 @@ const Home = {
     // Finance
     const nextInst = Store.where('LoanInstallments', (i) => i.status !== 'Lunas').sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
     const loanOf = nextInst ? Store.get('Loans', nextInst.loanId) : null;
+    const TB = Fin.tagihanBulan(thisMonth());
     const dr = Fin.debtRatio(mk);
     const [drLabel, drColor] = Fin.ratioLabel(dr.ratio);
 
@@ -3649,10 +3797,10 @@ const Home = {
       <div class="hub">
         ${card('finance', `<div><div class="big-label">Saldo berjalan</div><div class="big ${bal < 0 ? 'neg' : ''}">${idr(bal)}</div></div>${sparkline(series, bal < 0 ? 'var(--coral)' : 'var(--jade)')}
           <div class="hc-stats" style="grid-template-columns:repeat(3,1fr)">${stat(I18N.p('Masuk ', 'In ') + BLN[+mk.slice(5) - 1], idrShort(m.incomeOps), 'pos')}${stat(I18N.p('Keluar ', 'Out ') + BLN[+mk.slice(5) - 1], idrShort(m.expense), 'neg')}${stat('Rasio cicilan', `${Math.round(dr.ratio * 100)}% <span class="badge b-${drColor}">${drLabel}</span>`)}</div>
-          <div class="hc-note">${nextInst ? `${I18N.p('Cicilan terdekat', 'Next instalment')}: <b>${esc(loanOf ? loanOf.creditor : '')}</b> ${idr(nextInst.amount)} — ${fmtDate(nextInst.dueDate)} ${UI.dueBadge(nextInst.dueDate)}` : I18N.p('Tidak ada tagihan cicilan.', 'No instalments due.')}</div>`, 'wide finance')}
+          <div class="hc-note">${TB.left ? `${I18N.p('Sisa tagihan bulan ini', 'Still due this month')}: <b class="neg">${idr(TB.left)}</b> — ${TB.nLeft} ${I18N.p('tagihan', 'items')}${nextInst ? ` · ${I18N.p('terdekat', 'next')} ${esc(loanOf ? loanOf.creditor : '')} ${fmtDate(nextInst.dueDate)} ${UI.dueBadge(nextInst.dueDate)}` : ''}` : I18N.p('Tidak ada tagihan tersisa bulan ini.', 'No bills left this month.')}</div>`, 'wide finance')}
         ${card('planner', `<div class="hc-stats">${stat(I18N.p('Aktivitas 7 hari', 'Next 7 days'), (typeof Planner !== 'undefined' ? Planner.items(t, addDays(t, 7)).filter((x) => !x.done && x.kind !== 'mengajar').length : 0))}${stat(I18N.p('Terlambat', 'Overdue'), (typeof Planner !== 'undefined' ? Planner.items('2000-01-01', addDays(t, -1)).filter((x) => !x.done && !x.cancelled && x.kind !== 'mengajar').length : 0), 'neg')}</div><div class="hc-note">${I18N.p('Agenda, tugas, deadline, sesi, dan cicilan dalam satu kalender.', 'Agenda, tasks, deadlines, sessions, and instalments in one calendar.')}</div>`)}
         ${card('project', `<div class="hc-stats">${stat('Project aktif', activeP.length)}${stat('Piutang', idrShort(piutang), piutang ? 'warn' : '')}</div><div class="hc-note">${nextP ? `${I18N.p('Deadline terdekat', 'Next deadline')}: ${esc(nextP.clientName)} ${UI.dueBadge(nextP.deadline)}` : I18N.p('Belum ada deadline aktif.', 'No active deadline.')}</div>`)}
-        ${card('school', `<div class="hc-stats" style="grid-template-columns:repeat(3,1fr)">${stat(I18N.p('Beban mengajar', 'Teaching load'), `${jp} JP<span class="muted mini"> / ${esc(st.jpTarget)}</span>`)}${stat('Tugas aktif', activeTasks)}${typeof Workload !== 'undefined' ? stat(I18N.p('Total JP / minggu', 'Total periods / week'), `${wl.total} <span class="badge b-${wl.lv.color}">${esc(I18N.p(wl.lv.id.split(' —')[0], wl.lv.en))}</span>`) : ''}</div><div class="hc-note">${todaySched ? I18N.p(`${todaySched} jam pelajaran hari ini`, `${todaySched} teaching slots today`) : I18N.p('Tidak ada jadwal hari ini', 'No classes today')}${openDl ? I18N.p(` — ${openDl} deadline dinas terbuka`, ` — ${openDl} open official deadlines`) : ''}.</div>`)}
+        ${card('school', `<div class="hc-stats" style="grid-template-columns:repeat(3,1fr)">${stat(I18N.p('Beban mengajar', 'Teaching load'), `${jp} JP<span class="muted mini"> / ${esc(st.jpTarget)}${jpTambah ? ` · +${jpTambah} pengganti` : ''}</span>`)}${stat('Tugas aktif', activeTasks)}${typeof Workload !== 'undefined' ? stat(I18N.p('Total JP / minggu', 'Total periods / week'), `${wl.total} <span class="badge b-${wl.lv.color}">${esc(I18N.p(wl.lv.id.split(' —')[0], wl.lv.en))}</span>`) : ''}</div><div class="hc-note">${todaySched ? I18N.p(`${todaySched} jam pelajaran hari ini`, `${todaySched} teaching slots today`) : I18N.p('Tidak ada jadwal hari ini', 'No classes today')}${openDl ? I18N.p(` — ${openDl} deadline dinas terbuka`, ` — ${openDl} open official deadlines`) : ''}.</div>`)}
         ${card('tutor', `<div class="hc-stats">${stat('Kelas aktif', activeC.length)}${stat('Sesi hari ini', todaySess)}</div><div class="hc-note">${I18N.p('Honor belum dibayar', 'Unpaid fees')}: <b>${idr(tutorDue)}</b></div>`)}
         ${card('journal', `<div class="hc-stats">${stat('Habit hari ini', `${doneToday}/${habits.length}`)}${stat('To-do terbuka', todos.length)}</div><div class="hc-note">${journaled ? I18N.p('Jurnal hari ini sudah ditulis.', "Today's journal is written.") : I18N.p('Jurnal hari ini belum ditulis.', "Today's journal is empty.")}</div>`)}
         ${typeof Notes !== 'undefined' ? card('notes', `<div class="hc-stats">${stat(I18N.p('Catatan aktif', 'Active notes'), nkActive.length)}${stat(I18N.p('Butir terbuka', 'Open items'), nkOpen, nkOpen ? 'warn' : '')}</div><div class="hc-note">${nkDone ? I18N.p(`${nkDone} butir selesai dan siap dihapus.`, `${nkDone} items done and ready to erase.`) : I18N.p('Catatan cepat, daftar centang, lalu alirkan ke workflow.', 'Quick notes, checklists, then send them into the workflow.')}</div>`) : ''}
@@ -4278,13 +4426,19 @@ VIEWS.school = {
       const days = sched.some((x) => Number(x.day) === 7) ? [1, 2, 3, 4, 5, 6, 7] : [1, 2, 3, 4, 5, 6];
       const byClass = {};
       sched.filter((x) => !School.isDuty(x)).forEach((x) => { const k = [x.subject, x.className].filter(Boolean).join(' '); byClass[k] = (byClass[k] || 0) + School.jpOf(x, jpMin); });
-      const jp = School.jpPerWeek(jpMin);
+      const jpDasar = School.jpPerWeek(jpMin);
+    /* Beban mengajar minggu ini = jadwal tetap + jam menggantikan guru lain,
+       mitigasi tugas, dan jam tambahan yang tercatat minggu ini. Tanpa
+       penjumlahan ini angkanya selalu sama setiap minggu, dan minggu yang
+       benar-benar padat tidak pernah terlihat. */
+    const jpTambah = (typeof Pengganti !== 'undefined' ? Pengganti.jpMinggu(todayISO()) : 0);
+    const jp = round2(jpDasar + jpTambah);
       const mods = s.calAll ? ['school', 'project', 'tutor', 'finance'] : ['school'];
       const evs = collectEvents(s.month + '-01', addDays(addMonths(s.month + '-01', 1), -1).slice(0, 10) + '', mods);
       const monthAg = Store.where('Agenda', (a) => monthKey(a.date) === s.month).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
       return `
         <div class="grid g4 mb">
-          <div class="stat accent"><small>Beban mengajar</small><b>${jp} JP</b><span class="sub">target ${esc(st.jpTarget)} JP / minggu</span></div>
+          <div class="stat accent"><small>Beban mengajar</small><b>${jp} JP</b><span class="sub">${jpTambah ? `${jpDasar} + ${jpTambah} pengganti · ` : ''}target ${esc(st.jpTarget)} JP / minggu</span></div>
           <div class="stat"><small>Kelas diampu</small><b>${Object.keys(byClass).length}</b><span class="sub">${esc(Object.keys(byClass).slice(0, 3).join(', '))}${Object.keys(byClass).length > 3 ? '…' : ''}</span></div>
           <div class="stat"><small>Agenda bulan ini</small><b>${monthAg.length}</b><span class="sub">${monthAg.filter((a) => a.status === 'Selesai').length} selesai</span></div>
           <div class="stat"><small>Jadwal hari ini</small><b>${sched.filter((x) => Number(x.day) === dow).length}</b><span class="sub">${HARI[new Date().getDay()]}</span></div>
@@ -5575,6 +5729,9 @@ const Finance = {
     let extra = '';
     if (t.source === 'loan' && t.kind === 'Cicilan' && Store.get('LoanInstallments', t.refId)) { ops.push({ op: 'update', sheet: 'LoanInstallments', id: t.refId, row: { status: 'Belum', paidDate: '' } }); extra = ' Status cicilan dikembalikan menjadi "Belum".'; }
     if (t.source === 'loan' && t.kind === 'Pencairan' && Store.get('Loans', t.refId)) { ops.push({ op: 'update', sheet: 'Loans', id: t.refId, row: { disbursed: false } }); extra = ' Pinjaman ditandai belum dicairkan.'; }
+    /* Status tagihan bulanan dibaca dari ada/tidaknya transaksi ini, jadi
+       menghapusnya otomatis membuat tagihan itu kembali "belum dibayar". */
+    if (t.source === 'bill' && Store.get('Recurring', t.refId)) extra = ` Tagihan "${esc((Store.get('Recurring', t.refId) || {}).name || '')}" kembali berstatus belum dibayar.`;
     if (t.source === 'tutor') {
       let ids = []; try { ids = JSON.parse(t.meta || '{}').sessionIds || []; } catch (e) { }
       ids.filter((sid) => Store.get('TutorSessions', sid)).forEach((sid) => ops.push({ op: 'update', sheet: 'TutorSessions', id: sid, row: { paid: false } }));
@@ -5600,8 +5757,11 @@ const Finance = {
       { h: 'Masuk', cls: 'r', f: (t) => t.type === 'income' ? `<b class="pos">${idr(t.amount)}</b>` : '' },
       { h: 'Keluar', cls: 'r', f: (t) => t.type === 'expense' ? `<b class="neg">${idr(t.amount)}</b>` : '' },
       ...(running ? [{ h: I18N.p('Saldo', 'Balance'), cls: 'r', f: (t) => `<span class="${runMap[t.id] < 0 ? 'neg' : ''}">${idr(runMap[t.id])}</span>` }] : []),
-      { h: '', cls: 'act', f: (t) => `<button class="btn xs" data-act="txnEdit" data-id="${t.id}">${ic('edit')}</button>` }
+      { h: '', cls: 'act', f: (t) => `<button class="btn xs" data-act="txnEdit" data-id="${t.id}">${ic('edit')}<span class="lbl-wide">Ubah</span></button>` }
     ], list, {
+      /* Seluruh baris bisa diklik untuk diubah — di layar sempit tabel ini
+         bergeser ke samping dan tombol di kolom terakhir tidak terlihat. */
+      rowAttr: (t) => `class="link" data-act="txnEdit" data-id="${t.id}" title="Klik untuk mengubah transaksi ini"`,
       emptyMsg: 'Belum ada transaksi.',
       foot: list.length ? `<tr><td colspan="3">${running ? I18N.p(`Saldo awal ${idr(Number(opening) || 0)} → saldo akhir`, `Opening ${idr(Number(opening) || 0)} → closing`) : I18N.p('Total', 'Total')} (${list.length} ${I18N.p('transaksi', 'entries')})</td><td class="r pos">${idr(inc)}</td><td class="r neg">${idr(exp)}</td>${running ? `<td class="r"><b class="${bal < 0 ? 'neg' : 'pos'}">${idr(bal)}</b></td>` : ''}<td></td></tr>` : ''
     });
@@ -5727,23 +5887,268 @@ const Finance = {
       values: r || { type: 'expense', active: true, dayOfMonth: 1 },
       fields: [
         { k: 'name', l: 'Nama', req: 1, ph: 'mis. Gaji sekolah, WiFi + listrik' },
-        { k: 'type', l: 'Jenis', t: 'select', o: [['income', 'Pemasukan'], ['expense', 'Pengeluaran']] },
-        { k: 'amount', l: 'Nominal per bulan (Rp)', t: 'money', req: 1 },
+        { k: 'type', l: 'Jenis', t: 'select', o: [['income', 'Pemasukan'], ['expense', 'Pengeluaran']], hint: 'Pengeluaran muncul sebagai tagihan bulanan yang bisa dicentang lunas tiap bulan; pemasukan hanya dipakai di proyeksi.' },
+        { k: 'amount', l: 'Nominal per bulan (Rp)', t: 'money', req: 1, hint: 'Perkiraan saja — nominal saat membayar boleh berbeda.' },
         { k: 'category', l: 'Kategori', list: () => Fin.categories() },
-        { k: 'dayOfMonth', l: 'Tanggal biasa (1–31)', t: 'number', min: 1, max: 31 },
-        { k: 'active', l: 'Aktif dihitung di proyeksi', t: 'checkbox' }
+        { k: 'dayOfMonth', l: 'Tanggal jatuh tempo (1–31)', t: 'number', min: 1, max: 31 },
+        { k: 'active', l: 'Aktif — dihitung di tagihan bulanan & proyeksi', t: 'checkbox' }
       ],
       extraFoot: r ? `<button class="btn danger left" data-act="delRow" data-sheet="Recurring" data-id="${r.id}">${ic('trash')}Hapus</button>` : '',
       onSubmit: (v) => r ? Store.update('Recurring', r.id, v) : Store.create('Recurring', v)
     });
   },
 
-  async postRecurring(id) {
+  async postRecurring(id, mkArg) {
     const r = Store.get('Recurring', id);
-    const mk = thisMonth();
+    const mk = mkArg || thisMonth();
     const day = clamp(Number(r.dayOfMonth) || 1, 1, new Date(+mk.slice(0, 4), +mk.slice(5), 0).getDate());
-    await Store.create('Transactions', { date: `${mk}-${pad(day)}`, type: r.type, category: r.category || (r.type === 'income' ? 'Pemasukan Lain' : 'Pengeluaran Lain'), amount: r.amount, description: r.name, source: r.category === 'Gaji Sekolah' ? 'school' : 'manual', method: 'Transfer' });
-    UI.toast(`"${r.name}" dicatat di Buku Kas`, 'ok');
+    /* Pengeluaran rutin ditandai source 'bill' + refId + kind = bulannya, supaya
+       status lunas per bulan terbaca pasti (bukan lagi cocok-cocokan nama). */
+    const tagihan = r.type === 'expense';
+    await Store.create('Transactions', Object.assign({
+      date: `${mk}-${pad(day)}`, type: r.type,
+      category: r.category || (r.type === 'income' ? 'Pemasukan Lain' : 'Pengeluaran Lain'),
+      amount: r.amount, description: r.name, method: 'Transfer',
+      source: tagihan ? 'bill' : (r.category === 'Gaji Sekolah' ? 'school' : 'manual')
+    }, tagihan ? { refId: r.id, kind: mk } : {}));
+    UI.toast(`"${r.name}" ${monthLabel(mk)} dicatat di Buku Kas`, 'ok');
+  },
+
+  /* ---------- tagihan bulanan ---------- */
+  billPay(id, mkArg) {
+    const r = Store.get('Recurring', id);
+    if (!r) return;
+    const mk = mkArg || thisMonth();
+    const sudah = Fin.billTxn(r, mk);
+    if (sudah) { this.txnForm(sudah.id); return; }   // sudah dibayar → langsung buka transaksinya
+    const akhir = new Date(+mk.slice(0, 4), +mk.slice(5), 0).getDate();
+    const day = clamp(Number(r.dayOfMonth) || 1, 1, akhir);
+    UI.form({
+      title: `Bayar ${r.name} — ${monthLabel(mk)}`,
+      values: { date: mk === thisMonth() ? todayISO() : `${mk}-${pad(day)}`, amount: r.amount, method: 'Transfer' },
+      note: `Jatuh tempo tanggal ${day} tiap bulan. Dicatat sebagai pengeluaran di Buku Kas dengan sumber <b>Tagihan</b>, jadi status ${monthLabel(mk)} langsung menjadi lunas. Nominal boleh berbeda dari nominal yang didaftarkan.`,
+      fields: [
+        { k: 'date', l: 'Tanggal bayar', t: 'date', req: 1 },
+        { k: 'amount', l: 'Jumlah dibayar (Rp)', t: 'money', req: 1 },
+        { k: 'method', l: 'Metode', t: 'select', o: ['Transfer', 'Autodebet', 'Tunai', 'E-wallet', 'QRIS', 'Paylater'] }
+      ],
+      submit: 'Catat pembayaran',
+      onSubmit: async (v) => {
+        await Store.create('Transactions', {
+          date: v.date, type: 'expense', category: r.category || 'Tagihan & Utilitas',
+          amount: v.amount, description: r.name, source: 'bill', refId: r.id, kind: mk, method: v.method
+        });
+        UI.toast(`"${r.name}" ${monthLabel(mk)} lunas`, 'ok');
+      }
+    });
+  },
+
+  /* ---------- SPayLater ----------
+   * Satu entri untuk semua bulan, nominal boleh beda tiap bulan. Disimpan di
+   * Loans + LoanInstallments (interestType 'spaylater') supaya ikut terhitung
+   * di rasio cicilan, proyeksi, "perlu perhatian", dan pengingat kalender. */
+  splAngka(tok) {
+    let s = String(tok || '').toLowerCase().replace(/rp/g, '').trim();
+    let kali = 1;
+    const m = s.match(/(juta|jt|ribu|rb|k)\s*$/);
+    if (m) { kali = /juta|jt/.test(m[1]) ? 1e6 : 1e3; s = s.slice(0, s.length - m[1].length).trim(); }
+    if (kali > 1) {
+      /* "1,5jt" / "1.5jt" — di bentuk ini titik dan koma berarti desimal. */
+      const n = parseFloat(s.replace(/\s/g, '').replace(',', '.'));
+      return isFinite(n) ? Math.round(n * kali) : 0;
+    }
+    const digit = s.replace(/[^\d]/g, '');
+    return digit ? Math.round(Number(digit)) : 0;
+  },
+  splBulan(tok) {
+    const t = String(tok || '').trim();
+    let m = t.match(/^(\d{4})[-/.](\d{1,2})$/);
+    if (m && +m[2] >= 1 && +m[2] <= 12) return m[1] + '-' + pad(+m[2]);
+    m = t.match(/^(\d{1,2})[-/.](\d{4})$/);
+    if (m && +m[1] >= 1 && +m[1] <= 12) return m[2] + '-' + pad(+m[1]);
+    m = t.match(/^([A-Za-z]{3,9})\.?\s*(\d{2,4})?$/);
+    if (m) {
+      const tiga = m[1].toLowerCase().slice(0, 3);
+      const cari = (arr) => arr.findIndex((b) => b.toLowerCase().slice(0, 3) === tiga);
+      let i = cari(LOCALE.id.BLN); if (i < 0) i = cari(LOCALE.en.BLN);
+      if (i >= 0) { let y = m[2] ? Number(m[2]) : new Date().getFullYear(); if (y < 100) y += 2000; return y + '-' + pad(i + 1); }
+    }
+    return '';
+  },
+  /** Teks rincian → jadwal tagihan. Satu baris satu bulan; boleh "500000",
+   *  "1.5jt", "3x 450rb", atau "2026-12: 480000". Bulan tanpa label mengikuti
+   *  bulan berikutnya secara berurutan. */
+  splParse(text, firstDue, mulaiNo) {
+    const mulai = firstDue || addMonths(todayISO(), 1);
+    const hari = Number(String(mulai).slice(8, 10)) || 1;
+    let cur = monthKey(mulai);
+    const rows = [];
+    String(text || '').split(/[\n;]+/).forEach((baris) => {
+      let s = baris.trim();
+      if (!s || /^[#/]/.test(s)) return;
+      let bulan = '';
+      const lbl = s.match(/^([A-Za-z0-9/.\- ]{3,20}?)\s*[:=]\s*(.+)$/);
+      if (lbl) { const b = this.splBulan(lbl[1]); if (b) { bulan = b; s = lbl[2].trim(); } }
+      let ulang = 1, u = s.match(/^(\d{1,3})\s*[x×]\s*(.+)$/i);
+      if (u) { ulang = clamp(Number(u[1]), 1, 120); s = u[2].trim(); }
+      else { u = s.match(/^(.+?)\s*[x×]\s*(\d{1,3})$/i); if (u) { ulang = clamp(Number(u[2]), 1, 120); s = u[1].trim(); } }
+      const amt = this.splAngka(s);
+      for (let k = 0; k < ulang; k++) {
+        const mk = (k === 0 && bulan) ? bulan : cur;
+        const akhir = new Date(+mk.slice(0, 4), +mk.slice(5), 0).getDate();
+        rows.push({ dueDate: mk + '-' + pad(clamp(hari, 1, akhir)), amount: Math.max(0, amt) });
+        cur = shiftMonth(mk, 1);
+      }
+    });
+    rows.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    const n0 = Number(mulaiNo) || 0;
+    rows.forEach((r, i) => { r.no = n0 + i + 1; r.principalPart = r.amount; r.interestPart = 0; });
+    return rows;
+  },
+  /** Ringkasan Loans untuk SPayLater dihitung ulang dari daftar tagihannya. */
+  splPatch(loan, inst) {
+    const belum = inst.filter((i) => i.status !== 'Lunas').sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)));
+    return {
+      principal: sum(inst, (i) => i.amount), tenor: inst.length,
+      installment: belum.length ? belum[0].amount : 0,
+      status: inst.length && !belum.length ? 'Lunas' : 'Aktif'
+    };
+  },
+
+  splForm(id) {
+    const r = id ? Store.get('Loans', id) : null;
+    const st = r ? Fin.loanStats(r) : null;
+    const lunas = st ? st.inst.filter((i) => i.status === 'Lunas') : [];
+    const belum = st ? st.inst.filter((i) => i.status !== 'Lunas').sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate))) : [];
+    const firstDue = belum.length ? belum[0].dueDate : (st && st.inst.length ? addMonths(st.inst[st.inst.length - 1].dueDate, 1) : addMonths(todayISO(), 1));
+    const rinci = belum.map((i) => `${monthKey(i.dueDate)}: ${i.amount}`).join('\n');
+    /* Penomoran bulan baru melanjutkan nomor terbesar yang sudah dibayar —
+       bukan jumlahnya, supaya tidak bentrok kalau ada bulan yang pernah dihapus. */
+    const no0 = lunas.reduce((m, i) => Math.max(m, Number(i.no) || 0), 0);
+    const fields = [
+      { k: 'creditor', l: 'Nama / platform', req: 1, list: ['SPayLater', 'Shopee PayLater', 'SPinjam', 'Akulaku', 'Kredivo', 'Indodana', 'Atome', 'GoPay Later', 'Traveloka PayLater'] },
+      { k: 'firstDue', l: 'Jatuh tempo bulan pertama', t: 'date', req: 1 },
+      {
+        k: 'rincian', l: 'Tagihan tiap bulan', t: 'textarea', rows: 8, full: 1, req: 1,
+        hint: 'Satu baris satu bulan. Boleh “500000”, “1.5jt”, “3x 450rb”, atau “2026-12: 480000” kalau mau menyebut bulannya langsung.'
+      },
+      { k: 'note', l: 'Catatan (barang / nomor pesanan)', t: 'textarea', rows: 2 }
+    ];
+    const preview = (v, box) => {
+      const el = box.querySelector('#spl-prev');
+      if (!el) return;
+      const sch = this.splParse(v.rincian, v.firstDue, no0);
+      el.innerHTML = sch.length
+        ? `<b>${sch.length} bulan</b> — total ${idr(sum(sch, (x) => x.amount))}, mulai ${fmtDate(sch[0].dueDate)} sampai ${fmtDate(sch[sch.length - 1].dueDate)}.`
+        + (sch.some((x) => !x.amount) ? ` <span class="warn">${sch.filter((x) => !x.amount).length} baris belum terbaca nominalnya.</span>` : '')
+        + (lunas.length ? ` ${lunas.length} bulan yang sudah dibayar tetap disimpan.` : '')
+        : '<span class="warn">Belum ada baris tagihan yang terbaca.</span>';
+    };
+    UI.form({
+      title: r ? `Ubah ${r.creditor}` : 'SPayLater / paylater baru', size: 'wide',
+      values: r ? { creditor: r.creditor, firstDue: firstDue, rincian: rinci, note: r.note || '' }
+        : { creditor: 'SPayLater', firstDue: addMonths(todayISO(), 1), rincian: '' },
+      fields,
+      note: `<span id="spl-prev"></span><br>Cukup diisi sekali untuk seluruh bulannya; nominal tiap bulan boleh berbeda. Setelah disimpan, nominal satu bulan masih bisa diubah sendiri bila tagihannya berubah.`,
+      onMount: (box) => preview(UI.readForm(box, fields), box),
+      onChange: (v, box) => preview(v, box),
+      extraFoot: r ? `<button class="btn danger left" data-act="loanDel" data-id="${r.id}">${ic('trash')}Hapus</button>` : '',
+      onSubmit: async (v) => {
+        const sch = this.splParse(v.rincian, v.firstDue, no0);
+        if (!sch.length) { UI.toast('Rincian tagihan per bulan belum terbaca.', 'err'); return false; }
+        const dasar = { creditor: v.creditor, note: v.note || '', ratePct: 0, interestType: 'spaylater', disbursed: true };
+        if (r) {
+          const semua = lunas.concat(sch.map((x) => ({ amount: x.amount, dueDate: x.dueDate, status: 'Belum' })));
+          const ops = [{ op: 'update', sheet: 'Loans', id: r.id, row: Object.assign({}, dasar, { startDate: r.startDate || todayISO() }, this.splPatch(r, semua)) }];
+          belum.forEach((i) => ops.push({ op: 'delete', sheet: 'LoanInstallments', id: i.id }));
+          sch.forEach((x) => ops.push({ op: 'create', sheet: 'LoanInstallments', row: Object.assign({}, x, { loanId: r.id, status: 'Belum' }) }));
+          await Store.commit(ops);
+          UI.toast(`${v.creditor} diperbarui — ${sch.length} bulan belum dibayar`, 'ok');
+          return;
+        }
+        const loan = Object.assign({ id: uid(), status: 'Aktif', startDate: todayISO() }, dasar, this.splPatch({}, sch.map((x) => ({ amount: x.amount, dueDate: x.dueDate, status: 'Belum' }))));
+        const ops = [{ op: 'create', sheet: 'Loans', row: loan }];
+        sch.forEach((x) => ops.push({ op: 'create', sheet: 'LoanInstallments', row: Object.assign({}, x, { loanId: loan.id, status: 'Belum' }) }));
+        await Store.commit(ops);
+        UI.toast(`${v.creditor} dicatat — ${sch.length} bulan, total ${idr(sum(sch, (x) => x.amount))}`, 'ok');
+      }
+    });
+  },
+
+  /** Ubah satu bulan tagihan — dipakai kalau nominal paylater berubah atau ada
+   *  denda/penyesuaian di satu cicilan saja. */
+  instEdit(id) {
+    const i = Store.get('LoanInstallments', id);
+    if (!i) return;
+    const loan = Store.get('Loans', i.loanId) || {};
+    const spl = Fin.isSpl(loan);
+    if (i.status === 'Lunas') { UI.toast('Bulan ini sudah dibayar — batalkan dulu transaksinya di Buku Kas.', 'err'); return; }
+    UI.form({
+      title: `Ubah tagihan ${loan.creditor || ''} ke-${i.no}`,
+      values: { dueDate: i.dueDate, amount: i.amount },
+      note: spl ? 'Total dan tenor SPayLater dihitung ulang otomatis setelah disimpan.' : 'Pokok dan bunga bulan ini disesuaikan mengikuti selisih nominal.',
+      fields: [
+        { k: 'dueDate', l: 'Jatuh tempo', t: 'date', req: 1 },
+        { k: 'amount', l: 'Nominal tagihan (Rp)', t: 'money', req: 1 }
+      ],
+      extraFoot: `<button class="btn danger left" data-act="instDel" data-id="${i.id}">${ic('trash')}Hapus bulan ini</button>`,
+      onSubmit: async (v) => {
+        const amt = Math.max(0, Math.round(Number(v.amount) || 0));
+        const row = { dueDate: v.dueDate, amount: amt };
+        if (spl) row.principalPart = amt;
+        else row.interestPart = Math.max(0, amt - (Number(i.principalPart) || 0));
+        const ops = [{ op: 'update', sheet: 'LoanInstallments', id: i.id, row: row }];
+        if (spl) {
+          const semua = Fin.loanInst(loan.id).map((x) => x.id === i.id ? Object.assign({}, x, row) : x);
+          ops.push({ op: 'update', sheet: 'Loans', id: loan.id, row: this.splPatch(loan, semua) });
+        }
+        await Store.commit(ops);
+        UI.toast('Tagihan bulan ini diperbarui', 'ok');
+      }
+    });
+  },
+
+  instAdd(loanId) {
+    const loan = Store.get('Loans', loanId);
+    if (!loan) return;
+    /* Hanya untuk paylater. Pada pinjaman biasa, pokok dan bunga tiap bulan
+       dihitung dari plafon dan tenornya, jadi menambah satu baris di sini akan
+       membuat ringkasan pinjamannya tidak lagi cocok dengan jadwalnya. */
+    if (!Fin.isSpl(loan)) { UI.toast('Menambah bulan hanya untuk SPayLater/paylater. Jadwal pinjaman diubah lewat form pinjamannya.', 'err'); return; }
+    const inst = Fin.loanInst(loanId);
+    const akhir = inst.length ? inst[inst.length - 1] : null;
+    UI.form({
+      title: `Tambah bulan — ${loan.creditor || ''}`,
+      values: { dueDate: akhir ? addMonths(akhir.dueDate, 1) : addMonths(todayISO(), 1), amount: akhir ? akhir.amount : 0 },
+      note: 'Untuk pembelian baru yang masuk ke tagihan paylater yang sama.',
+      fields: [
+        { k: 'dueDate', l: 'Jatuh tempo', t: 'date', req: 1 },
+        { k: 'amount', l: 'Nominal tagihan (Rp)', t: 'money', req: 1 }
+      ],
+      submit: 'Tambah',
+      onSubmit: async (v) => {
+        const amt = Math.max(0, Math.round(Number(v.amount) || 0));
+        const baru = { loanId: loanId, no: (akhir ? Number(akhir.no) || inst.length : 0) + 1, dueDate: v.dueDate, amount: amt, principalPart: amt, interestPart: 0, status: 'Belum' };
+        await Store.commit([
+          { op: 'create', sheet: 'LoanInstallments', row: baru },
+          { op: 'update', sheet: 'Loans', id: loanId, row: this.splPatch(loan, inst.concat([baru])) }
+        ]);
+        UI.toast(`Bulan ${monthLabel(monthKey(v.dueDate))} ditambahkan`, 'ok');
+      }
+    });
+  },
+
+  async instDel(id) {
+    const i = Store.get('LoanInstallments', id);
+    if (!i) return;
+    const loan = Store.get('Loans', i.loanId) || {};
+    if (i.status === 'Lunas') { UI.toast('Bulan yang sudah dibayar tidak bisa dihapus dari sini.', 'err'); return; }
+    if (!(await UI.confirm(`Hapus tagihan ${esc(loan.creditor || '')} ke-${i.no} sebesar ${idr(i.amount)}?`, { ok: 'Hapus', danger: true }))) return;
+    UI.closeAll();
+    const ops = [{ op: 'delete', sheet: 'LoanInstallments', id: i.id }];
+    if (Fin.isSpl(loan)) ops.push({ op: 'update', sheet: 'Loans', id: loan.id, row: this.splPatch(loan, Fin.loanInst(loan.id).filter((x) => x.id !== i.id)) });
+    await Store.commit(ops);
+    UI.toast('Tagihan bulan itu dihapus');
   },
 
   projection(mk, nested) {
@@ -5751,7 +6156,11 @@ const Finance = {
     const off = s.projOff || {};
     const endOfMonth = addDays(addMonths(mk + '-01', 1), -1);
     const isCur = mk === thisMonth() || nested === true;
-    const postedThisMonth = (r) => isCur && Store.all('Transactions').some((t) => monthKey(t.date) === mk && t.description === r.name && Number(t.amount) === Number(r.amount));
+    /* Pengeluaran rutin dicocokkan lewat source/refId/kind (tepat, berlaku untuk
+       bulan apa pun); pemasukan rutin masih memakai pencocokan nama + nominal. */
+    const postedThisMonth = (r) => r.type === 'expense'
+      ? !!Fin.billTxn(r, mk)
+      : (isCur && Store.all('Transactions').some((t) => monthKey(t.date) === mk && t.description === r.name && Number(t.amount) === Number(r.amount)));
     const lines = [];
     const add = (key, label, amount, sign, note = '') => lines.push({ key, label, amount: Math.round(amount), sign, note, on: !off[key] });
     if (mk === thisMonth()) {
@@ -5773,7 +6182,7 @@ const Finance = {
     add('loanPlan', 'Rencana pencairan pinjaman', Number(s.loanPlan) || 0, 1, 'isi manual');
     const due = Store.where('LoanInstallments', (i) => i.status !== 'Lunas' && i.dueDate <= endOfMonth);
     add('inst', I18N.p(`Cicilan jatuh tempo (${due.length})`, `Instalments due (${due.length})`), sum(due, (i) => i.amount), -1, 'termasuk yang terlambat');
-    Store.where('Recurring', (r) => r.active !== false && r.type === 'expense').forEach((r) => add('re_' + r.id, r.name, postedThisMonth(r) ? 0 : r.amount, -1, postedThisMonth(r) ? 'sudah tercatat bulan ini' : 'pengeluaran rutin'));
+    Store.where('Recurring', (r) => r.active !== false && r.type === 'expense').forEach((r) => add('re_' + r.id, r.name, postedThisMonth(r) ? 0 : r.amount, -1, postedThisMonth(r) ? `sudah dibayar ${monthLabel(mk)}` : 'tagihan bulanan'));
     add('other', 'Pengeluaran lain', Number(s.otherExp) || 0, -1, 'isi manual');
     const total = sum(lines.filter((l) => l.on), (l) => l.amount * l.sign);
     return { lines, total };
@@ -5795,8 +6204,14 @@ VIEWS.finance = {
       const [lbl, col] = Fin.ratioLabel(dr.ratio);
       const src = groupBy(m.list.filter((t) => t.type === 'income'), (t) => t.source || 'manual');
       const maxSrc = Math.max(1, ...Object.values(src).map((l) => sum(l, (t) => t.amount)));
-      const upcoming = Store.where('LoanInstallments', (i) => i.status !== 'Lunas').sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 6);
       const loans = Object.fromEntries(Store.all('Loans').map((l) => [l.id, l]));
+      const T = Fin.tagihanBulan(s.month);
+      /* Yang belum dibayar bulan ini, tiga sumber jadi satu daftar. */
+      const belum = T.cicilan.items.filter((i) => i.status !== 'Lunas').map((i) => ({ nama: `${(loans[i.loanId] || {}).creditor || ''} — ke-${i.no}`, jenis: 'Cicilan', due: i.dueDate, amount: i.amount, act: `instPay`, id: i.id }))
+        .concat(T.spaylater.items.filter((i) => i.status !== 'Lunas').map((i) => ({ nama: `${(loans[i.loanId] || {}).creditor || ''} — ${monthLabel(monthKey(i.dueDate))}`, jenis: 'Paylater', due: i.dueDate, amount: i.amount, act: 'instPay', id: i.id })))
+        .concat(T.rutin.items.filter((b) => !b.paid).map((b) => ({ nama: b.r.name, jenis: 'Tagihan', due: b.dueDate, amount: b.amount, act: 'billPay', id: b.r.id })))
+        .concat(T.telatList.map((i) => ({ nama: `${(loans[i.loanId] || {}).creditor || ''} — ke-${i.no}`, jenis: 'Tunggakan', due: i.dueDate, amount: i.amount, act: 'instPay', id: i.id })))
+        .sort((a, b) => String(a.due).localeCompare(String(b.due)));
       return `
         <div class="toolbar"><button class="btn sm" data-act="finMonth" data-n="-1">${ic('chevL')}</button><b>${monthLabel(s.month)}</b><button class="btn sm" data-act="finMonth" data-n="1">${ic('chevR')}</button><button class="btn sm ghost" data-act="finMonth" data-n="0">Bulan ini</button></div>
         <div class="grid g5 mb">
@@ -5805,6 +6220,11 @@ VIEWS.finance = {
           <div class="stat"><small>Pengeluaran</small><b class="neg">${idr(m.expense)}</b><span class="sub">cicilan ${idrShort(m.installments)}</span></div>
           <div class="stat accent"><small>${I18N.p('Saldo akhir bulan', 'Closing balance')}</small><b class="${close < 0 ? 'neg' : 'pos'}">${idr(close)}</b><span class="sub">${I18N.p('dibawa ke ' + monthLabel(shiftMonth(s.month, 1)), 'carried to ' + monthLabel(shiftMonth(s.month, 1)))}</span></div>
           <div class="stat"><small>Rasio cicilan / pendapatan</small><b>${Math.round(dr.ratio * 100)}% <span class="badge b-${col}">${lbl}</span></b><span class="sub">sisa pokok utang ${idrShort(Fin.debtLeft())}</span></div>
+        </div>
+        <div class="grid g3 mb">
+          <div class="stat accent ${T.left ? 'accent-warn' : ''}"><small>${I18N.p(`Sisa tagihan ${monthLabel(s.month)}`, `Still due ${monthLabel(s.month)}`)}</small><b class="${T.left ? 'neg' : 'pos'}">${idr(T.left)}</b><span class="sub">${T.nLeft ? I18N.p(`${T.nLeft} belum dibayar — cicilan ${idrShort(T.cicilan.left)} · paylater ${idrShort(T.spaylater.left)} · bulanan ${idrShort(T.rutin.left)}`, `${T.nLeft} unpaid — loans ${idrShort(T.cicilan.left)} · paylater ${idrShort(T.spaylater.left)} · bills ${idrShort(T.rutin.left)}`) : I18N.p('semua tagihan bulan ini sudah dibayar', 'everything due this month is paid')}</span></div>
+          <div class="stat"><small>${I18N.p('Tagihan sudah dibayar', 'Bills paid')}</small><b class="pos">${idr(T.paid)}</b><span class="sub">${I18N.p(`dari total kewajiban ${idrShort(T.due)}`, `of ${idrShort(T.due)} due in total`)}</span></div>
+          <div class="stat ${T.telat ? 'accent accent-danger' : ''}"><small>${I18N.p('Tunggakan bulan sebelumnya', 'Arrears from earlier months')}</small><b class="${T.telat ? 'neg' : ''}">${idr(T.telat)}</b><span class="sub">${T.telatList.length ? I18N.p(`${T.telatList.length} cicilan lewat jatuh tempo`, `${T.telatList.length} instalments past due`) : I18N.p('tidak ada tunggakan', 'no arrears')}</span></div>
         </div>
         <div class="note mb">${I18N.p(`Perhitungan bulan ini: ${idr(open)} sisa bulan lalu + ${idr(m.income)} masuk − ${idr(m.expense)} keluar = <b>${idr(close)}</b>, dan sisa itu otomatis menjadi saldo awal bulan berikutnya. Saldo seluruh transaksi ${idr(bal)}.`, `This month: ${idr(open)} carried over + ${idr(m.income)} in − ${idr(m.expense)} out = <b>${idr(close)}</b>; that remainder automatically becomes next month's opening balance. All-time balance ${idr(bal)}.`)}</div>
         <div class="card mb"><h4>${I18N.p('Saldo berjalan per bulan', 'Month-to-month balance')}</h4>
@@ -5824,7 +6244,10 @@ VIEWS.finance = {
         <div class="grid g2">
           <div class="card"><h4>${I18N.p(`Sumber pemasukan ${monthLabel(s.month)}`, `Income sources ${monthLabel(s.month)}`)}</h4>${Object.keys(src).length ? `<div class="bars">${Object.entries(src).map(([k, l]) => `<div class="bar-row"><span>${SOURCE_LABEL[k] || k}</span><div class="progress lg" style="--mc:var(--${SOURCE_COLOR[k] || 'slate'})"><i style="width:${sum(l, (t) => t.amount) / maxSrc * 100}%"></i></div><b class="nowrap">${idrShort(sum(l, (t) => t.amount))}</b></div>`).join('')}</div>` : UI.empty('Belum ada pemasukan')}
             <p class="mini muted">Gaji dari modul Sekolah, fee dari Project, dan honor Tutor masuk otomatis ke sini.</p></div>
-          <div class="card"><h4>Tagihan cicilan terdekat</h4>${upcoming.length ? `<ul class="list">${upcoming.map((i) => `<li><div class="grow"><div class="t">${esc((loans[i.loanId] || {}).creditor || '')} — ke-${i.no}</div><div class="s">${fmtDate(i.dueDate)}</div></div>${UI.dueBadge(i.dueDate)}<b class="nowrap">${idr(i.amount)}</b><button class="btn xs" data-act="instPay" data-id="${i.id}">Bayar</button></li>`).join('')}</ul>` : UI.empty('Tidak ada cicilan', 'Semua pinjaman lunas.')}</div>
+          <div class="card"><h4>${I18N.p(`Tagihan ${monthLabel(s.month)} yang belum dibayar`, `Unpaid in ${monthLabel(s.month)}`)}${T.left ? ` — ${idr(T.left)}` : ''}</h4>${belum.length ? `<ul class="list tag-list">${belum.slice(0, 8).map((x) => `<li><span class="dotc" style="background:var(--${x.jenis === 'Tunggakan' ? 'coral' : x.jenis === 'Tagihan' ? 'amber' : 't1'})"></span><div class="grow"><div class="t">${esc(x.nama)}</div><div class="s">${esc(x.jenis)} — ${fmtDate(x.due)}</div></div>${UI.dueBadge(x.due)}<b class="nowrap neg">${idr(x.amount)}</b><button class="btn xs" data-act="${x.act}" data-id="${x.id}" data-mk="${s.month}">${I18N.p('Bayar', 'Pay')}</button></li>`).join('')}</ul>
+            ${belum.length > 8 ? `<p class="mini muted">${I18N.p(`${belum.length - 8} tagihan lain tidak ditampilkan.`, `${belum.length - 8} more not shown.`)}</p>` : ''}
+            <div class="btn-row"><button class="btn xs" data-act="open" data-mod="finance" data-sub="tagihan">${ic('card')}${I18N.p('Buka Tagihan Bulanan', 'Open Monthly Bills')}</button></div>`
+            : UI.empty(I18N.p('Tidak ada tagihan tersisa', 'Nothing left to pay'), I18N.p(`Cicilan, SPayLater, dan tagihan bulanan ${monthLabel(s.month)} sudah beres.`, `Instalments, paylater, and bills for ${monthLabel(s.month)} are all settled.`), `<button class="btn sm" data-act="open" data-mod="finance" data-sub="tagihan">${ic('card')}${I18N.p('Buka Tagihan Bulanan', 'Open Monthly Bills')}</button>`)}</div>
         </div>`;
     },
     after() {
@@ -5879,23 +6302,108 @@ VIEWS.finance = {
     }
   },
 
+  tagihan: {
+    actions: () => `<button class="btn" data-act="recAdd">${ic('plus')}Daftarkan tagihan</button><button class="btn mod" data-act="splAdd">${ic('card')}SPayLater baru</button>`,
+    render() {
+      const s = App.s('finance');
+      const mk = s.tagMonth || thisMonth();
+      const T = Fin.tagihanBulan(mk);
+      const spl = Fin.splAll().slice().sort((a, b) => (a.status === 'Lunas') - (b.status === 'Lunas') || String(a.creditor).localeCompare(String(b.creditor)));
+      const loans = Object.fromEntries(Store.all('Loans').map((l) => [l.id, l]));
+      const baris = (judul, sub, nominal, kanan, cls) => `<li><span class="dotc" style="background:var(--${cls})"></span>
+        <div class="grow"><div class="t">${judul}</div><div class="s">${sub}</div></div>
+        <b class="nowrap ${cls === 'jade' ? 'muted' : 'neg'}">${idr(nominal)}</b>${kanan}</li>`;
+      return `
+        <div class="toolbar"><button class="btn sm" data-act="tagMonth" data-n="-1">${ic('chevL')}</button><b>${monthLabel(mk)}</b><button class="btn sm" data-act="tagMonth" data-n="1">${ic('chevR')}</button><button class="btn sm ghost" data-act="tagMonth" data-n="0">Bulan ini</button></div>
+        <div class="grid g4 mb">
+          <div class="stat accent"><small>Sisa tagihan ${monthLabel(mk)}</small><b class="${T.left ? 'neg' : 'pos'}">${idr(T.left)}</b><span class="sub">${T.nLeft ? `${T.nLeft} tagihan belum dibayar` : 'semua sudah dibayar'}</span></div>
+          <div class="stat"><small>Sudah dibayar</small><b class="pos">${idr(T.paid)}</b><span class="sub">dari total ${idrShort(T.due)}</span></div>
+          <div class="stat"><small>Tagihan bulanan</small><b>${idr(T.rutin.left)}</b><span class="sub">${T.rutin.n} pos terdaftar</span></div>
+          <div class="stat ${T.telat ? 'accent-danger' : ''}"><small>Tunggakan bulan lalu</small><b class="${T.telat ? 'neg' : ''}">${idr(T.telat)}</b><span class="sub">${T.telatList.length ? `${T.telatList.length} cicilan lewat jatuh tempo` : 'tidak ada'}</span></div>
+        </div>
+        <div class="note mb">Angka “sisa tagihan ${monthLabel(mk)}” di atas menggabungkan tiga hal: cicilan pinjaman, tagihan SPayLater, dan tagihan bulanan yang terdaftar di bawah. Angka yang sama muncul di Ringkasan dan di beranda, dan ikut mengurangi proyeksi saldo akhir bulan. Satu tagihan cukup dicatat di <b>satu</b> tempat saja — kalau cicilan yang sudah punya baris pinjaman juga didaftarkan sebagai tagihan bulanan, ia akan terhitung dua kali.</div>
+
+        <div class="card mb"><h3>${ic('refresh')}Tagihan bulanan — ${monthLabel(mk)}
+            <span class="badge b-${T.rutin.nLeft ? 'amber' : 'jade'}" style="margin-left:auto">${T.rutin.nLeft ? `${T.rutin.nLeft} belum dibayar` : 'lunas semua'}</span></h3>
+          ${T.rutin.n ? `<ul class="list tag-list">${T.rutin.items.map((b) => baris(
+            esc(b.r.name),
+            `${esc(b.r.category || 'Tagihan & Utilitas')} — jatuh tempo ${fmtDate(b.dueDate)}`,
+            b.amount,
+            b.paid
+              ? `<span class="badge b-jade">${ic('check')}Lunas ${fmtDateShort(b.txn.date)}</span><button class="btn xs" data-act="txnEdit" data-id="${b.txn.id}">${ic('edit')}</button>`
+              : `${UI.dueBadge(b.dueDate)}<button class="btn xs mod" data-act="billPay" data-id="${b.r.id}" data-mk="${mk}">${ic('pay')}Bayar</button><button class="btn xs" data-act="recEdit" data-id="${b.r.id}">${ic('edit')}</button>`,
+            b.paid ? 'jade' : 'coral'
+          )).join('')}</ul>
+          <div class="divider"></div><div class="kv">
+            <div><small>Total tagihan ${monthLabel(mk)}</small><b>${idr(T.rutin.due)}</b></div>
+            <div><small>Sudah dibayar</small><b class="pos">${idr(T.rutin.paid)}</b></div>
+            <div><small>Belum dibayar</small><b class="${T.rutin.left ? 'neg' : ''}">${idr(T.rutin.left)}</b></div>
+            <div><small>Perkiraan setahun</small><b>${idrShort(T.rutin.due * 12)}</b></div></div>
+          <p class="mini muted">Didaftarkan sekali, lalu muncul sendiri tiap bulan. Nominal saat membayar boleh berbeda dari yang didaftarkan — yang tercatat di Buku Kas adalah nominal yang benar-benar dibayar.</p>`
+            : UI.empty('Belum ada tagihan bulanan', 'Daftarkan WiFi, listrik, air, iuran, langganan, atau cicilan tetap lain supaya tiap bulan langsung muncul di sini.', `<button class="btn sm" data-act="recAdd">${ic('plus')}Daftarkan tagihan</button>`)}</div>
+
+        <div class="card mb"><h3>${ic('card')}SPayLater & paylater lain
+            <span class="badge b-${T.spaylater.nLeft ? 'amber' : 'jade'}" style="margin-left:auto">${monthLabel(mk)}: ${idr(T.spaylater.left)}</span></h3>
+          ${spl.length ? `<div class="cards">${spl.map((l) => {
+            const st = Fin.loanStats(l);
+            const open = s.splOpen === l.id;
+            const bulanIni = st.inst.filter((i) => monthKey(i.dueDate) === mk);
+            return `<div class="ocard m-finance" style="${open ? 'grid-column:1/-1' : ''}">
+              <div class="hd"><div><h4>${esc(l.creditor)}</h4><p>${st.count} bulan — total ${idr(l.principal)}${l.note ? ' — ' + esc(String(l.note).slice(0, 60)) : ''}</p></div><span class="badge b-${l.status === 'Lunas' ? 'jade' : 'amber'}">${esc(l.status)}</span></div>
+              <div>${UI.progress(st.count ? st.paidCount / st.count * 100 : 0)}<div class="flex between mini muted" style="margin-top:4px"><span>${st.paidCount}/${st.count} bulan dibayar</span><span>sisa ${idr(st.totalLeft)}</span></div></div>
+              <div class="kv"><div><small>Tagihan ${monthLabel(mk)}</small><b class="${bulanIni.some((i) => i.status !== 'Lunas') ? 'neg' : 'pos'}">${bulanIni.length ? idr(sum(bulanIni, (i) => i.amount)) : '—'}</b></div>
+                <div><small>Jatuh tempo berikutnya</small><b>${st.next ? fmtDate(st.next.dueDate) : '—'}</b></div>
+                <div><small>Rata-rata per bulan</small><b>${st.count ? idr(Math.round(l.principal / st.count)) : '—'}</b></div>
+                <div><small>Bulan terakhir</small><b>${st.inst.length ? fmtDate(st.inst[st.inst.length - 1].dueDate) : '—'}</b></div></div>
+              ${open ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>#</th><th>Bulan</th><th>Jatuh tempo</th><th class="r">Nominal</th><th>Status</th><th></th></tr></thead><tbody>${st.inst.map((i) => `<tr><td>${i.no}</td><td class="nowrap">${monthLabel(monthKey(i.dueDate))}</td><td class="nowrap">${fmtDate(i.dueDate)}</td><td class="r"><b>${idr(i.amount)}</b></td><td>${i.status === 'Lunas' ? UI.badge('Lunas ' + fmtDateShort(i.paidDate), 'jade') : UI.dueBadge(i.dueDate)}</td><td class="act">${i.status !== 'Lunas' ? `<button class="btn xs mod" data-act="instPay" data-id="${i.id}">${ic('pay')}Bayar</button><button class="btn xs" data-act="instEdit" data-id="${i.id}" title="Ubah nominal bulan ini">${ic('edit')}</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : ''}
+              <div class="foot">
+                ${st.next ? `<button class="btn xs mod" data-act="instPay" data-id="${st.next.id}">${ic('pay')}Bayar ${monthLabel(monthKey(st.next.dueDate))}</button>` : ''}
+                <button class="btn xs" data-act="splToggle" data-id="${l.id}">${ic('table')}${open ? 'Tutup rincian' : 'Rincian per bulan'}</button>
+                <button class="btn xs" data-act="instAdd" data-id="${l.id}">${ic('plus')}Tambah bulan</button>
+                <button class="btn xs" data-act="splEdit" data-id="${l.id}">${ic('edit')}</button>
+              </div></div>`;
+          }).join('')}</div>
+          <p class="mini muted">Diisi sekali untuk semua bulannya walau nominal tiap bulan berbeda. Tagihannya otomatis ikut ke rasio cicilan, proyeksi saldo, daftar “perlu perhatian”, dan pengingat Google Calendar seperti cicilan pinjaman biasa.</p>`
+            : UI.empty('Belum ada SPayLater', 'Masukkan sekali saja: isi nominal tiap bulan sesuai tagihan yang muncul di aplikasi paylater, termasuk kalau jumlahnya berbeda-beda.', `<button class="btn sm" data-act="splAdd">${ic('plus')}SPayLater baru</button>`)}</div>
+
+        <div class="card"><h3>${ic('bank')}Cicilan pinjaman — ${monthLabel(mk)}
+            <span class="badge b-${T.cicilan.nLeft ? 'amber' : 'jade'}" style="margin-left:auto">${idr(T.cicilan.left)} belum dibayar</span></h3>
+          ${T.cicilan.n ? `<ul class="list tag-list">${T.cicilan.items.slice().sort((a, b) => a.dueDate.localeCompare(b.dueDate)).map((i) => baris(
+            `${esc((loans[i.loanId] || {}).creditor || '')} — ke-${i.no}`,
+            `jatuh tempo ${fmtDate(i.dueDate)}`,
+            i.amount,
+            i.status === 'Lunas'
+              ? `<span class="badge b-jade">${ic('check')}Lunas ${fmtDateShort(i.paidDate)}</span>`
+              : `${UI.dueBadge(i.dueDate)}<button class="btn xs mod" data-act="instPay" data-id="${i.id}">${ic('pay')}Bayar</button><button class="btn xs" data-act="instEdit" data-id="${i.id}">${ic('edit')}</button>`,
+            i.status === 'Lunas' ? 'jade' : 'coral'
+          )).join('')}</ul>` : UI.empty(`Tidak ada cicilan jatuh tempo ${monthLabel(mk)}`, 'Pinjaman dikelola di tab “Pinjaman & Cicilan”.')}
+          ${T.telatList.length ? `<div class="divider"></div><h4 class="warn">Tunggakan bulan sebelumnya</h4><ul class="list tag-list">${T.telatList.map((i) => baris(
+            `${esc((loans[i.loanId] || {}).creditor || '')} — ke-${i.no}`,
+            `jatuh tempo ${fmtDate(i.dueDate)}`,
+            i.amount,
+            `${UI.dueBadge(i.dueDate)}<button class="btn xs mod" data-act="instPay" data-id="${i.id}">${ic('pay')}Bayar</button>`,
+            'coral'
+          )).join('')}</ul>` : ''}</div>`;
+    }
+  },
+
   pinjaman: {
     actions: () => `<button class="btn mod" data-act="loanAdd">${ic('plus')}Pinjaman baru</button>`,
     render() {
-      const loans = Store.all('Loans').slice().sort((a, b) => (a.status === 'Lunas') - (b.status === 'Lunas'));
+      const loans = Fin.loansBiasa().slice().sort((a, b) => (a.status === 'Lunas') - (b.status === 'Lunas'));
       const mk = thisMonth();
       const dr = Fin.debtRatio(mk);
       const [lbl, col] = Fin.ratioLabel(dr.ratio);
       const s = App.s('finance');
-      const dueM = Fin.dueInMonth(mk);
+      const T = Fin.tagihanBulan(mk);
       return `
         <div class="grid g4 mb">
-          <div class="stat accent"><small>Sisa pokok utang</small><b class="neg">${idr(Fin.debtLeft())}</b><span class="sub">${loans.filter((l) => l.status !== 'Lunas').length} pinjaman aktif</span></div>
-          <div class="stat"><small>${I18N.p(`Cicilan ${monthLabel(mk)}`, `Instalments ${monthLabel(mk)}`)}</small><b>${idr(sum(dueM, (i) => i.amount))}</b><span class="sub">${I18N.p(`${dueM.filter((i) => i.status === 'Lunas').length}/${dueM.length} sudah dibayar`, `${dueM.filter((i) => i.status === 'Lunas').length} of ${dueM.length} paid`)}</span></div>
+          <div class="stat accent"><small>Sisa pokok utang</small><b class="neg">${idr(Fin.debtLeft())}</b><span class="sub">${loans.filter((l) => l.status !== 'Lunas').length} pinjaman aktif${Fin.splAll().filter((l) => l.status !== 'Lunas').length ? ` + ${Fin.splAll().filter((l) => l.status !== 'Lunas').length} paylater` : ''}</span></div>
+          <div class="stat ${T.left ? 'accent accent-warn' : ''}"><small>${I18N.p(`Sisa tagihan ${monthLabel(mk)}`, `Still due ${monthLabel(mk)}`)}</small><b class="${T.left ? 'neg' : 'pos'}">${idr(T.left)}</b><span class="sub">${I18N.p(`dari ${idrShort(T.due)} — cicilan ${idrShort(T.cicilan.left)} · paylater ${idrShort(T.spaylater.left)} · bulanan ${idrShort(T.rutin.left)}`, `of ${idrShort(T.due)} — loans ${idrShort(T.cicilan.left)} · paylater ${idrShort(T.spaylater.left)} · bills ${idrShort(T.rutin.left)}`)}</span></div>
           <div class="stat"><small>Rasio cicilan / pendapatan</small><b>${Math.round(dr.ratio * 100)}%</b><span class="badge b-${col}">${lbl}</span></div>
           <div class="stat"><small>Basis pendapatan</small><b>${idrShort(dr.base)}</b><span class="sub">maks(pemasukan bulan ini, pemasukan rutin)</span></div>
         </div>
-        <div class="note mb">Patokan umum: total cicilan ≤ 30% pendapatan tergolong sehat, 30–40% perlu waspada, di atas 40% berisiko. Pengingat jatuh tempo dikirim H-5, H-3, dan H-1 lewat Google Calendar serta ringkasan harian Gmail.</div>
+        <div class="note mb">Patokan umum: total cicilan ≤ 30% pendapatan tergolong sehat, 30–40% perlu waspada, di atas 40% berisiko. Pengingat jatuh tempo dikirim H-5, H-3, dan H-1 lewat Google Calendar serta ringkasan harian Gmail. SPayLater dan paylater lain ada di tab <b>Tagihan Bulanan</b>, tetapi tetap ikut dihitung di rasio dan sisa pokok di atas.</div>
         ${loans.length ? `<div class="cards">${loans.map((l) => {
           const st = Fin.loanStats(l);
           const open = s.loanOpen === l.id;
@@ -5963,7 +6471,16 @@ Object.assign(ACT, {
   },
   recAdd: () => Finance.recForm(),
   recEdit: (d) => Finance.recForm(d.id),
-  recPost: (d) => Finance.postRecurring(d.id)
+  recPost: (d) => Finance.postRecurring(d.id),
+  /* tagihan bulanan & SPayLater */
+  tagMonth: (d) => { const s = App.s('finance'); s.tagMonth = d.n === '0' ? thisMonth() : shiftMonth(s.tagMonth || thisMonth(), Number(d.n)); App.refresh(); },
+  billPay: (d) => Finance.billPay(d.id, d.mk || App.s('finance').tagMonth || thisMonth()),
+  splAdd: () => Finance.splForm(),
+  splEdit: (d) => Finance.splForm(d.id),
+  splToggle: (d) => { const s = App.s('finance'); s.splOpen = s.splOpen === d.id ? null : d.id; App.refresh(); },
+  instEdit: (d) => Finance.instEdit(d.id),
+  instAdd: (d) => Finance.instAdd(d.id),
+  instDel: (d) => Finance.instDel(d.id)
 });
 Object.assign(CHG, {
   kasQ: (v) => { App.s('finance').kasQ = v; App.refresh(); },
@@ -7749,6 +8266,7 @@ const I18N = {
     'Kanban': 'Kanban', 'Pembayaran & Piutang': 'Payments & Receivables', 'Pricelist & Kalkulator': 'Pricelist & Calculator',
     'File Project': 'Project Files', 'Kelas & Klien': 'Classes & Clients', 'Sesi & Progres': 'Sessions & Progress', 'Pembayaran': 'Payments',
     'File Kelas': 'Class Files', 'Ringkasan': 'Overview', 'Buku Kas': 'Cash Book', 'Pinjaman & Cicilan': 'Loans & Instalments',
+    'Tagihan Bulanan': 'Monthly Bills',
     'Rutin & Proyeksi': 'Recurring & Projection', 'Arsip Keuangan': 'Finance Archive', 'Jurnal Harian': 'Daily Journal',
     'Habit Tracker': 'Habit Tracker', 'To-Do': 'To-Do', 'Semua File': 'All Files',
     /* aksi umum */
@@ -11141,7 +11659,23 @@ function lf(key) {
 
 /* --------------- (B) BEBAN TERPADU: MENGAJAR + JOBDESC -------------- */
 const Workload = {
-  teachingJP() { return round2(School.jpPerWeek(Number(Store.settings().jpMinutes) || 40)); },
+  /** JP jadwal tetap saja — sama setiap minggu. */
+  teachingJPDasar() { return round2(School.jpPerWeek(Number(Store.settings().jpMinutes) || 40)); },
+  /** JP mengajar di luar jadwal pada minggu berjalan. */
+  teachingJPTambahan() {
+    try { return typeof Pengganti !== 'undefined' ? Pengganti.jpMinggu(todayISO()) : 0; }
+    catch (e) { return 0; }
+  },
+  /**
+   * Beban mengajar minggu INI: jadwal tetap + jam menggantikan guru lain,
+   * mitigasi tugas, dan jam tambahan yang tercatat minggu ini.
+   *
+   * Dulu angka ini hanya dari lembar Schedule, sehingga selalu sama setiap
+   * minggu — minggu dengan enam jam pengganti terlihat sama ringannya dengan
+   * minggu kosong. Rinciannya tetap bisa diambil lewat teachingJPDasar()
+   * dan teachingJPTambahan().
+   */
+  teachingJP() { return round2(this.teachingJPDasar() + this.teachingJPTambahan()); },
   dutyJP() { return JobLoad.calc().total; },
 
   /** JP mengajar + JP jobdesc = total, beserta kapasitas dan levelnya. */
@@ -14064,6 +14598,322 @@ const Rawan = {
  * kalau penulisan otomatisnya sempat gagal.
  * =================================================================== */
 /* =====================================================================
+ * JAM MENGAJAR DI LUAR JADWAL TETAP
+ *
+ * Lembar Schedule berisi jadwal yang sama setiap minggu, jadi JP yang
+ * dihitung darinya selalu angka yang sama. Kenyataannya tidak begitu:
+ * ada minggu Ustadz menggantikan guru lain, ada minggu tugas mengajar
+ * dimitigasi ke orang lain, ada jam tambahan. Lembar _Pengganti mencatat
+ * semua itu per tanggal, dan JP-nya ikut masuk ke JP minggu bersangkutan —
+ * dari situlah fluktuasinya baru bisa terlihat.
+ * =================================================================== */
+
+/** Senin pada minggu yang memuat tanggal itu (ISO). */
+function seninMinggu(iso) {
+  const d = parseISO(iso) || new Date();
+  const h = d.getDay();                       // 0 = Minggu
+  const mundur = h === 0 ? 6 : h - 1;         // minggu dimulai Senin
+  return ymd(addDaysDate(d, -mundur));
+}
+function addDaysDate(d, n) { const x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
+
+const Pengganti = {
+  JENIS: ['Menggantikan', 'Mitigasi', 'Tambahan'],
+  STATUS: ['Terlaksana', 'Batal'],
+
+  semua() {
+    return Store.all('_Pengganti').slice()
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  },
+
+  /** JP satu baris. Diisi sendiri bila ada; kalau tidak, dihitung dari jam. */
+  jpOf(r) {
+    const n = Number(r.jp);
+    if (isFinite(n) && n > 0) return n;
+    const jpMin = Number(Store.settings().jpMinutes) || 40;
+    return r.start && r.end ? School.jpOf(r, jpMin) : 0;
+  },
+
+  /** Baris yang jatuh pada minggu (Senin–Minggu) yang memuat tanggal itu. */
+  minggu(iso) {
+    const a = seninMinggu(iso);
+    const b = ymd(addDaysDate(parseISO(a), 6));
+    return this.semua().filter((r) => {
+      const d = String(r.date || '').slice(0, 10);
+      return d >= a && d <= b;
+    });
+  },
+
+  /** JP tambahan pada minggu itu. Yang dibatalkan tidak dihitung — mencatat
+   *  rencana yang batal tetap berguna, tetapi tidak menambah beban. */
+  jpMinggu(iso) {
+    return round2(sum(this.minggu(iso).filter((r) => String(r.status || 'Terlaksana') !== 'Batal'),
+      (r) => this.jpOf(r)));
+  },
+
+  /** Rincian satu minggu, dipakai kartu fluktuasi. */
+  rincianMinggu(iso) {
+    const list = this.minggu(iso).filter((r) => String(r.status || 'Terlaksana') !== 'Batal');
+    const per = {};
+    list.forEach((r) => {
+      const j = String(r.jenis || 'Menggantikan');
+      per[j] = round2((per[j] || 0) + this.jpOf(r));
+    });
+    return { n: list.length, perJenis: per, jp: round2(sum(list, (r) => this.jpOf(r))) };
+  },
+
+  form(id) {
+    const r = id ? Store.get('_Pengganti', id) : null;
+    const slots = Store.meta.slots || [];
+    UI.form({
+      title: r ? I18N.p('Ubah catatan mengajar tambahan', 'Edit extra teaching record')
+        : I18N.p('Catat mengajar di luar jadwal', 'Record teaching outside the timetable'),
+      values: r || { date: todayISO(), jenis: 'Menggantikan', status: 'Terlaksana' },
+      fields: [
+        { k: 'date', l: I18N.p('Tanggal', 'Date'), t: 'date', req: 1 },
+        { k: 'jenis', l: I18N.p('Jenis', 'Kind'), t: 'select', req: 1,
+          o: [['Menggantikan', I18N.p('Menggantikan guru lain', 'Substituting for another teacher')],
+            ['Mitigasi', I18N.p('Mitigasi tugas guru', 'Covering a teaching duty')],
+            ['Tambahan', I18N.p('Jam tambahan', 'Extra hours')]] },
+        { k: 'guru', l: I18N.p('Guru yang digantikan', 'Teacher replaced'),
+          hint: I18N.p('Kosongkan untuk jam tambahan yang bukan menggantikan siapa pun.',
+            'Leave empty for extra hours that replace no one.') },
+        { k: 'className', l: I18N.p('Kelas', 'Class'), req: 1, list: () => School.classes() },
+        { k: 'subject', l: I18N.p('Mata pelajaran', 'Subject') },
+        slots.length ? { k: 'start', l: I18N.p('Mulai (slot)', 'Start (slot)'), t: 'select', o: [['', '—']].concat(slots.map((x) => [x.start, x.start + ' – ' + x.end])) }
+          : { k: 'start', l: I18N.p('Mulai', 'Start'), t: 'time' },
+        slots.length ? { k: 'end', l: I18N.p('Selesai (slot)', 'End (slot)'), t: 'select', o: [['', '—']].concat(slots.map((x) => [x.end, x.start + ' – ' + x.end])) }
+          : { k: 'end', l: I18N.p('Selesai', 'End'), t: 'time' },
+        { k: 'jp', l: 'JP', t: 'number', min: 0, step: '0.5',
+          hint: I18N.p('Dikosongkan = dihitung sendiri dari jam mulai & selesai.',
+            'Leave empty = computed from the start and end times.') },
+        { k: 'alasan', l: I18N.p('Alasan', 'Reason'), ph: I18N.p('mis. guru mapel sedang dinas luar', 'e.g. the subject teacher is away on duty') },
+        { k: 'status', l: 'Status', t: 'select', o: [['Terlaksana', I18N.p('Terlaksana', 'Carried out')], ['Batal', I18N.p('Batal', 'Cancelled')]] },
+        { k: 'note', l: I18N.p('Catatan', 'Note'), t: 'textarea' }
+      ],
+      onSubmit: async (v) => {
+        if (v.start && v.end && timeToMin(v.end) <= timeToMin(v.start)) {
+          UI.toast(I18N.p('Jam selesai harus setelah jam mulai.', 'The end time must be after the start time.'), 'err');
+          return false;
+        }
+        /* JP boleh dikosongkan: dihitung dari jamnya. Kalau jamnya pun kosong
+           — mis. mitigasi yang tidak terikat jam tertentu — dipakai 1 JP,
+           supaya catatannya tetap punya bobot dan tidak hilang dari hitungan. */
+        if (v.jp === '' || v.jp == null) {
+          const jpMin = Number(Store.settings().jpMinutes) || 40;
+          v.jp = v.start && v.end ? School.jpOf(v, jpMin) : 1;
+        }
+        v.jp = Number(v.jp) || 0;
+        UI.toast(I18N.p('Tersimpan. JP minggu itu ikut diperbarui.', 'Saved. That week’s periods are updated too.'), 'ok');
+        return r ? Store.update('_Pengganti', r.id, v) : Store.create('_Pengganti', v);
+      }
+    });
+  }
+};
+
+CHG.pgBulan = (v) => { App.s('school').pgBulan = String(v || ''); App.refresh(); };
+ACT.pgTambah = () => Pengganti.form('');
+ACT.pgUbah = (d) => Pengganti.form(d && d.id);
+ACT.pgHapus = async (d) => {
+  if (!d || !d.id) return;
+  if (!(await UI.confirm(I18N.p('Hapus catatan ini?', 'Delete this record?'), { danger: true }))) return;
+  await Store.remove('_Pengganti', d.id);
+  UI.toast(I18N.p('Dihapus.', 'Deleted.'), 'ok');
+};
+
+/* =====================================================================
+ * FLUKTUASI JP PER MINGGU DALAM SATU BULAN
+ *
+ * Yang dicari bukan sekadar berapa JP minggu ini, melainkan seberapa
+ * naik-turun beban mengajar sepanjang bulan: minggu mana yang berat,
+ * mana yang ringan, dan seberapa jauh jaraknya. Itulah yang bisa dibawa
+ * ke evaluasi — angka rata-rata saja menyembunyikan minggu 24 JP yang
+ * diapit minggu-minggu 12 JP.
+ * =================================================================== */
+const Fluktuasi = {
+  /** Semua minggu (Senin) yang bersinggungan dengan bulan ym = 'YYYY-MM'. */
+  mingguDi(ym) {
+    const awal = parseISO(ym + '-01');
+    if (!awal) return [];
+    const akhir = new Date(awal.getFullYear(), awal.getMonth() + 1, 0);
+    const out = [];
+    let s = parseISO(seninMinggu(ymd(awal)));
+    while (s <= akhir) {
+      out.push(ymd(s));
+      s = addDaysDate(s, 7);
+    }
+    return out;
+  },
+
+  /** Satu baris per minggu: JP jadwal tetap + JP tambahan. */
+  data(ym) {
+    const jpMin = Number(Store.settings().jpMinutes) || 40;
+    const dasar = round2(School.jpPerWeek(jpMin));
+    return this.mingguDi(ym).map((senin, i) => {
+      const r = Pengganti.rincianMinggu(senin);
+      return {
+        ke: i + 1, senin: senin, ahad: ymd(addDaysDate(parseISO(senin), 6)),
+        dasar: dasar, tambahan: r.jp, n: r.n, perJenis: r.perJenis,
+        total: round2(dasar + r.jp)
+      };
+    });
+  },
+
+  /** Ringkasan naik-turunnya, untuk bahan evaluasi. */
+  ringkas(ym) {
+    const rows = this.data(ym);
+    if (!rows.length) return null;
+    const nilai = rows.map((r) => r.total);
+    const rata = round2(sum(nilai, (x) => x) / nilai.length);
+    const maks = Math.max.apply(null, nilai);
+    const min = Math.min.apply(null, nilai);
+    /* Simpangan baku populasi: yang diukur adalah minggu-minggu bulan ini
+       sendiri, bukan sampel dari sesuatu yang lebih besar. */
+    const varian = sum(nilai, (x) => (x - rata) * (x - rata)) / nilai.length;
+    const sd = round2(Math.sqrt(varian));
+    const target = Number(Store.settings().jpTarget) || 0;
+    const rentang = round2(maks - min);
+    /* Koefisien variasi: rentang relatif terhadap rata-rata. Dipakai supaya
+       "naik-turun 6 JP" bisa dinilai adil, baik pada beban 12 JP maupun 40. */
+    const cv = rata > 0 ? Math.round(sd / rata * 100) : 0;
+    return {
+      rows, rata, maks, min, sd, cv, rentang, target,
+      mingguMaks: rows.filter((r) => r.total === maks)[0],
+      mingguMin: rows.filter((r) => r.total === min)[0],
+      totalTambahan: round2(sum(rows, (r) => r.tambahan)),
+      nTambahan: rows.reduce((a, r) => a + r.n, 0)
+    };
+  },
+
+  /** Kalimat evaluasi — angka saja tidak memberi tahu apa yang harus dilakukan. */
+  nilai(s) {
+    if (!s) return { teks: '', warna: '' };
+    if (!s.totalTambahan) {
+      return { warna: '', teks: I18N.p(
+        'Tidak ada jam mengajar di luar jadwal bulan ini, jadi bebannya rata setiap minggu.',
+        'No teaching outside the timetable this month, so the load is flat every week.') };
+    }
+    if (s.cv <= 10) {
+      return { warna: 'ok', teks: I18N.p(
+        `Beban cukup rata: naik-turunnya ${s.rentang} JP (${s.cv}% dari rata-rata). Jam tambahan tersebar, tidak menumpuk di satu minggu.`,
+        `Fairly even: the swing is ${s.rentang} periods (${s.cv}% of the average). Extra hours are spread out, not piled into one week.`) };
+    }
+    if (s.cv <= 25) {
+      return { warna: 'warn', teks: I18N.p(
+        `Naik-turun ${s.rentang} JP (${s.cv}% dari rata-rata). Minggu ke-${s.mingguMaks.ke} paling padat (${s.mingguMaks.total} JP), minggu ke-${s.mingguMin.ke} paling ringan (${s.mingguMin.total} JP).`,
+        `The swing is ${s.rentang} periods (${s.cv}% of the average). Week ${s.mingguMaks.ke} is heaviest (${s.mingguMaks.total}), week ${s.mingguMin.ke} lightest (${s.mingguMin.total}).`) };
+    }
+    return { warna: 'err', teks: I18N.p(
+      `Naik-turunnya tajam: ${s.rentang} JP (${s.cv}% dari rata-rata). Minggu ke-${s.mingguMaks.ke} menanggung ${s.mingguMaks.total} JP sementara minggu ke-${s.mingguMin.ke} hanya ${s.mingguMin.total} JP. Kalau jam penggantinya bisa digeser, menyebarkannya akan jauh lebih ringan.`,
+      `A sharp swing: ${s.rentang} periods (${s.cv}% of the average). Week ${s.mingguMaks.ke} carries ${s.mingguMaks.total} while week ${s.mingguMin.ke} has only ${s.mingguMin.total}. If the substitute hours can be moved, spreading them out would be far lighter.`) };
+  }
+};
+
+VIEWS.school.pengganti = {
+  after: () => Store.ensureThen(['_Pengganti']),
+  actions: () => `<button class="btn primary" data-act="pgTambah">${ic('plus')}${I18N.p('Catat mengajar tambahan', 'Record extra teaching')}</button>`,
+  render() {
+    const s = App.s('school');
+    const ym = s.pgBulan || todayISO().slice(0, 7);
+    const r = Fluktuasi.ringkas(ym);
+    const ev = Fluktuasi.nilai(r);
+    const jpMin = Number(Store.settings().jpMinutes) || 40;
+    const target = Number(Store.settings().jpTarget) || 0;
+
+    /* Pilihan bulan: dari bulan paling awal yang punya catatan sampai bulan ini. */
+    const bulanAda = [...new Set(Pengganti.semua().map((x) => String(x.date || '').slice(0, 7)).filter(Boolean))];
+    const kini = todayISO().slice(0, 7);
+    if (bulanAda.indexOf(kini) < 0) bulanAda.push(kini);
+    if (bulanAda.indexOf(ym) < 0) bulanAda.push(ym);
+    bulanAda.sort().reverse();
+    const labelBulan = (x) => `${BLN[+x.slice(5) - 1]} ${x.slice(0, 4)}`;
+
+    /* Tinggi batang diskalakan ke angka tertinggi antara JP maksimum dan
+       target, supaya garis target selalu masuk gambar. Bagian bawah batang
+       (gelap) adalah jadwal tetap, bagian atas (amber) jam tambahan — persis
+       seperti yang tertulis di keterangannya. Dibuat bertumpuk dari bawah,
+       bukan satu kotak dengan lapisan transparan, sebab lapisan transparan
+       di atas warna yang berdekatan praktis tidak terlihat. */
+    const TINGGI = 96;
+    const maksBar = r ? Math.max(r.maks, target, 1) : 1;
+    const grafik = r ? `<div style="position:relative;padding:4px 0 0">
+      ${target > 0 ? `<div title="${esc(I18N.p(`Target ${target} JP/minggu`, `Target ${target}/week`))}"
+        style="position:absolute;left:0;right:0;bottom:${28 + Math.round(target / maksBar * TINGGI)}px;
+               border-top:1px dashed var(--line-2);pointer-events:none">
+        <span class="mini muted" style="position:absolute;right:0;top:-15px;background:var(--panel);padding:0 4px">${I18N.p('target', 'target')} ${target}</span></div>` : ''}
+      <div class="gb-sebar" style="align-items:flex-end;min-height:${TINGGI + 28}px">${r.rows.map((w) => {
+      const hTotal = Math.max(4, Math.round(w.total / maksBar * TINGGI));
+      const hDasar = Math.round(Math.min(w.dasar, w.total) / maksBar * TINGGI);
+      const hTambah = Math.max(0, hTotal - hDasar);
+      return `<div class="gb-s" title="${esc(`${fmtDate(w.senin)} – ${fmtDate(w.ahad)}: ${w.dasar}`
+        + (w.tambahan ? ` + ${w.tambahan} tambahan` : '') + ` = ${w.total} JP`)}">
+        <div style="width:26px;height:${hTotal}px;border-radius:5px 5px 0 0;overflow:hidden;display:flex;flex-direction:column">
+          ${hTambah ? `<div style="height:${hTambah}px;background:var(--amber)"></div>` : ''}
+          <div style="flex:1;background:var(--brand)"></div>
+        </div>
+        <b>${w.total}</b><span class="mini muted">M${w.ke}</span></div>`;
+    }).join('')}</div></div>` : '';
+
+    const kartuFluktuasi = `<div class="card mb">
+      <h3>${ic('chart')}${I18N.p('Fluktuasi JP mengajar', 'Teaching load fluctuation')}</h3>
+      <div class="toolbar mb">
+        <select class="select" data-chg="pgBulan">${bulanAda.map((x) =>
+      `<option value="${esc(x)}" ${x === ym ? 'selected' : ''}>${esc(labelBulan(x))}</option>`).join('')}</select>
+        <span class="mini muted">${I18N.p(`1 JP = ${jpMin} menit${target ? ` · target ${target} JP/minggu` : ''}`,
+        `1 period = ${jpMin} min${target ? ` · target ${target}/week` : ''}`)}</span>
+      </div>
+      ${r ? `<div class="grid g4 mb">
+        <div class="stat"><small>${I18N.p('Rata-rata / minggu', 'Average / week')}</small><b>${r.rata}</b><span class="sub">JP</span></div>
+        <div class="stat"><small>${I18N.p('Naik-turun', 'Swing')}</small><b>${r.rentang}</b><span class="sub">${I18N.p(`JP · ${r.min}–${r.maks}`, `periods · ${r.min}–${r.maks}`)}</span></div>
+        <div class="stat"><small>${I18N.p('Simpangan baku', 'Std deviation')}</small><b>${r.sd}</b><span class="sub">${r.cv}% ${I18N.p('dari rata-rata', 'of average')}</span></div>
+        <div class="stat"><small>${I18N.p('JP tambahan', 'Extra periods')}</small><b>${r.totalTambahan}</b><span class="sub">${r.nTambahan} ${I18N.p('catatan', 'records')}</span></div>
+      </div>
+      ${grafik}
+      <div class="hint" style="text-align:center">${I18N.p(
+        'Bagian gelap = jadwal tetap, bagian amber di atasnya = jam tambahan. Garis putus-putus adalah target JP per minggu.',
+        'Dark part = fixed timetable, the amber part above it = extra hours. The dashed line is the weekly target.')}</div>
+      <div class="note ${esc(ev.warna)} mt">${esc(ev.teks)}</div>
+      ${UI.table([
+        { h: I18N.p('Minggu', 'Week'), f: (w) => `<div class="t">M${w.ke}</div><div class="s">${esc(fmtDate(w.senin))} – ${esc(fmtDate(w.ahad))}</div>` },
+        { h: I18N.p('Jadwal tetap', 'Timetable'), cls: 'r', f: (w) => String(w.dasar) },
+        { h: I18N.p('Tambahan', 'Extra'), cls: 'r', f: (w) => w.tambahan ? `<b class="pos">+${w.tambahan}</b>` : '—' },
+        { h: I18N.p('Rincian', 'Breakdown'), f: (w) => Object.keys(w.perJenis).length
+          ? Object.keys(w.perJenis).map((k) => `<span class="badge b-sky">${esc(k)} ${w.perJenis[k]}</span>`).join(' ') : '—' },
+        { h: 'Total', cls: 'r', f: (w) => `<b>${w.total}</b>` },
+        { h: I18N.p('vs target', 'vs target'), cls: 'r', f: (w) => !target ? '—'
+          : (w.total > target ? `<span class="badge b-amber">+${round2(w.total - target)}</span>`
+            : w.total < target ? `<span class="badge">${round2(w.total - target)}</span>` : `<span class="badge b-ok">0</span>`) }
+      ], r.rows, { emptyMsg: '' })}`
+      : `<div class="note">${I18N.p('Belum ada data untuk bulan ini.', 'No data for this month yet.')}</div>`}</div>`;
+
+    const list = Pengganti.semua().filter((x) => String(x.date || '').slice(0, 7) === ym);
+    const kartuCatatan = `<div class="card">
+      <h3>${ic('calendar')}${I18N.p('Catatan mengajar di luar jadwal', 'Teaching outside the timetable')}
+        <span class="badge b-sky">${list.length}</span></h3>
+      <p class="mini muted" style="margin-top:0">${I18N.p(
+      'Menggantikan guru lain, mitigasi tugas guru, atau jam tambahan. JP dari sini ikut dihitung ke JP minggu yang bersangkutan — jadwal tetap saja selalu memberi angka yang sama setiap minggu.',
+      'Substituting for another teacher, covering a teaching duty, or extra hours. Periods recorded here count toward that week’s total — the fixed timetable alone always gives the same number every week.')}</p>
+      ${UI.table([
+      { h: I18N.p('Tanggal', 'Date'), f: (x) => `<div class="t">${esc(fmtDate(x.date))}</div><div class="s">${esc(HARI[(parseISO(x.date) || new Date()).getDay()])}</div>` },
+      { h: I18N.p('Jenis', 'Kind'), f: (x) => `<span class="badge ${x.jenis === 'Menggantikan' ? 'b-violet' : x.jenis === 'Mitigasi' ? 'b-amber' : 'b-sky'}">${esc(x.jenis || '-')}</span>` },
+      { h: I18N.p('Kelas', 'Class'), f: (x) => `<div class="t">${esc(x.className || '-')}</div><div class="s">${esc(x.subject || '')}</div>` },
+      { h: I18N.p('Menggantikan', 'Replacing'), f: (x) => esc(x.guru || '—') },
+      { h: I18N.p('Jam', 'Time'), f: (x) => x.start && x.end ? `${esc(x.start)}–${esc(x.end)}` : '—' },
+      { h: 'JP', cls: 'r', f: (x) => `<b>${Pengganti.jpOf(x)}</b>` },
+      { h: 'Status', f: (x) => String(x.status || 'Terlaksana') === 'Batal'
+        ? `<span class="badge b-coral">${I18N.p('Batal', 'Cancelled')}</span>`
+        : `<span class="badge b-ok">${I18N.p('Terlaksana', 'Done')}</span>` },
+      { h: I18N.p('Alasan', 'Reason'), f: (x) => esc(x.alasan || '') },
+      { h: '', cls: 'act', f: (x) => `<button class="btn xs" data-act="pgUbah" data-id="${esc(x.id)}">${ic('edit')}</button>
+        <button class="btn xs ghost" data-act="pgHapus" data-id="${esc(x.id)}">${ic('trash')}</button>` }
+    ], list, { emptyMsg: I18N.p('Belum ada catatan bulan ini. Tekan "Catat mengajar tambahan" setiap kali Ustadz menggantikan guru lain.',
+      'No records this month. Press "Record extra teaching" whenever you substitute for another teacher.') })}</div>`;
+
+    return kartuFluktuasi + kartuCatatan;
+  }
+};
+
+/* =====================================================================
  * TAUTAN PUBLIK — alamat GitHub Pages yang dikunci
  *
  * Alamat /exec panjang, dan yang lebih penting: ia berubah kalau suatu saat
@@ -14087,13 +14937,29 @@ const Publik = {
     try { return /^(on|ya|true|1)$/i.test(String((Store.settings() || {}).githubBaseLocked || '')); }
     catch (e) { return false; }
   },
-  /** Alamat salah satu portal, atau '' bila alamat dasar belum ditetapkan. */
+
+  /** Tautan yang ditulis sendiri per halaman, menimpa yang diturunkan dari
+   *  alamat dasar. Disimpan sebagai satu baris JSON di Settings supaya
+   *  menambah halaman baru nanti tidak perlu menambah baris setelan lagi. */
+  kustom() {
+    try { return JSON.parse(String((Store.settings() || {}).tautanKustom || '{}')) || {}; }
+    catch (e) { return {}; }
+  },
+  kustomSatu(bagian) {
+    const v = this.kustom()[bagian];
+    return typeof v === 'string' ? v.trim() : '';
+  },
+
+  /** Alamat salah satu portal: tulisan sendiri dulu, baru turunan alamat
+   *  dasar, dan '' bila dua-duanya belum ada (pemanggil memakai /exec). */
   ke(bagian) {
+    const k = this.kustomSatu(bagian);
+    if (k) return k;
     const b = this.dasar();
     const sub = this.SUB[bagian];
     return b && sub ? b + '/' + sub + '/' : '';
   },
-  aktif() { return !!this.dasar(); }
+  aktif() { return !!this.dasar() || Object.keys(this.kustom()).length > 0; }
 };
 
 const CbtHub = {
@@ -14111,12 +14977,13 @@ const CbtHub = {
     if (this._st && !paksa) return this._st;
     this._galat = '';
     try {
-      const [st, pt, uj] = await Promise.all([
+      const [st, pt, uj, pn] = await Promise.all([
         Api.call('jembatan', { op: 'status' }),
         Api.call('jembatan', { op: 'pantau' }),
-        Api.call('jembatan', { op: 'daftarUjian' })
+        Api.call('jembatan', { op: 'daftarUjian' }),
+        Api.call('jembatan', { op: 'petaNilai' })
       ]);
-      this._st = st; this._pantau = pt; this._ujian = uj;
+      this._st = st; this._pantau = pt; this._ujian = uj; this._peta = pn;
     } catch (e) {
       this._galat = (e && e.message) || String(e);
       /* Kalau aksi "jembatan" belum ada di Apps Script yang berjalan,
@@ -14184,6 +15051,11 @@ const CbtHub = {
    *  publik GitHub bila sudah ditetapkan; sisanya tetap di /exec karena
    *  memang hanya bisa dilayani Apps Script. */
   tautan(bagian) {
+    /* Tautan yang ditulis sendiri berlaku untuk SEMUA halaman, termasuk yang
+       tidak bisa dihosting statis — kalau Ustadz punya alamat pendek sendiri
+       yang meneruskan ke /exec, itu tetap dihormati. */
+    const k = Publik.kustomSatu(bagian);
+    if (k) return k;
     const publik = { cbt: 'cbt', beranda: 'siswa', klien: 'klien' }[bagian];
     if (publik) {
       const p = Publik.ke(publik);
@@ -14259,23 +15131,48 @@ const CbtHub = {
     ], list, { emptyMsg: '' })}</div>`;
   },
 
+  /** Komponen Daftar Nilai yang akan dipakai satu ujian, berikut asalnya. */
+  petaUjian(u) {
+    const p = (this._peta && this._peta.peta) || {};
+    const bawaan = (this._peta && this._peta.bawaan) || {};
+    const id = String(u.exam_id);
+    if (Object.prototype.hasOwnProperty.call(p, id)) {
+      return { komponen: String(p[id] || ''), sendiri: true };
+    }
+    return { komponen: String(bawaan[String(u.kategori || '')] || ''), sendiri: false };
+  },
+
   kartuUjian() {
     const list = ((this._ujian && this._ujian.ujian) || []).filter((u) => u.dirilis);
     const sibukSerap = (id) => this._sibuk === 'serap:' + id || this._sibuk === 'serap:';
     return `<div class="card mb"><h3>${ic('table')}${I18N.p('Nilai ujian yang sudah dirilis', 'Released exam scores')}</h3>
       <p class="mini muted" style="margin-top:0">${I18N.p(
-      'Nilai mengalir sendiri ke legger saat guru menekan "Umumkan nilai" di portal CBT. Tombol di sini hanya diperlukan untuk ujian yang dirilis sebelum penggabungan dipasang.',
-      'Scores flow into the ledger by themselves when a teacher presses "Announce scores" in the CBT portal. The buttons here are only needed for exams released before the merge was installed.')}</p>
+      'Nilai mengalir sendiri saat guru menekan "Umumkan nilai" di portal CBT: masuk ke Daftar Nilai sebagai komponen penilaian, lalu ke legger. Tombol di sini hanya diperlukan untuk ujian yang dirilis sebelum penggabungan dipasang.',
+      'Scores flow by themselves when a teacher presses "Announce scores" in the CBT portal: into the gradebook as an assessment component, then into the ledger. The buttons here are only needed for exams released before the merge was installed.')}</p>
       ${list.length ? UI.table([
       { h: I18N.p('Ujian', 'Exam'), f: (u) => `<div class="t">${esc(u.judul)}</div><div class="s">${esc(u.mapel || '')} · ${esc(u.kategori || '')}</div>` },
       { h: I18N.p('Kelas', 'Classes'), f: (u) => esc(u.kelas || '—') },
+      {
+        h: I18N.p('Direkap sebagai', 'Recorded as'), f: (u) => {
+          const p = this.petaUjian(u);
+          const isi = p.komponen
+            ? `<span class="badge ${p.sendiri ? 'b-violet' : 'b-sky'}">${esc(p.komponen)}</span>`
+            : `<span class="badge">${I18N.p('tidak direkap', 'not recorded')}</span>`;
+          return `${isi}<button class="btn xs ghost" data-act="cbtPeta" data-id="${esc(u.exam_id)}"
+            data-k="${esc(u.kategori || '')}" data-j="${esc(u.judul || '')}"
+            title="${esc(I18N.p('Ubah komponen Daftar Nilai untuk ujian ini', 'Change the gradebook component for this exam'))}">${ic('edit')}</button>`;
+        }
+      },
       { h: I18N.p('Mulai', 'Started'), f: (u) => esc(String(u.mulai || '').slice(0, 16)) },
       {
         h: '', cls: 'act', f: (u) => `<button class="btn xs" data-act="cbtSerap" data-id="${esc(u.exam_id)}"
-          ${sibukSerap(u.exam_id) ? 'disabled' : ''}>${ic('download')}${sibukSerap(u.exam_id) ? I18N.p('Menarik…', 'Pulling…') : I18N.p('Tarik ke legger', 'Pull to ledger')}</button>`
+          ${sibukSerap(u.exam_id) ? 'disabled' : ''}>${ic('download')}${sibukSerap(u.exam_id) ? I18N.p('Menarik…', 'Pulling…') : I18N.p('Rekap ulang', 'Re-record')}</button>`
       }
     ], list, { emptyMsg: '' })
-        : `<div class="note">${I18N.p('Belum ada ujian yang nilainya dirilis.', 'No exam scores have been released yet.')}</div>`}</div>`;
+        : `<div class="note">${I18N.p('Belum ada ujian yang nilainya dirilis.', 'No exam scores have been released yet.')}</div>`}
+      <div class="hint">${I18N.p(
+      'Ujian berkategori Daily Test, Mid Test, dan Final Test dipetakan otomatis ke UH, MID TEST, dan FINAL TEST. Ujian terstandar (IELTS, SAT, TOEFL, UTBK, TKA) sengaja tidak dipetakan — nilainya tetap masuk legger dengan nama ujiannya sendiri, supaya tidak mengotori kolom UH di rapor. Lencana ungu berarti pemetaannya Ustadz atur sendiri.',
+      'Daily Test, Mid Test, and Final Test exams map automatically to UH, MID TEST, and FINAL TEST. Standardised tests (IELTS, SAT, TOEFL, UTBK, TKA) are deliberately not mapped — their scores still reach the ledger under their own exam name, so they do not pollute the UH column in reports. A violet badge means you set the mapping yourself.')}</div></div>`;
   },
 
   /** Alamat publik GitHub Pages: menetapkan, mengunci, dan mengunduh berkasnya. */
@@ -14304,9 +15201,12 @@ const CbtHub = {
         <p class="mini muted">${I18N.p(
         'Seluruh tautan yang dibagikan ke siswa dan klien memakai alamat ini, bukan alamat /exec. Alamatnya tidak dapat diubah dari aplikasi maupun lewat API — itu disengaja, supaya tautan yang sudah dicetak di kartu peserta dan kode QR tidak pernah mati.',
         'Every link shared with students and clients uses this address, not the /exec one. It cannot be changed from the app or through the API — deliberately, so links already printed on participant cards and QR codes never break.')}</p>
-        <div class="note warn">${I18N.p(
-        'Kalau benar-benar harus diubah: buka proyek Apps Script → Run → bukaKunciTautanPublik. Hanya pemilik proyek yang bisa. Setelan ini juga tersimpan di lembar Settings, jadi siapa pun yang bisa membuka spreadsheet tetap bisa menyuntingnya langsung di selnya.',
-        'If it truly must change: open the Apps Script project → Run → bukaKunciTautanPublik. Only the project owner can. The setting also lives in the Settings sheet, so anyone who can open the spreadsheet can still edit the cell directly.')}</div>
+        <div class="note">${I18N.p(
+        'Tersimpan permanen — bertahan walau aplikasi ditutup, perangkat berganti, atau Apps Script di-deploy ulang. Tetap bisa diubah di sini kalau suatu saat repo-nya pindah; perubahannya minta konfirmasi lebih dulu karena tautan yang sudah dicetak akan ikut berubah.',
+        'Saved permanently — it survives closing the app, switching devices, and redeploying Apps Script. It can still be changed here if the repo ever moves; the change asks for confirmation first because links already printed would change with it.')}</div>
+        <div class="btn-row">
+          <button class="btn" data-act="cbtBukaKunciGh" ${sibuk ? 'disabled' : ''}>${ic('edit')}${I18N.p('Ubah alamat ini', 'Change this address')}</button>
+        </div>
         ${unduh}</div>`;
     }
 
@@ -14324,11 +15224,11 @@ const CbtHub = {
       ${dasar ? `<div class="note">${I18N.p('Yang akan jadi tautannya:', 'The links would become:')}
         <br><code>${esc(dasar)}/siswa/</code><br><code>${esc(dasar)}/klien/</code><br><code>${esc(dasar)}/cbt/</code></div>` : ''}
       <div class="note warn">${I18N.p(
-      'Sekali dikunci, alamat ini tidak bisa diubah lagi dari aplikasi maupun API. Pastikan dulu ketiga berkas di bawah sudah diunggah dan ketiga alamat di atas benar-benar bisa dibuka.',
-      'Once locked, this address cannot be changed from the app or the API. Make sure the three files below are uploaded and all three addresses above actually open first.')}</div>
+      'Sebelum ditetapkan: unggah dulu ketiga berkas di bawah, lalu buka ketiga alamat di atas di peramban dan pastikan benar-benar jalan. Setelah ditetapkan, tautan inilah yang dibagikan ke siswa dan klien.',
+      'Before setting this: upload the three files below, then open all three addresses above in a browser and make sure they actually work. Once set, these are the links shared with students and clients.')}</div>
       <div class="btn-row">
-        <button class="btn" data-act="cbtSimpanGh" ${sibuk ? 'disabled' : ''}>${ic('check')}${I18N.p('Simpan dulu (belum dikunci)', 'Save for now (not locked)')}</button>
-        <button class="btn mod" data-act="cbtKunciGh" ${sibuk ? 'disabled' : ''}>${ic('lock')}${I18N.p('Kunci permanen', 'Lock permanently')}</button>
+        <button class="btn" data-act="cbtSimpanGh" ${sibuk ? 'disabled' : ''}>${ic('check')}${I18N.p('Simpan', 'Save')}</button>
+        <button class="btn mod" data-act="cbtKunciGh" ${sibuk ? 'disabled' : ''}>${ic('lock')}${I18N.p('Simpan & tetapkan', 'Save & set')}</button>
       </div>
       ${unduh}</div>`;
   },
@@ -14352,12 +15252,21 @@ const CbtHub = {
       ${UI.table([
       { h: I18N.p('Halaman', 'Page'), f: (r) => `<div class="t">${esc(r[1])}</div><div class="s">${esc(r[2])}</div>` },
       {
-        h: '', cls: 'act', f: (r) => adaUrl
-          ? `<button class="btn xs" data-act="cbtSalin" data-u="${esc(this.tautan(r[0]))}">${ic('copy')}${I18N.p('Salin', 'Copy')}</button>
-             <a class="btn xs" href="${esc(this.tautan(r[0]))}" target="_blank" rel="noopener">${ic('eye')}${I18N.p('Buka', 'Open')}</a>`
-          : `<code class="mini">?p=${esc(r[0])}</code>`
+        h: '', cls: 'act', f: (r) => {
+          const u = this.tautan(r[0]);
+          const sendiri = !!Publik.kustomSatu(r[0]);
+          return (u
+            ? `<button class="btn xs" data-act="cbtSalin" data-u="${esc(u)}">${ic('copy')}${I18N.p('Salin', 'Copy')}</button>
+               <a class="btn xs" href="${esc(u)}" target="_blank" rel="noopener">${ic('eye')}${I18N.p('Buka', 'Open')}</a>`
+            : `<code class="mini">?p=${esc(r[0])}</code>`)
+            + `<button class="btn xs ${sendiri ? 'mod' : 'ghost'}" data-act="cbtUbahTautan" data-n="${esc(r[0])}"
+                 title="${esc(I18N.p('Ganti dengan tautan sendiri (mis. GitHub Pages)', 'Replace with your own link (e.g. GitHub Pages)'))}">${ic('edit')}</button>`;
+        }
       }
-    ], b, { emptyMsg: '' })}</div>`;
+    ], b, { emptyMsg: '' })}
+      <div class="hint">${I18N.p(
+      'Tombol pensil mengganti tautan satu halaman dengan tautan Ustadz sendiri. Tersimpan permanen dan tetap bisa diubah lagi kapan saja; dikosongkan berarti kembali ke tautan bawaan.',
+      'The pencil replaces one page’s link with your own. It is saved permanently and can still be changed any time; clearing it returns to the default link.')}</div></div>`;
   }
 };
 
@@ -14407,18 +15316,18 @@ ACT.cbtKunciGh = async () => {
      bukan sekadar "yakin?": yang dikunci ini akan dicetak di kartu peserta. */
   const b = esc(bersih);
   const ya = await UI.confirm(I18N.p(
-    `<b>Alamat yang dikunci:</b><br><code>${b}</code><br><br>`
-    + 'Sesudah ini aplikasi dan API <b>tidak bisa</b> mengubahnya lagi. Membukanya hanya lewat '
-    + '<code>Run &gt; bukaKunciTautanPublik</code> di editor Apps Script.<br><br>'
+    `<b>Alamat yang ditetapkan:</b><br><code>${b}</code><br><br>`
+    + 'Mulai sekarang tautan inilah yang dibagikan ke siswa dan klien, dan ia tersimpan permanen. '
+    + 'Masih bisa diubah lagi nanti lewat tombol <b>Ubah alamat ini</b>.<br><br>'
     + 'Pastikan dulu ketiga alamat ini benar-benar bisa dibuka di peramban:<br>'
     + `<code>${b}/siswa/</code><br><code>${b}/klien/</code><br><code>${b}/cbt/</code>`,
-    `<b>Address to lock:</b><br><code>${b}</code><br><br>`
-    + 'After this, neither the app nor the API can change it. Unlocking is only possible via '
-    + '<code>Run &gt; bukaKunciTautanPublik</code> in the Apps Script editor.<br><br>'
+    `<b>Address to set:</b><br><code>${b}</code><br><br>`
+    + 'From now on these are the links shared with students and clients, and it is saved permanently. '
+    + 'It can still be changed later with the <b>Change this address</b> button.<br><br>'
     + 'Make sure all three of these actually open in a browser first:<br>'
     + `<code>${b}/siswa/</code><br><code>${b}/klien/</code><br><code>${b}/cbt/</code>`),
-    { title: I18N.p('Kunci alamat publik permanen?', 'Lock the public address permanently?'),
-      ok: I18N.p('Ya, kunci permanen', 'Yes, lock permanently'), danger: true });
+    { title: I18N.p('Tetapkan alamat publik?', 'Set the public address?'),
+      ok: I18N.p('Ya, tetapkan', 'Yes, set it') });
   if (!ya) return;
   CbtHub._sibuk = 'gh'; App.refresh();
   try {
@@ -14427,6 +15336,107 @@ ACT.cbtKunciGh = async () => {
     await Store.pull({ force: true });
     UI.toast(r.pesan || I18N.p('Alamat dikunci.', 'Address locked.'), 'ok', 7000);
   } catch (e) { UI.toast((e && e.message) || String(e), 'err', 7000); }
+  CbtHub._sibuk = ''; App.refresh();
+};
+
+/** Mengatur komponen Daftar Nilai untuk satu ujian CBT. */
+ACT.cbtPeta = (d) => {
+  const id = (d && d.id) || '';
+  if (!id || CbtHub._sibuk) return;
+  const u = (((CbtHub._ujian || {}).ujian) || []).filter((x) => String(x.exam_id) === String(id))[0] || {};
+  const p = CbtHub.petaUjian(u);
+  const bawaan = ((CbtHub._peta || {}).bawaan || {})[String(d.k || '')] || '';
+  /* Pilihan dibatasi ke kosakata komponen yang memang dikenal legger dan
+     rapor. Menulis bebas akan membuat komponen yang tidak pernah terbaca
+     komponenNorm_, dan nilainya diam-diam tidak muncul di mana pun. */
+  const opsi = [['', I18N.p('— tidak direkap ke Daftar Nilai —', '— not recorded in the gradebook —')]]
+    .concat([1, 2, 3].map((n) => [`UNIT ${n} — Daily Test`, `UH — UNIT ${n} — Daily Test`]))
+    .concat([['MID TEST', 'MID TEST'], ['FINAL TEST', 'FINAL TEST']]);
+  UI.form({
+    title: I18N.p('Rekap sebagai apa?', 'Record as what?'),
+    note: I18N.p(
+      `Ujian <b>${esc(d.j || '')}</b> berkategori <b>${esc(d.k || '-')}</b>.`
+      + (bawaan ? ` Tanpa pengaturan sendiri, ia direkap sebagai <b>${esc(bawaan)}</b>.`
+        : ' Kategori ini tidak dipetakan otomatis, jadi nilainya hanya masuk legger dengan nama ujiannya.'),
+      `Exam <b>${esc(d.j || '')}</b> has category <b>${esc(d.k || '-')}</b>.`
+      + (bawaan ? ` Without your own setting it is recorded as <b>${esc(bawaan)}</b>.`
+        : ' This category is not mapped automatically, so its scores only reach the ledger under the exam name.')),
+    values: { komponen: p.komponen },
+    fields: [
+      { k: 'komponen', l: I18N.p('Komponen Daftar Nilai', 'Gradebook component'), t: 'select', o: opsi, full: 1 },
+      { k: 'bawaan', l: '', t: 'html', full: 1,
+        html: `<label><input type="checkbox" id="pk_bawaan"> ${esc(I18N.p('Kembalikan ke pemetaan otomatis menurut kategori',
+          'Return to the automatic mapping by category'))}</label>` }
+    ],
+    onSubmit: async (v) => {
+      const kembali = !!(document.querySelector('#pk_bawaan') || {}).checked;
+      const r = await Api.call('jembatan', kembali
+        ? { op: 'setPetaNilai', exam_id: id, hapus: true }
+        : { op: 'setPetaNilai', exam_id: id, komponen: v.komponen || '' });
+      CbtHub._peta = { peta: r.peta, bawaan: (CbtHub._peta || {}).bawaan || {} };
+      UI.toast(I18N.p('Pemetaan disimpan. Tekan "Rekap ulang" agar nilainya ikut berpindah.',
+        'Mapping saved. Press "Re-record" so the scores move too.'), 'ok', 6000);
+      App.refresh();
+      return true;
+    }
+  });
+};
+
+ACT.cbtBukaKunciGh = async () => {
+  if (CbtHub._sibuk) return;
+  const ya = await UI.confirm(I18N.p(
+    'Tautan yang sudah dibagikan ke siswa dan klien — termasuk yang sudah dicetak di kartu peserta dan kode QR — ikut berubah begitu alamatnya diganti. '
+    + 'Yang sudah terlanjur tersebar tidak akan menunjuk ke tempat yang benar lagi.<br><br>Tetap buka untuk diubah?',
+    'Links already shared with students and clients — including those printed on participant cards and QR codes — change with the address. '
+    + 'Whatever is already out there will no longer point anywhere correct.<br><br>Open it for editing anyway?'),
+    { title: I18N.p('Ubah alamat publik?', 'Change the public address?'),
+      ok: I18N.p('Ya, buka untuk diubah', 'Yes, open for editing'), danger: true });
+  if (!ya) return;
+  CbtHub._sibuk = 'gh'; App.refresh();
+  try {
+    const r = await Api.call('jembatan', { op: 'bukaKunci' });
+    await Store.pull({ force: true });
+    UI.toast(r.pesan || I18N.p('Alamat bisa diubah lagi.', 'The address can be edited again.'), 'ok', 6000);
+  } catch (e) { UI.toast((e && e.message) || String(e), 'err', 6000); }
+  CbtHub._sibuk = ''; App.refresh();
+};
+
+/** Mengganti tautan SATU halaman dengan tautan sendiri. */
+ACT.cbtUbahTautan = async (d) => {
+  const n = (d && d.n) || '';
+  if (!n || CbtHub._sibuk) return;
+  const judul = {
+    cbt: I18N.p('Portal ujian siswa', 'Student exam portal'),
+    'cbt-guru': I18N.p('Dasbor guru & admin CBT', 'CBT teacher & admin dashboard'),
+    panduan: I18N.p('Panduan peserta', 'Participant guide'),
+    beranda: I18N.p('Beranda siswa', 'Student home'),
+    siswa: I18N.p('Pengumpulan tugas', 'Task submission'),
+    klien: I18N.p('Portal klien', 'Client portal'),
+    mph: I18N.p('Dasbor ini', 'This dashboard')
+  }[n] || n;
+  const kini = Publik.kustomSatu(n);
+  const v = await UI.prompt(
+    I18N.p(`Tautan untuk “${judul}”`, `Link for “${judul}”`),
+    {
+      value: kini,
+      ph: 'https://namaanda.github.io/mph/cbt/',
+      hint: I18N.p('Tersimpan permanen dan bisa diubah lagi kapan saja. Dikosongkan = kembali ke tautan bawaan.',
+        'Saved permanently and changeable any time. Leave empty to return to the default link.')
+    });
+  if (v === null) return;                      // dibatalkan
+  const bersih = String(v || '').trim();
+  if (bersih && !/^https?:\/\//i.test(bersih)) {
+    UI.toast(I18N.p('Tautan harus diawali http:// atau https://', 'The link must start with http:// or https://'), 'err');
+    return;
+  }
+  CbtHub._sibuk = 'tautan'; App.refresh();
+  try {
+    const peta = Publik.kustom();
+    if (bersih) peta[n] = bersih; else delete peta[n];
+    await Store.saveSettings({ tautanKustom: JSON.stringify(peta) });
+    UI.toast(bersih ? I18N.p('Tautan disimpan.', 'Link saved.')
+      : I18N.p('Kembali ke tautan bawaan.', 'Back to the default link.'), 'ok');
+  } catch (e) { UI.toast((e && e.message) || String(e), 'err'); }
   CbtHub._sibuk = ''; App.refresh();
 };
 
@@ -16847,7 +17857,13 @@ const Dash = {
     const t = todayISO();
     const dow = new Date().getDay() || 7;
     const jpMin = Number(st.jpMinutes) || 40;
-    const jp = School.jpPerWeek(jpMin);
+    const jpDasar = School.jpPerWeek(jpMin);
+    /* Beban mengajar minggu ini = jadwal tetap + jam menggantikan guru lain,
+       mitigasi tugas, dan jam tambahan yang tercatat minggu ini. Tanpa
+       penjumlahan ini angkanya selalu sama setiap minggu, dan minggu yang
+       benar-benar padat tidak pernah terlihat. */
+    const jpTambah = (typeof Pengganti !== 'undefined' ? Pengganti.jpMinggu(todayISO()) : 0);
+    const jp = round2(jpDasar + jpTambah);
     const todaySched = Store.where('Schedule', (s) => Number(s.day) === dow && !School.isDuty(s)).length;
     const activeTasks = Store.where('Assignments', (a) => !['Selesai', 'Dinilai'].includes(a.status)).length;
     const openDl = Store.where('Deadlines', (d) => d.status !== 'Done').length;
@@ -16865,7 +17881,7 @@ const Dash = {
       : I18N.p('tidak ada yang mendesak di sekolah hari ini.', 'nothing urgent at school today.'))}
       <div class="hub">
         ${this.card('school', `<div class="hc-stats" style="grid-template-columns:repeat(3,1fr)">
-          ${this.stat(I18N.p('Beban mengajar', 'Teaching load'), `${jp} JP<span class="muted mini"> / ${esc(st.jpTarget || '')}</span>`)}
+          ${this.stat(I18N.p('Beban mengajar', 'Teaching load'), `${jp} JP<span class="muted mini"> / ${esc(st.jpTarget || '')}${jpTambah ? ` · +${jpTambah} pengganti` : ''}</span>`)}
           ${this.stat(I18N.p('Tugas aktif', 'Active tasks'), activeTasks)}
           ${wl ? this.stat(I18N.p('Total JP / minggu', 'Total periods / week'), `${wl.total} <span class="badge b-${wl.lv.color}">${esc(I18N.p(wl.lv.id.split(' —')[0], wl.lv.en))}</span>`) : ''}</div>
           <div class="hc-note">${todaySched ? I18N.p(`${todaySched} jam pelajaran hari ini`, `${todaySched} teaching slots today`) : I18N.p('Tidak ada jadwal hari ini', 'No classes today')}${openDl ? I18N.p(` — ${openDl} deadline dinas terbuka`, ` — ${openDl} open official deadlines`) : ''}.</div>`, 'wide')}
@@ -16974,9 +17990,13 @@ const Dash = {
     const [drLabel, drColor] = Fin.ratioLabel(dr.ratio);
     const nextInst = Store.where('LoanInstallments', (i) => i.status !== 'Lunas').sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)))[0];
     const loanOf = nextInst ? Store.get('Loans', nextInst.loanId) : null;
+    const TB = Fin.tagihanBulan(thisMonth());
     const t = todayISO();
     const bySource = {};
-    Store.where('Transactions', (x) => String(x.date).slice(0, 7) === mk && x.type !== 'Pengeluaran')
+    /* Dulu di sini tertulis `x.type !== 'Pengeluaran'`, padahal kolom type berisi
+       'income'/'expense' — jadi saringannya tidak pernah membuang apa pun dan
+       kartu "pemasukan per sumber" diam-diam ikut menjumlahkan pengeluaran. */
+    Store.where('Transactions', (x) => String(x.date).slice(0, 7) === mk && x.type === 'income')
       .forEach((x) => { const k = x.source || 'lain'; bySource[k] = (bySource[k] || 0) + (Number(x.amount) || 0); });
     const alerts = Alerts.compute().filter((a) => a.mod === 'finance');
     const piutang = sum(Store.all('Projects'), (p) => Fin.projectRemaining(p)) + sum(Store.all('TutorClasses'), (c) => Fin.tutorRemaining(c));
@@ -16992,7 +18012,7 @@ const Dash = {
           ${this.stat(I18N.p('Masuk ', 'In ') + BLN[+mk.slice(5) - 1], idrShort(m.incomeOps), 'pos')}
           ${this.stat(I18N.p('Keluar ', 'Out ') + BLN[+mk.slice(5) - 1], idrShort(m.expense), 'neg')}
           ${this.stat(I18N.p('Rasio cicilan', 'Debt ratio'), `${Math.round(dr.ratio * 100)}% <span class="badge b-${drColor}">${drLabel}</span>`)}</div>
-          <div class="hc-note">${nextInst ? `${I18N.p('Cicilan terdekat', 'Next instalment')}: <b>${esc(loanOf ? loanOf.creditor : '')}</b> ${idr(nextInst.amount)} — ${fmtDate(nextInst.dueDate)} ${UI.dueBadge(nextInst.dueDate)}` : I18N.p('Tidak ada tagihan cicilan.', 'No instalments due.')}</div>`, 'wide finance')}
+          <div class="hc-note">${TB.left ? `${I18N.p('Sisa tagihan bulan ini', 'Still due this month')}: <b class="neg">${idr(TB.left)}</b> — ${TB.nLeft} ${I18N.p('tagihan', 'items')}${nextInst ? ` · ${I18N.p('terdekat', 'next')} ${esc(loanOf ? loanOf.creditor : '')} ${fmtDate(nextInst.dueDate)} ${UI.dueBadge(nextInst.dueDate)}` : ''}` : I18N.p('Tidak ada tagihan tersisa bulan ini.', 'No bills left this month.')}</div>`, 'wide finance')}
         ${this.bridge('school', I18N.p('Sumber: Sekolah', 'Source: School'),
       `<div class="hc-stats">${this.stat(I18N.p('Masuk bulan ini', 'In this month'), idrShort(bySource.school || 0), (bySource.school || 0) ? 'pos' : '')}</div>
           <div class="hc-note">${I18N.p('Gaji, honor, dan tunjangan dari mode Sekolah.', 'Salary, fees, and allowances from School mode.')}</div>`)}
@@ -17006,7 +18026,7 @@ const Dash = {
         <div class="card"><h3>${ic('pay')}${I18N.p('Pemasukan bulan ini per sumber', 'This month’s income by source')}</h3>
           ${Object.keys(bySource).length ? `<div class="bars">${Object.keys(bySource).sort((a, b) => bySource[b] - bySource[a]).map((k) => {
           const tot = Object.values(bySource).reduce((a, b) => a + b, 0) || 1;
-          return `<div class="bar-row" style="grid-template-columns:110px 1fr auto"><span>${esc(label[k] || k)}</span>
+          return `<div class="bar-row" style="grid-template-columns:110px 1fr auto"><span>${esc(label[k] || SOURCE_LABEL[k] || k)}</span>
             <div class="progress" style="--mc:var(--t3)"><i style="width:${Math.round(bySource[k] / tot * 100)}%"></i></div>
             <span class="mini nowrap">${idrShort(bySource[k])}</span></div>`;
         }).join('')}</div>` : UI.empty(I18N.p('Belum ada pemasukan bulan ini', 'No income this month'), '')}</div>
@@ -21986,7 +23006,7 @@ MODULES.school.subs = [['jadwal', 'Jadwal & Kalender'], ['ajar', 'Riwayat Pembel
 /* [kunci grup, judul, daftar halaman di dalamnya] */
 const SEKOLAH_GRUP = [
   ['aktivitas', 'School Activity',
-    ['jadwal', 'ajar', 'kegiatan', 'kehadiran', 'deadline', 'jobdesc', 'logbook', 'keuangan', 'lembar']],
+    ['jadwal', 'pengganti', 'ajar', 'kegiatan', 'kehadiran', 'deadline', 'jobdesc', 'logbook', 'keuangan', 'lembar']],
   ['penilaian', 'Score List & Task',
     ['ledger', 'tugas', 'tugassiswa', 'cbt']],
   ['rapor', 'Students Report',
@@ -21996,7 +23016,7 @@ const SEKOLAH_GRUP = [
 /* Judul tiap halaman dalam — diambil dari daftar sub lama supaya tidak ada
    yang berganti nama diam-diam. */
 const SEKOLAH_JUDUL = {
-  jadwal: 'Jadwal & Kalender', ajar: 'Riwayat Pembelajaran', kegiatan: 'Kegiatan & Appointment',
+  jadwal: 'Jadwal & Kalender', pengganti: 'Pengganti & Beban JP', ajar: 'Riwayat Pembelajaran', kegiatan: 'Kegiatan & Appointment',
   kehadiran: 'Kehadiran & TP', deadline: 'Deadline Dinas', jobdesc: 'Jobdesc',
   logbook: 'Logbook & KPI', keuangan: 'Gaji & Honor', lembar: 'Lembar Excel',
   ledger: 'Ledger', tugas: 'Tugas & Ujian', tugassiswa: 'Tugas Siswa', cbt: 'Ujian CBT',
