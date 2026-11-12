@@ -1760,8 +1760,7 @@ span.rs-pill { cursor: default; }
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
     }
   </script>
-  <script>
-/* =====================================================================
+  <script>/* =====================================================================
  * MY PRODUCTIVITY HUB — Frontend (vanilla JS, tanpa build step)
  * Database: Google Sheets via Google Apps Script Web App
  * Mode lokal (tanpa server) tersedia untuk mencoba / cadangan offline.
@@ -1773,7 +1772,7 @@ span.rs-pill { cursor: default; }
 const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbyV8s3_yYClutUiPfF7Jam_Tww6QFJkoZKABIFBEvEV_jdR6fRASdixXHGxjj043WDsJw/exec';
 const DEFAULT_API_KEY = 'mph_86556476be2b4bdcbc46ae435d41f2cc';
 
-const APP_VERSION = '5.8.0';
+const APP_VERSION = '5.9.0';
 
 /* Deteksi: dibuka langsung dari URL Apps Script (HtmlService) atau dari hosting statis. */
 const BOOT = (() => {
@@ -2600,7 +2599,7 @@ const Store = {
  * ------------------------------------------------------------------- */
 const MODULES = {
   school: { nav: 'Sekolah & Mengajar', title: 'Sekolah & Kinerja Mengajar', short: 'Sekolah', icon: 'school', desc: 'Jadwal, logbook, KPI, tugas & ujian',
-    subs: [['jadwal', 'Jadwal & Kalender'], ['tugas', 'Tugas & Ujian'], ['kegiatan', 'Kegiatan & Appointment'], ['deadline', 'Deadline Dinas'], ['kehadiran', 'Kehadiran & TP'], ['nilai', 'Rekap Nilai'], ['scorelist', 'Score List'], ['daftarnilai', 'Daftar Nilai'], ['tugassiswa', 'Tugas Siswa'], ['logbook', 'Logbook & KPI'], ['jobdesc', 'Jobdesc'], ['keuangan', 'Gaji & Honor'], ['lembar', 'Lembar Excel']] },
+    subs: [['jadwal', 'Jadwal & Kalender'], ['tugas', 'Tugas & Ujian'], ['kegiatan', 'Kegiatan & Appointment'], ['deadline', 'Deadline Dinas'], ['kehadiran', 'Kehadiran & TP'], ['nilai', 'Rekap Nilai'], ['scorelist', 'Score List'], ['tugassiswa', 'Tugas Siswa'], ['logbook', 'Logbook & KPI'], ['jobdesc', 'Jobdesc'], ['keuangan', 'Gaji & Honor'], ['lembar', 'Lembar Excel']] },
   pustaka: { nav: 'Pustaka Link & File', title: 'Pustaka Link & File', short: 'Pustaka', icon: 'link', desc: 'Tautan kerja & dokumen, tertata per kategori',
     subs: [['tautan', 'Tautan per Kategori'], ['file', 'Semua Berkas']] },
   planner: { nav: 'Agenda & Aktivitas', title: 'Agenda & Aktivitas', short: 'Agenda', icon: 'calendar', desc: 'Kalender terpadu, deadline, tugas, dan rekapnya',
@@ -10032,7 +10031,9 @@ const Tugas = {
         { k: 'maxScore', l: I18N.p('Nilai maksimum', 'Maximum score'), t: 'number', min: 1 },
         { k: 'status', l: 'Status', t: 'select', o: ['Terbuka', 'Tutup'] },
         { k: 'instruction', l: I18N.p('Instruksi untuk siswa', 'Instructions for students'), t: 'textarea', rows: 3, full: 1 },
-        { k: 'link', l: I18N.p('Tautan bahan (opsional)', 'Material link (optional)'), t: 'url', full: 1 },
+        { k: 'link', l: I18N.p('Tautan bahan (opsional)', 'Material link (optional)'), t: 'url', full: 1,
+        hint: I18N.p('Muncul di beranda siswa sebagai tombol “Buka bahan tugas” dan ikut terlihat saat ia mengumpulkan — pastikan aksesnya “siapa saja yang memiliki link”.',
+          'Shows up on the student home as a “Open task material” button and stays visible while they submit — set sharing to “anyone with the link”.') },
         { t: 'section', l: I18N.p('Tautan ke daftar nilai', 'Link to gradebook') },
         { k: 'bookId', l: I18N.p('Daftar nilai', 'Gradebook'), t: 'select', o: () => [['', I18N.p('— belum ditautkan —', '— not linked —')]].concat(books.map((b) => [b.id, `${b.name} (${b.className})`])) },
         { k: 'component', l: I18N.p('Komponen / section tujuan', 'Target component / section'), hint: I18N.p('Nilai tugas akan masuk ke kolom ini.', 'Task scores land in this column.') },
@@ -10184,19 +10185,27 @@ const Tugas = {
         ops.push({ op: 'update', sheet: '_Pengumpulan', id: m.id, row: { score: o.row.score, feedback: o.row.feedback, status: o.row.status } });
       });
     });
+    /* Nilai yang sudah terisi di ledger tidak ditimpa diam-diam. Yang
+       ditanyakan hanya yang benar-benar BERUBAH angkanya — menyimpan ulang
+       nilai yang sama tidak perlu persetujuan, dan kalau setiap penyimpanan
+       bertanya, persetujuannya berhenti dibaca. */
+    if (t.component && !(await Tugas.izinTimpa(t, ops))) return;
+
     if (ops.length) await Store.commit(ops);
     if (baru) UI.toast(I18N.p(`${baru} siswa yang belum mengumpulkan ikut dicatat dan dinilai.`,
       `${baru} students who had not submitted were recorded and graded.`), 'ok', 6000);
     if (nyebar) UI.toast(I18N.p(`Nilai kelompok diteruskan ke ${nyebar} anggota lain.`,
       `The group score was applied to ${nyebar} more members.`), 'ok', 6000);
-    if (t.bookId) {
+    /* Gerbangnya sekarang sel ledger tujuan, bukan tautan ke daftar nilai:
+       satu jalan saja dari tugas ke ledger. */
+    if (t.component) {
       try {
         const j = await Api.call('taskGrade', { taskId });
-        await Store.ensure('_NilaiSiswa', true);
-        UI.toast(I18N.p(`${ops.length} nilai disimpan, ${j.saved} masuk ke daftar nilai (${j.component})`, `${ops.length} scores saved, ${j.saved} pushed to the gradebook (${j.component})`), 'ok', 7000);
+        await Store.ensure('_Ledger', true);
+        UI.toast(I18N.p(`${ops.length} nilai disimpan, ${j.saved} masuk ke ledger (${j.component})`, `${ops.length} scores saved, ${j.saved} written into the ledger (${j.component})`), 'ok', 7000);
       } catch (e) { UI.toast(e.message, 'err', 7000); }
     } else {
-      UI.toast(I18N.p(`${ops.length} nilai disimpan. Tautkan tugas ke daftar nilai agar otomatis masuk rekap.`, `${ops.length} scores saved. Link this task to a gradebook so they flow into the recap.`), 'ok', 7000);
+      UI.toast(I18N.p(`${ops.length} nilai disimpan, tetapi tugas ini belum punya tujuan di ledger — buka "Ubah tugas" dan pilih jalurnya.`, `${ops.length} scores saved, but this task has no ledger target yet — open “Edit task” and pick its path.`), 'ok', 8000);
     }
     UI.closeAll();
     App.refresh();
@@ -10740,49 +10749,212 @@ Object.assign(CHG, {
 
 /* --------------- 33.2 ADMIN TUGAS — perbaikan & tambahan ----------- */
 
-/** Komponen daftar nilai yang dipilih, untuk dropdown tujuan nilai tugas. */
+/** Komponen daftar nilai yang dipilih — dipakai data lama saja.
+ *  Sejak jalur nilai disatukan, tugas TIDAK lagi ditautkan ke daftar nilai;
+ *  ia langsung menunjuk sel ledger tujuannya. */
 Tugas.compsOf = function (bookId) {
   const b = bookId ? Store.get('_DaftarNilai', bookId) : null;
   return b ? Rapor.comps(b) : [];
 };
 
+/* ---------------- kelas & mapel yang boleh dipilih ----------------- */
+
+/** Mata pelajaran yang diampu. Hanya dua, dan ejaannya dikunci: kolom
+ *  `subject` ini yang terbawa ke ledger, jadi "English", "english", dan
+ *  "English Wajib" yang ditulis bebas akan memecah satu mapel menjadi tiga
+ *  di rekapnya. */
+/* Dua mata pelajaran yang diajar, dengan ejaan yang SAMA PERSIS seperti
+   MAPEL_WAJIB_ dan MAPEL_LANJUT_ di Code.gs. Nama mapel ikut menjadi kunci sel
+   ledger, jadi menulis "English" di sini akan membuat kolom ketiga yang tidak
+   pernah terlihat di layar sementara nilai Score List tetap masuk ke
+   "English Wajib". Kalau ejaan di server diubah, ubah juga di sini. */
+const MAPEL_AJAR = ['English Wajib', 'English Lanjut'];
+
+/** Kelas yang sedang diampu, SATU BARIS PER ROMBEL dengan ejaan resminya.
+ *
+ *  Kenapa tidak sekadar mengumpulkan nama yang ada: di data nyata satu rombel
+ *  tertulis bermacam-macam — "XI 1", "XI.1", "EW (XI.1)" dari jadwal, "X1"
+ *  dari impor lama. Kalau semuanya dimasukkan ke dropdown, Ustadz disuguhi 30
+ *  baris yang sebagian menunjuk kelas yang sama, dan memilih yang "salah"
+ *  memecah rekapnya persis seperti mengetik bebas.
+ *
+ *  Aturannya dibuat SAMA PERSIS dengan kelasResmiPeta_ di Code.gs: nama
+ *  dikelompokkan dengan clsKey(), lalu per kelompok dipilih ejaan yang paling
+ *  banyak dipakai; kalau sama banyak, yang terpendek — sehingga "X 4"
+ *  mengalahkan "EW (X.4)" tanpa perlu daftar khusus. Rujukannya daftar siswa,
+ *  karena itulah ejaan yang dilihat Ustadz di layar nilai dan rapor.
+ *
+ *  Jadwal hanya dipakai untuk MENAMBAH rombel yang belum punya siswa aktif,
+ *  dan labelnya dirapikan lebih dulu: "EL XII PA" masuk sebagai "XII PA".
+ *  Kalau ejaan resmi di server diubah, ubah juga aturan di sini. */
+Tugas.kelasAktif = function () {
+  const hit = {};
+  const catat = (nama) => {
+    const n = String(nama || '').trim();
+    const k = clsKey(n);
+    if (!k || !n) return;
+    (hit[k] = hit[k] || {})[n] = (hit[k][n] || 0) + 1;
+  };
+  Store.all('_Siswa').forEach((r) => {
+    if (!r.className) return;
+    if (String(r.status || '') === 'Aktif' || !r.status) catat(r.className);
+  });
+  /* Rombel dari jadwal yang belum terwakili siswa aktif. Namanya dilewatkan
+     kelasRapi() dulu supaya yang masuk daftar adalah nama rombel, bukan label
+     mapel+kelas. */
+  Store.all('Schedule').forEach((r) => {
+    if (!r.className || School.isDuty(r)) return;
+    const k = clsKey(r.className);
+    if (!k || hit[k]) return;
+    catat(kelasRapi(r.className) || r.className);
+  });
+  return Object.keys(hit).map((k) => {
+    const kand = Object.keys(hit[k]);
+    kand.sort((a, b) => (hit[k][b] - hit[k][a]) || (a.length - b.length) || a.localeCompare(b));
+    return kand[0];
+  }).filter(Boolean).sort((a, b) => a.localeCompare(b, 'id', { numeric: true }));
+};
+
+/** Pilihan yang memuat nilai sekarang walau nilai itu sudah tidak ada di
+ *  daftarnya — supaya membuka tugas lama tidak diam-diam mengubah kelas
+ *  atau mapelnya hanya karena formnya dibuka. */
+function pilihanPlus(daftar, kini, labelLama) {
+  const out = daftar.map((x) => [x, x]);
+  const k = String(kini || '').trim();
+  if (k && daftar.indexOf(k) < 0) out.push([k, k + ' ' + (labelLama || I18N.p('(lama)', '(old)'))]);
+  return out;
+}
+
+/* --------- tujuan nilai di ledger: dijelaskan, bukan ditebak -------- */
+
+/** Tiga jalur masuk nilai, persis seperti bentuk ledgernya:
+ *   harian  → UNIT n — Reading/Listening/Writing/Speaking/Grammar
+ *   ulangan → UNIT n — Daily Test
+ *   ujian   → MID TEST / FINAL TEST
+ *  Sebelumnya semuanya satu daftar panjang berisi 20 sel; "Daily Test"
+ *  terselip di antara nama bagian unit, jadi nilai ulangan mudah sekali
+ *  masuk ke kolom harian tanpa ada yang menyadarinya. */
+const JALUR_NILAI = [
+  ['harian', 'Nilai unit harian', 'Unit daily score',
+    'Latihan dan tugas sehari-hari di dalam satu unit — masuk ke kolom bagiannya (Reading, Listening, Writing, Speaking, atau Grammar).',
+    'Everyday practice inside one unit — lands in that skill column.'],
+  ['ulangan', 'Ulangan harian unit', 'Unit test',
+    'Ulangan di akhir satu unit — masuk ke kolom Daily Test unit itu, terpisah dari nilai hariannya.',
+    'The test at the end of a unit — lands in that unit\u2019s Daily Test column, separate from its daily scores.'],
+  ['ujian', 'Ujian tengah / akhir semester', 'Mid / final exam',
+    'Mid Test atau Final Test — satu kolom tersendiri di ledger, bukan milik unit mana pun.',
+    'Mid Test or Final Test \u2014 its own ledger column, not part of any unit.'],
+  ['star', 'Star Points', 'Star Points',
+    'Poin bintang, bukan nilai akademik.', 'Star points, not an academic score.']
+];
+
+/** Nama sel ledger -> jalur + rinciannya, untuk mengisi ulang formnya. */
+Tugas.uraiTarget = function (comp) {
+  const c = String(comp || '').trim();
+  if (!c) return { jalur: '', unit: 1, bagian: UNIT_LIMA[0], ujian: 'MID TEST' };
+  if (c === 'STAR POINTS') return { jalur: 'star', unit: 1, bagian: UNIT_LIMA[0], ujian: 'MID TEST' };
+  if (c === 'MID TEST' || c === 'FINAL TEST') return { jalur: 'ujian', unit: 1, bagian: UNIT_LIMA[0], ujian: c };
+  const m = c.match(/^UNIT\s+(\d+)\s+\u2014\s+(.+)$/);
+  if (m) {
+    const u = Math.min(UNIT_MAX, Math.max(1, Number(m[1]) || 1));
+    const nama = m[2].trim();
+    if (nama === 'Daily Test') return { jalur: 'ulangan', unit: u, bagian: UNIT_LIMA[0], ujian: 'MID TEST' };
+    if (UNIT_LIMA.indexOf(nama) >= 0) return { jalur: 'harian', unit: u, bagian: nama, ujian: 'MID TEST' };
+  }
+  return { jalur: 'lama', unit: 1, bagian: UNIT_LIMA[0], ujian: 'MID TEST', lama: c };
+};
+
+/** Jalur + rincian -> nama sel ledger. Satu-satunya tempat nama sel itu
+ *  dirakit, supaya bentuknya tidak pernah berbeda antar layar. */
+Tugas.rakitTarget = function (v) {
+  if (v.jalur === 'harian') return komponenUnit(v.unit, v.bagian);
+  if (v.jalur === 'ulangan') return komponenUnit(v.unit, 'Daily Test');
+  if (v.jalur === 'ujian') return v.ujian;
+  if (v.jalur === 'star') return 'STAR POINTS';
+  if (v.jalur === 'lama') return v.lama || '';
+  return '';
+};
+
+/** Kotak pemilih tujuan nilai, berikut penjelasan tiap jalurnya. */
+Tugas.targetBox = function (comp) {
+  const u = Tugas.uraiTarget(comp);
+  const opt = (v, l, sel) => `<option value="${esc(v)}" ${v === sel ? 'selected' : ''}>${esc(l)}</option>`;
+  const jalurOpt = [`<option value="" ${u.jalur ? '' : 'selected'}>${I18N.p('\u2014 belum ditentukan \u2014', '\u2014 not chosen \u2014')}</option>`]
+    .concat(JALUR_NILAI.map((j) => opt(j[0], I18N.p(j[1], j[2]), u.jalur)))
+    .concat(u.jalur === 'lama' ? [opt('lama', I18N.p('Sel lama: ', 'Old cell: ') + u.lama, 'lama')] : [])
+    .join('');
+  const unitOpt = [];
+  for (let i = 1; i <= UNIT_MAX; i++) unitOpt.push(opt(String(i), 'Unit ' + i, String(u.unit)));
+  return `<div class="form" style="margin:0">
+      <div class="field full"><label for="tg-jalur">${I18N.p('Nilai tugas ini masuk sebagai', 'This task\u2019s score counts as')}</label>
+        <select class="select" id="tg-jalur">${jalurOpt}</select></div>
+      <div class="field" id="tg-wrap-unit"><label for="tg-unit">Unit</label>
+        <select class="select" id="tg-unit">${unitOpt.join('')}</select></div>
+      <div class="field" id="tg-wrap-bagian"><label for="tg-bagian">${I18N.p('Bagian', 'Skill')}</label>
+        <select class="select" id="tg-bagian">${UNIT_LIMA.map((x) => opt(x, x, u.bagian)).join('')}</select></div>
+      <div class="field" id="tg-wrap-ujian"><label for="tg-ujian">${I18N.p('Ujian', 'Exam')}</label>
+        <select class="select" id="tg-ujian">${opt('MID TEST', 'Mid Test', u.ujian)}${opt('FINAL TEST', 'Final Test', u.ujian)}</select></div>
+      <div class="field full"><div class="note" id="tg-target-note" style="margin:0"></div></div>
+    </div>`;
+};
+
+/** Menyalakan kotak yang sesuai dan menulis penjelasannya. */
+Tugas.targetPasang = function (box) {
+  const g = (id) => box.querySelector('#' + id);
+  const perbarui = () => {
+    const jalur = g('tg-jalur').value;
+    const tampil = (id, ya) => { const el = g(id); if (el) el.style.display = ya ? '' : 'none'; };
+    tampil('tg-wrap-unit', jalur === 'harian' || jalur === 'ulangan');
+    tampil('tg-wrap-bagian', jalur === 'harian');
+    tampil('tg-wrap-ujian', jalur === 'ujian');
+    const comp = Tugas.bacaTarget(box);
+    const def = JALUR_NILAI.filter((j) => j[0] === jalur)[0];
+    const nota = g('tg-target-note');
+    if (!nota) return;
+    if (!jalur) {
+      nota.innerHTML = `<span class="warn">${I18N.p('Belum ditentukan \u2014 nilai tugas ini tidak akan masuk ke ledger sampai jalurnya dipilih.',
+        'Not chosen \u2014 this task\u2019s score will not reach the ledger until a target is picked.')}</span>`;
+    } else if (jalur === 'lama') {
+      nota.innerHTML = `<span class="warn">${I18N.p('Sel lama "' + comp + '" tidak dikenali bentuknya, jadi nilainya belum tentu sampai. Pilih salah satu jalur di atas untuk membetulkannya.',
+        'The old cell \u201c' + comp + '\u201d is not a recognised shape, so the score may not arrive. Pick one of the paths above to fix it.')}</span>`;
+    } else {
+      nota.innerHTML = (def ? esc(I18N.p(def[3], def[4])) + '<br>' : '')
+        + I18N.p('Nilainya masuk ke sel ledger ', 'The score lands in ledger cell ') + '<b>' + esc(comp) + '</b>.';
+    }
+  };
+  ['tg-jalur', 'tg-unit', 'tg-bagian', 'tg-ujian'].forEach((id) => {
+    const el = g(id); if (el) el.addEventListener('change', perbarui);
+  });
+  perbarui();
+};
+
+/** Membaca pilihan tujuan dari formnya. */
+Tugas.bacaTarget = function (box) {
+  const g = (id) => { const el = box.querySelector('#' + id); return el ? el.value : ''; };
+  return Tugas.rakitTarget({
+    jalur: g('tg-jalur'), unit: Number(g('tg-unit')) || 1,
+    bagian: g('tg-bagian') || UNIT_LIMA[0], ujian: g('tg-ujian') || 'MID TEST',
+    lama: box.__compLama || ''
+  });
+};
+
 /** Form tugas: komponen jadi pilihan dari daftar nilai, bukan ketikan bebas. */
 Tugas.form = function (id) {
   const t = id ? Store.get('_Tugas', id) : null;
-  const books = Rapor.books();
   const tps = Store.all('TP');
-  /* Komponen tujuan HARUS berupa sel ledger yang sungguhan — "UNIT 1 — Writing",
-     bukan "Writing" apalagi "Tugas". Kalau bukan, nilai tugasnya berhenti di
-     tugas itu saja dan tidak pernah sampai ke ledger; itulah sebabnya 38 tugas
-     lama tidak pernah menambah apa pun ke rekap nilai.
-     Maka daftar sel ledger selalu ditawarkan, dan komponen milik daftar nilai
-     ikut ditampilkan terpisah supaya yang lama tetap bisa dipilih. */
-  const compBox = (bookId, cur) => {
-    const sel = Tugas.selLedger();
-    const comps = Tugas.compsOf(bookId).filter((c) => sel.indexOf(c) < 0);
-    const kini = String(cur || '');
-    const sah = !kini || sel.indexOf(kini) >= 0;
-    const opt = (v, l) => `<option value="${esc(v)}" ${v === kini ? 'selected' : ''}>${esc(l || v)}</option>`;
-    return `<select class="select" id="tg-comp">
-        ${opt('', I18N.p('— belum dipilih —', '— not chosen —'))}
-        <optgroup label="${I18N.p('Sel ledger', 'Ledger cells')}">${sel.map((c) => opt(c)).join('')}</optgroup>
-        ${comps.length ? `<optgroup label="${I18N.p('Komponen daftar nilai ini', 'This gradebook\u2019s own components')}">${comps.map((c) => opt(c)).join('')}</optgroup>` : ''}
-        ${kini && sel.indexOf(kini) < 0 && comps.indexOf(kini) < 0 ? opt(kini, kini + ' ' + I18N.p('(lama)', '(old)')) : ''}
-      </select>
-      <div class="hint ${sah ? '' : 'warn'}">${sah
-        ? I18N.p('Begitu tugas ini dinilai, nilainya mengalir sendiri ke sel ledger itu.',
-          'Once this task is graded, the score flows into that ledger cell by itself.')
-        : I18N.p('"' + kini + '" bukan nama sel ledger, jadi nilainya TIDAK akan masuk ledger. Pilih salah satu sel di atas.',
-          '"' + kini + '" is not a ledger cell, so the score will NOT reach the ledger. Pick one of the cells above.')}</div>`;
-  };
+  /* Tujuan nilai dipilih lewat jalurnya (harian / ulangan / ujian), lalu nama
+     sel ledgernya dirakit sendiri oleh Tugas.rakitTarget. Dulu kolom ini
+     berupa satu daftar 20 sel yang diketik atau dipilih bebas, dan yang
+     tidak berbentuk sel ledger — "Writing" saja, atau "Tugas" — membuat
+     nilainya berhenti di tugas itu dan tidak pernah sampai ke ledger. */
   UI.form({
     title: t ? I18N.p('Ubah tugas', 'Edit task') : I18N.p('Tugas baru untuk siswa', 'New student task'), size: 'wide',
     values: t || { status: 'Terbuka', maxScore: 100, type: 'Tugas', assignDate: todayISO() },
-    note: I18N.p('Siswa membuka tautan khusus, memilih kelas, lalu mengumpulkan tugas. Nilai yang Ustadz isi bisa langsung disalin ke daftar nilai.', 'Students open a dedicated link, pick their class, and submit. The scores you enter can be pushed straight into the gradebook.'),
+    note: I18N.p('Siswa membuka tautan khusus, memilih kelas, lalu mengumpulkan tugas. Nilai yang Ustadz isi masuk sendiri ke sel ledger yang dipilih di bawah — tidak lewat daftar nilai lagi.', 'Students open a dedicated link, pick their class, and submit. The scores you enter flow by themselves into the ledger cell chosen below — no gradebook in between.'),
     fields: [
       { k: 'title', l: I18N.p('Judul tugas', 'Task title'), req: 1, full: 1 },
-      { k: 'className', l: I18N.p('Kelas', 'Class'), req: 1, list: () => School.classes() },
-      { k: 'subject', l: I18N.p('Mata pelajaran', 'Subject'), list: () => [...new Set(Store.all('Schedule').map((x) => x.subject).filter(Boolean))] },
+      { k: 'className', l: I18N.p('Kelas', 'Class'), req: 1, t: 'select', o: () => pilihanPlus(Tugas.kelasAktif(), t ? t.className : '') },
+      { k: 'subject', l: I18N.p('Mata pelajaran', 'Subject'), req: 1, t: 'select', o: () => pilihanPlus(MAPEL_AJAR, t ? t.subject : '') },
       { k: 'type', l: I18N.p('Jenis', 'Type'), t: 'select', o: ['Tugas', 'Proyek', 'Latihan', 'Ujian', 'Presentasi', 'Portofolio'] },
       { k: 'assignDate', l: I18N.p('Tanggal diberikan', 'Assigned on'), t: 'date' },
       { k: 'dueDate', l: I18N.p('Batas pengumpulan', 'Due date'), t: 'date', req: 1 },
@@ -10797,24 +10969,102 @@ Tugas.form = function (id) {
       { k: 'groupMin', l: I18N.p('Anggota minimal', 'Minimum members'), t: 'number', min: 2, ph: '2' },
       { k: 'groupMax', l: I18N.p('Anggota maksimal', 'Maximum members'), t: 'number', min: 2, ph: '5' },
       { k: 'instruction', l: I18N.p('Instruksi untuk siswa', 'Instructions for students'), t: 'textarea', rows: 3, full: 1 },
-      { k: 'link', l: I18N.p('Tautan bahan (opsional)', 'Material link (optional)'), t: 'url', full: 1 },
-      { t: 'section', l: I18N.p('Tautan ke daftar nilai', 'Link to gradebook') },
-      { k: 'bookId', l: I18N.p('Daftar nilai', 'Gradebook'), t: 'select', o: () => [['', I18N.p('— belum ditautkan —', '— not linked —')]].concat(books.map((b) => [b.id, `${b.name} (${b.className})`])) },
-      { t: 'html', full: 1, html: `<label style="font-size:12.5px;font-weight:700">${I18N.p('Komponen / section tujuan', 'Target component / section')}</label><div id="tg-compbox">${compBox(t ? t.bookId : '', t ? t.component : '')}</div>` },
+      { k: 'link', l: I18N.p('Tautan bahan (opsional)', 'Material link (optional)'), t: 'url', full: 1,
+        hint: I18N.p('Muncul di beranda siswa sebagai tombol “Buka bahan tugas” dan ikut terlihat saat ia mengumpulkan — pastikan aksesnya “siapa saja yang memiliki link”.',
+          'Shows up on the student home as a “Open task material” button and stays visible while they submit — set sharing to “anyone with the link”.') },
+      { t: 'section', l: I18N.p('Tujuan nilai di ledger', 'Where the score goes in the ledger') },
+      { t: 'html', full: 1, html: Tugas.targetBox(t ? t.component : '') },
       { k: 'tpCode', l: I18N.p('Kode TP', 'Objective code'), t: 'select', o: () => [''].concat([...new Set(tps.map((x) => String(x.code).trim()).filter(Boolean))]) }
     ],
     onMount: (box) => {
-      const sel = box.querySelector('[name="bookId"]');
-      if (sel) sel.addEventListener('change', (e) => { box.querySelector('#tg-compbox').innerHTML = compBox(e.target.value, ''); });
+      /* Sel lama yang bentuknya tidak dikenali disimpan apa adanya, supaya
+         membuka tugas lama tidak menghapus tujuannya begitu saja. */
+      box.__compLama = (t && Tugas.uraiTarget(t.component).jalur === 'lama') ? String(t.component) : '';
+      Tugas.targetPasang(box);
     },
     extraFoot: t ? `<button class="btn danger left" data-act="delRow" data-sheet="_Tugas" data-id="${t.id}">${ic('trash')}Hapus</button>` : '',
     onSubmit: (v, box) => {
-      const cb = box.querySelector('#tg-comp');
-      v.component = cb ? cb.value.trim() : '';
-      if (v.bookId && !v.component) { UI.toast(I18N.p('Pilih komponen tujuan nilainya.', 'Pick the target component for the score.'), 'err'); return false; }
+      v.component = Tugas.bacaTarget(box);
+      /* bookId tidak dipakai lagi: nilai tugas berjalan langsung ke ledger.
+         Dikosongkan saat disimpan supaya tidak ada tugas bertujuan ganda. */
+      v.bookId = '';
       if (v.dueDate && v.assignDate && v.dueDate < v.assignDate) { UI.toast(I18N.p('Batas pengumpulan tidak boleh sebelum tanggal diberikan.', 'The due date cannot be before the assigned date.'), 'err'); return false; }
       return t ? Store.update('_Tugas', t.id, v) : Store.create('_Tugas', v);
     }
+  });
+};
+
+/* ---------------- persetujuan sebelum menimpa nilai ---------------- */
+
+/** Nilai yang sudah ada di ledger untuk satu siswa pada sel tujuan tugas ini. */
+Tugas.nilaiLedger = function (t, nama) {
+  const k = nameKey(nama);
+  const comp = String(t.component || '');
+  if (!comp) return null;
+  const sama = Store.where('_Ledger', (r) => String(r.component || '') === comp
+    && sameCls(r.className, t.className) && nameKey(r.studentName) === k);
+  if (!sama.length) return null;
+  /* Yang paling baru yang berlaku, sama seperti pembacaan rekapnya. */
+  return sama.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))[0];
+};
+
+/** Meminta persetujuan bila penyimpanan ini akan MENGGANTI nilai yang sudah
+ *  terisi di ledger. Mengembalikan true bila boleh lanjut.
+ *
+ *  Pemeriksaannya dilakukan di sini, sebelum apa pun ditulis, bukan sesudah
+ *  — kalau ditanyakan sesudah tersimpan, "batal" tidak lagi berarti apa-apa. */
+Tugas.izinTimpa = async function (t, ops) {
+  const bentrok = [];
+  ops.forEach((o) => {
+    const baru = o.row ? o.row.score : '';
+    if (baru === '' || baru == null) return;
+    const nama = o.op === 'create'
+      ? (o.row.studentName || '')
+      : ((Store.get('_Pengumpulan', o.id) || {}).studentName || '');
+    if (!nama) return;
+    const lama = Tugas.nilaiLedger(t, nama);
+    if (!lama) return;
+    const nLama = Number(lama.score), nBaru = Number(baru);
+    if (!isFinite(nLama) || String(lama.score) === '') return;
+    if (nLama === nBaru) return;                       // tidak berubah
+    bentrok.push({ nama: nama, lama: lama, nLama: nLama, nBaru: nBaru });
+  });
+  if (!bentrok.length) return true;
+
+  const tampil = bentrok.slice(0, 12).map((x) => {
+    const asal = String(x.lama.source || '') === 'tugas'
+      ? I18N.p('dari tugas', 'from a task')
+      : (x.lama.source ? I18N.p('dari ', 'from ') + esc(x.lama.source) : '');
+    const judul = x.lama.title ? ' \u00b7 ' + esc(String(x.lama.title).slice(0, 40)) : '';
+    const tgl = x.lama.date ? ' \u00b7 ' + fmtDateShort(x.lama.date) : '';
+    return `<tr><td>${esc(x.nama)}</td><td class="r"><b>${x.nLama}</b></td>`
+      + `<td class="r"><b class="${x.nBaru >= x.nLama ? 'pos' : 'neg'}">${x.nBaru}</b></td>`
+      + `<td class="mini muted">${asal}${judul}${tgl}</td></tr>`;
+  }).join('');
+
+  /* Dialognya dibuat sendiri, bukan UI.confirm: confirm membungkus pesannya
+     dalam <p> dan lebarnya sempit, sedangkan yang perlu dibaca di sini adalah
+     tabel perbandingan nilai lama dan baru. */
+  return await new Promise((resolve) => {
+    let jawab = false;
+    const m = UI.modal({
+      title: I18N.p('Ganti nilai yang sudah ada?', 'Replace existing scores?'), size: 'wide',
+      body: `<p class="mini">${I18N.p(`<b>${bentrok.length} siswa</b> sudah punya nilai di sel ledger `, `<b>${bentrok.length} students</b> already have a score in ledger cell `)}`
+        + `<b>${esc(t.component)}</b> (${esc(t.className)})`
+        + `${I18N.p(', dan angkanya berbeda dari yang baru ini.', ', and it differs from the new one.')}</p>`
+        + `<div class="table-wrap" style="margin:11px 0;max-height:46vh;overflow:auto"><table class="tbl"><thead><tr>`
+        + `<th>${I18N.p('Siswa', 'Student')}</th><th class="r">${I18N.p('Nilai lama', 'Old')}</th>`
+        + `<th class="r">${I18N.p('Nilai baru', 'New')}</th><th>${I18N.p('Nilai lama berasal', 'Old score from')}</th>`
+        + `</tr></thead><tbody>${tampil}</tbody></table></div>`
+        + (bentrok.length > 12 ? `<p class="mini muted">${I18N.p(`dan ${bentrok.length - 12} siswa lainnya.`, `and ${bentrok.length - 12} more.`)}</p>` : '')
+        + `<div class="note">${I18N.p('Nilai lamanya akan diganti dengan yang baru di sel itu. Nilai di sel ledger lain tidak tersentuh.', 'The old scores in that cell will be replaced. Scores in other ledger cells are untouched.')}</div>`,
+      foot: `<button class="btn" data-close>${I18N.p('Batal, jangan diganti', 'Cancel, keep the old')}</button>`
+        + `<button class="btn danger solid" data-ok>${I18N.p('Ya, ganti nilainya', 'Yes, replace')}</button>`,
+      onClose: () => { if (!jawab) resolve(false); },
+      onMount: (box) => {
+        box.querySelector('[data-ok]').addEventListener('click', () => { jawab = true; resolve(true); m.close(); });
+      }
+    });
   });
 };
 
@@ -13058,7 +13308,7 @@ const Ajar = {
     const m = Store.get('_Pertemuan', id);
     if (!m) return;
     if (m.taskId && Store.get('_Tugas', m.taskId)) return Tugas.panel(m.taskId);
-    const books = typeof Rapor !== 'undefined' ? Rapor.books().filter((b) => sameCls(b.className, m.className)) : [];
+    let box = null;
     UI.form({
       title: I18N.p('Jadikan tugas siswa', 'Turn into a student task'), size: 'wide',
       note: I18N.p(`Dari pertemuan ${m.no} kelas ${m.className} — ${fmtDateFull(m.date)}. Tugas ini langsung muncul di halaman siswa, dan hasilnya terekap kembali ke pertemuan ini.`,
@@ -13071,19 +13321,24 @@ const Ajar = {
       },
       fields: [
         { k: 'title', l: I18N.p('Judul tugas', 'Task title'), req: 1, full: 1 },
-        { k: 'className', l: I18N.p('Kelas', 'Class'), req: 1 },
-        { k: 'subject', l: I18N.p('Mata pelajaran', 'Subject') },
+        { k: 'className', l: I18N.p('Kelas', 'Class'), req: 1, t: 'select', o: () => pilihanPlus(Tugas.kelasAktif(), m.className) },
+        { k: 'subject', l: I18N.p('Mata pelajaran', 'Subject'), req: 1, t: 'select', o: () => pilihanPlus(MAPEL_AJAR, m.subject) },
         { k: 'type', l: I18N.p('Jenis', 'Type'), t: 'select', o: ['Tugas', 'Proyek', 'Latihan', 'Ujian', 'Presentasi', 'Portofolio'] },
         { k: 'assignDate', l: I18N.p('Diberikan', 'Assigned'), t: 'date' },
         { k: 'dueDate', l: I18N.p('Batas pengumpulan', 'Due date'), t: 'date', req: 1 },
         { k: 'maxScore', l: I18N.p('Nilai maksimum', 'Maximum score'), t: 'number', min: 1 },
         { k: 'tpCode', l: I18N.p('Kode TP', 'Objective code') },
         { k: 'instruction', l: I18N.p('Instruksi untuk siswa', 'Instructions for students'), t: 'textarea', rows: 4, full: 1 },
-        { k: 'bookId', l: I18N.p('Daftar nilai tujuan', 'Target gradebook'), t: 'select', o: () => [['', I18N.p('— belum ditautkan —', '— not linked —')]].concat(books.map((b) => [b.id, `${b.name} (${b.className})`])) },
-        { k: 'component', l: I18N.p('Komponen / section', 'Component / section') }
+        { t: 'section', l: I18N.p('Tujuan nilai di ledger', 'Where the score goes in the ledger') },
+        { t: 'html', full: 1, html: Tugas.targetBox('') }
       ],
       submit: I18N.p('Buat tugas', 'Create the task'),
+      onMount: (el) => { box = el; Tugas.targetPasang(el); },
       onSubmit: async (v) => {
+        /* Sel tujuannya ditentukan di sini, bukan sesudahnya: tugas yang lahir
+           tanpa sel tujuan tidak akan pernah sampai ke ledger. */
+        v.component = Tugas.bacaTarget(box);
+        v.bookId = '';
         const r = await Store.create('_Tugas', Object.assign({ link: '' }, v));
         await Store.update('_Pertemuan', m.id, { taskId: r.id, note: v.title });
         UI.toast(I18N.p('Tugas dibuat dan tertaut ke pertemuan ini.', 'Task created and linked to this meeting.'), 'ok');
@@ -13173,7 +13428,7 @@ const Ajar = {
 
 MODULES.school.subs = [['jadwal', 'Jadwal & Kalender'], ['ajar', 'Riwayat Pembelajaran'], ['tugas', 'Tugas & Ujian'],
 ['kegiatan', 'Kegiatan & Appointment'], ['deadline', 'Deadline Dinas'], ['absen', 'Absen Siswa'], ['kehadiran', 'Kehadiran & TP'],
-['nilai', 'Rekap Nilai'], ['scorelist', 'Score List'], ['daftarnilai', 'Daftar Nilai'], ['tugassiswa', 'Tugas Siswa'],
+['nilai', 'Rekap Nilai'], ['scorelist', 'Score List'], ['tugassiswa', 'Tugas Siswa'],
 ['logbook', 'Logbook & KPI'], ['jobdesc', 'Jobdesc'], ['keuangan', 'Gaji & Honor'], ['lembar', 'Lembar Excel']];
 
 VIEWS.school.ajar = {
@@ -15486,7 +15741,7 @@ VIEWS.school.cbt = {
 
 MODULES.school.subs = [['jadwal', 'Jadwal & Kalender'], ['ajar', 'Riwayat Pembelajaran'], ['tugas', 'Tugas & Ujian'],
 ['kegiatan', 'Kegiatan & Appointment'], ['deadline', 'Deadline Dinas'], ['siswa', 'Data Siswa'], ['absen', 'Absen Siswa'],
-['kehadiran', 'Kehadiran & TP'], ['nilai', 'Rekap Nilai'], ['scorelist', 'Score List'], ['daftarnilai', 'Daftar Nilai'],
+['kehadiran', 'Kehadiran & TP'], ['nilai', 'Rekap Nilai'], ['scorelist', 'Score List'], 
 ['tugassiswa', 'Tugas Siswa'], ['logbook', 'Logbook & KPI'], ['jobdesc', 'Jobdesc'], ['keuangan', 'Gaji & Honor'], ['lembar', 'Lembar Excel']];
 
 VIEWS.school.siswa = {
@@ -16946,7 +17201,7 @@ Object.assign(ACT, {
 MODULES.school.subs = [['jadwal', 'Jadwal & Kalender'], ['ajar', 'Riwayat Pembelajaran'], ['tugas', 'Tugas & Ujian'],
 ['kegiatan', 'Kegiatan & Appointment'], ['deadline', 'Deadline Dinas'], ['siswa', 'Data Siswa'], ['absen', 'Absen Siswa'],
 ['ledger', 'Ledger Nilai'], ['rapor', 'Rapor PTS'], ['kehadiran', 'Kehadiran & TP'], ['nilai', 'Rekap Nilai'], ['scorelist', 'Score List'],
-['daftarnilai', 'Daftar Nilai'], ['tugassiswa', 'Tugas Siswa'], ['logbook', 'Logbook & KPI'], ['jobdesc', 'Jobdesc'],
+['tugassiswa', 'Tugas Siswa'], ['logbook', 'Logbook & KPI'], ['jobdesc', 'Jobdesc'],
 ['keuangan', 'Gaji & Honor'], ['lembar', 'Lembar Excel']];
 
 VIEWS.school.ledger = {
@@ -26044,7 +26299,6 @@ function abLayar(perbarui) {
 
 /* Mulai aplikasi */
 boot();
-
 </script>
 </body>
 </html>
